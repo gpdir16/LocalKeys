@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LocalKeys - Dashboard</title>
+        <link rel="stylesheet" href="../styles/common.css" />
+        <style>
+            .dashboard-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 30px;
+            }
+
+            .dashboard-title {
+                font-size: 28px;
+                font-weight: 600;
+                color: var(--text-primary);
+            }
+
+            .header-actions {
+                display: flex;
+                gap: 10px;
+            }
+
+            .projects-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+
+            .project-card {
+                background-color: var(--bg-secondary);
+                border-radius: 8px;
+                padding: 20px;
+                border: 1px solid var(--border);
+                cursor: pointer;
+                transition: transform 0.2s, border-color 0.2s;
+            }
+
+            .project-card:hover {
+                transform: translateY(-2px);
+                border-color: var(--accent);
+            }
+
+            .project-name {
+                font-size: 18px;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: 8px;
+            }
+
+            .project-stats {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 15px;
+            }
+
+            .secret-count {
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+
+            .project-date {
+                font-size: 12px;
+                color: var(--text-secondary);
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 60px 20px;
+                color: var(--text-secondary);
+            }
+
+            .empty-state-icon {
+                font-size: 64px;
+                margin-bottom: 20px;
+                opacity: 0.5;
+            }
+
+            .empty-state-title {
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 10px;
+                color: var(--text-primary);
+            }
+
+            .empty-state-description {
+                margin-bottom: 30px;
+                max-width: 400px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .search-bar {
+                position: relative;
+                margin-bottom: 20px;
+            }
+
+            .search-input {
+                width: 100%;
+                padding: 12px 40px 12px 16px;
+                background-color: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                color: var(--text-primary);
+                font-size: 14px;
+            }
+
+            .search-input:focus {
+                outline: none;
+                border-color: var(--accent);
+            }
+
+            .search-icon {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text-secondary);
+            }
+
+            .modal {
+                background-color: var(--bg-secondary);
+                border-radius: 8px;
+                padding: 30px;
+                max-width: 500px;
+                width: 90%;
+                border: 1px solid var(--border);
+            }
+
+            .stats-container {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+
+            .stat-card {
+                background-color: var(--bg-secondary);
+                border-radius: 8px;
+                padding: 20px;
+                border: 1px solid var(--border);
+                text-align: center;
+            }
+
+            .stat-value {
+                font-size: 32px;
+                font-weight: 600;
+                color: var(--accent);
+                margin-bottom: 5px;
+            }
+
+            .stat-label {
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Projects</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
+                    <button class="btn" id="add-project-btn">Add Project</button>
+                    <button class="btn btn-secondary" id="logs-btn">Logs</button>
+                    <button class="btn btn-secondary" id="lock-btn">Lock</button>
+                </div>
+            </div>
+
+            <!-- 통계 카드 -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-projects">0</div>
+                    <div class="stat-label">Total Projects</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-secrets">0</div>
+                    <div class="stat-label">Total Secrets</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="recent-access">0</div>
+                    <div class="stat-label">Recent Access</div>
+                </div>
+            </div>
+
+            <!-- 검색 바 -->
+            <div class="search-bar">
+                <input type="text" class="search-input" id="search-input" placeholder="Search projects..." />
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <!-- 프로젝트 목록 -->
+            <div id="projects-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 프로젝트 추가 모달 -->
+        <div id="add-project-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Add New Project</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label for="project-name">Project Name</label>
+                        <input type="text" id="project-name" placeholder="Enter project name" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancel-add-project">Cancel</button>
+                    <button class="btn" id="confirm-add-project">Add Project</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const projectsContainer = document.getElementById("projects-container");
+                const searchInput = document.getElementById("search-input");
+                const addProjectBtn = document.getElementById("add-project-btn");
+                const refreshBtn = document.getElementById("refresh-btn");
+                const logsBtn = document.getElementById("logs-btn");
+                const lockBtn = document.getElementById("lock-btn");
+                const addProjectModal = document.getElementById("add-project-modal");
+                const projectNameInput = document.getElementById("project-name");
+                const cancelAddProject = document.getElementById("cancel-add-project");
+                const confirmAddProject = document.getElementById("confirm-add-project");
+
+                // 통계 요소
+                const totalProjectsEl = document.getElementById("total-projects");
+                const totalSecretsEl = document.getElementById("total-secrets");
+                const recentAccessEl = document.getElementById("recent-access");
+
+                let projects = [];
+                let filteredProjects = [];
+
+                // 프로젝트 로드
+                async function loadProjects() {
+                    try {
+                        const result = await window.localkeys.projects.get();
+
+                        if (result.success) {
+                            projects = result.data;
+                            filteredProjects = projects;
+                            renderProjects();
+                            updateStats();
+                        } else {
+                            showError("Failed to load projects");
+                        }
+                    } catch (error) {
+                        showError(`Error loading projects: ${error.message}`);
+                    }
+                }
+
+                // 프로젝트 렌더링
+                function renderProjects() {
+                    if (filteredProjects.length === 0) {
+                        projectsContainer.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📁</div>
+              <div class="empty-state-title">No projects found</div>
+              <div class="empty-state-description">
+                ${projects.length === 0 ? "Create your first project to start managing your secrets securely." : "No projects match your search criteria."}
+              </div>
+              ${projects.length === 0 ? '<button class="btn" onclick="showAddProjectModal()">Create Project</button>' : ""}
+            </div>
+          `;
+                        return;
+                    }
+
+                    const projectsHTML = filteredProjects
+                        .map(
+                            (project) => `
+          <div class="project-card" onclick="openProject('${project.name}')">
+            <div class="project-name">${escapeHtml(project.name)}</div>
+            <div class="project-date">Updated ${formatDate(project.updatedAt)}</div>
+            <div class="project-stats">
+              <div class="secret-count">${project.secretCount} secrets</div>
+              <div class="project-actions">
+                <button class="btn btn-secondary" onclick="event.stopPropagation(); deleteProject('${project.name}')">Delete</button>
+              </div>
+            </div>
+          </div>
+        `
+                        )
+                        .join("");
+
+                    projectsContainer.innerHTML = `<div class="projects-grid">${projectsHTML}</div>`;
+                }
+
+                // 통계 업데이트
+                function updateStats() {
+                    totalProjectsEl.textContent = projects.length;
+                    totalSecretsEl.textContent = projects.reduce((sum, project) => sum + project.secretCount, 0);
+
+                    // 최근 접근 횟수 (실제로는 로그에서 가져와야 함)
+                    recentAccessEl.textContent = "0"; // 임시 값
+                }
+
+                // 프로젝트 열기
+                function openProject(projectName) {
+                    window.location.href = `project.html?name=${encodeURIComponent(projectName)}`;
+                }
+
+                // 프로젝트 삭제
+                async function deleteProject(projectName) {
+                    if (!confirm(`Are you sure you want to delete project "${projectName}"? This will also delete all secrets in this project.`)) {
+                        return;
+                    }
+
+                    try {
+                        const result = await window.localkeys.projects.delete(projectName);
+
+                        if (result.success) {
+                            await loadProjects();
+                            showSuccess(`Project "${projectName}" deleted successfully`);
+                        } else {
+                            showError(`Failed to delete project: ${result.error}`);
+                        }
+                    } catch (error) {
+                        showError(`Error deleting project: ${error.message}`);
+                    }
+                }
+
+                // 프로젝트 추가 모달 표시
+                function showAddProjectModal() {
+                    addProjectModal.classList.remove("hidden");
+                    projectNameInput.value = "";
+                    projectNameInput.focus();
+                }
+
+                // 프로젝트 추가 모달 숨기기
+                function hideAddProjectModal() {
+                    addProjectModal.classList.add("hidden");
+                }
+
+                // 프로젝트 추가
+                async function addProject() {
+                    const projectName = projectNameInput.value.trim();
+
+                    if (!projectName) {
+                        showError("Please enter a project name");
+                        return;
+                    }
+
+                    if (projects.some((p) => p.name === projectName)) {
+                        showError("A project with this name already exists");
+                        return;
+                    }
+
+                    try {
+                        const result = await window.localkeys.projects.create(projectName);
+
+                        if (result.success) {
+                            hideAddProjectModal();
+                            await loadProjects();
+                            showSuccess(`Project "${projectName}" created successfully`);
+                        } else {
+                            showError(`Failed to create project: ${result.error}`);
+                        }
+                    } catch (error) {
+                        showError(`Error creating project: ${error.message}`);
+                    }
+                }
+
+                // 검색
+                function searchProjects() {
+                    const query = searchInput.value.toLowerCase().trim();
+
+                    if (!query) {
+                        filteredProjects = projects;
+                    } else {
+                        filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(query));
+                    }
+
+                    renderProjects();
+                }
+
+                // 유틸리티 함수
+                function escapeHtml(text) {
+                    const div = document.createElement("div");
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                function formatDate(dateString) {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                    if (diffDays === 0) {
+                        return "today";
+                    } else if (diffDays === 1) {
+                        return "yesterday";
+                    } else if (diffDays < 7) {
+                        return `${diffDays} days ago`;
+                    } else if (diffDays < 30) {
+                        return `${Math.floor(diffDays / 7)} weeks ago`;
+                    } else {
+                        return date.toLocaleDateString();
+                    }
+                }
+
+                function showSuccess(message) {
+                    showMessage(message, "success");
+                }
+
+                function showError(message) {
+                    showMessage(message, "error");
+                }
+
+                function showMessage(message, type) {
+                    const messageEl = document.createElement("div");
+                    messageEl.className = `message message-${type}`;
+                    messageEl.textContent = message;
+                    messageEl.style.position = "fixed";
+                    messageEl.style.top = "20px";
+                    messageEl.style.right = "20px";
+                    messageEl.style.zIndex = "1000";
+                    messageEl.style.maxWidth = "400px";
+
+                    document.body.appendChild(messageEl);
+
+                    setTimeout(() => {
+                        if (document.body.contains(messageEl)) {
+                            document.body.removeChild(messageEl);
+                        }
+                    }, 3000);
+                }
+
+                // 이벤트 리스너
+                searchInput.addEventListener("input", searchProjects);
+                addProjectBtn.addEventListener("click", showAddProjectModal);
+                refreshBtn.addEventListener("click", loadProjects);
+
+                logsBtn.addEventListener("click", function () {
+                    window.location.href = "logs.html";
+                });
+
+                lockBtn.addEventListener("click", async function () {
+                    try {
+                        await window.localkeys.vault.lock();
+                    } catch (error) {
+                        showError(`Error locking vault: ${error.message}`);
+                    }
+                });
+
+                cancelAddProject.addEventListener("click", hideAddProjectModal);
+                confirmAddProject.addEventListener("click", addProject);
+
+                projectNameInput.addEventListener("keypress", function (e) {
+                    if (e.key === "Enter") {
+                        addProject();
+                    }
+                });
+
+                addProjectModal.addEventListener("click", function (e) {
+                    if (e.target === addProjectModal) {
+                        hideAddProjectModal();
+                    }
+                });
+
+                // 전역 함수로 등록 (HTML onclick에서 사용)
+                window.openProject = openProject;
+                window.deleteProject = deleteProject;
+                window.showAddProjectModal = showAddProjectModal;
+
+                // 초기 로드
+                loadProjects();
+            });
+        </script>
+    </body>
+</html>

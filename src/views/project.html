@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LocalKeys - Project</title>
+        <link rel="stylesheet" href="../styles/common.css" />
+        <style>
+            .project-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 30px;
+                padding-bottom: 15px;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .project-title {
+                font-size: 28px;
+                font-weight: 600;
+                color: var(--text-primary);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .back-btn {
+                background: none;
+                border: none;
+                color: var(--text-secondary);
+                font-size: 20px;
+                cursor: pointer;
+                padding: 5px;
+                border-radius: 4px;
+                transition: background-color 0.2s;
+            }
+
+            .back-btn:hover {
+                background-color: var(--bg-tertiary);
+            }
+
+            .header-actions {
+                display: flex;
+                gap: 10px;
+            }
+
+            .secrets-container {
+                margin-bottom: 20px;
+            }
+
+            .secret-item {
+                background-color: var(--bg-secondary);
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 15px;
+                border: 1px solid var(--border);
+            }
+
+            .secret-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+
+            .secret-key {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--text-primary);
+                word-break: break-all;
+            }
+
+            .secret-value {
+                font-family: "Courier New", monospace;
+                font-size: 14px;
+                color: var(--text-secondary);
+                background-color: var(--bg-tertiary);
+                padding: 10px;
+                border-radius: 4px;
+                word-break: break-all;
+                margin-bottom: 10px;
+                position: relative;
+            }
+
+            .secret-value.masked {
+                filter: blur(5px);
+                user-select: none;
+            }
+
+            .secret-actions {
+                display: flex;
+                gap: 10px;
+            }
+
+            .toggle-visibility {
+                background: none;
+                border: none;
+                color: var(--accent);
+                cursor: pointer;
+                font-size: 14px;
+                padding: 5px;
+                border-radius: 4px;
+                transition: background-color 0.2s;
+            }
+
+            .toggle-visibility:hover {
+                background-color: var(--bg-tertiary);
+            }
+
+            .copy-btn {
+                background: none;
+                border: none;
+                color: var(--text-secondary);
+                cursor: pointer;
+                font-size: 14px;
+                padding: 5px;
+                border-radius: 4px;
+                transition: background-color 0.2s;
+            }
+
+            .copy-btn:hover {
+                background-color: var(--bg-tertiary);
+                color: var(--text-primary);
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 60px 20px;
+                color: var(--text-secondary);
+            }
+
+            .empty-state-icon {
+                font-size: 64px;
+                margin-bottom: 20px;
+                opacity: 0.5;
+            }
+
+            .empty-state-title {
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 10px;
+                color: var(--text-primary);
+            }
+
+            .empty-state-description {
+                margin-bottom: 30px;
+                max-width: 400px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .modal {
+                background-color: var(--bg-secondary);
+                border-radius: 8px;
+                padding: 30px;
+                max-width: 500px;
+                width: 90%;
+                border: 1px solid var(--border);
+            }
+
+            .search-bar {
+                position: relative;
+                margin-bottom: 20px;
+            }
+
+            .search-input {
+                width: 100%;
+                padding: 12px 40px 12px 16px;
+                background-color: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                color: var(--text-primary);
+                font-size: 14px;
+            }
+
+            .search-input:focus {
+                outline: none;
+                border-color: var(--accent);
+            }
+
+            .search-icon {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--text-secondary);
+            }
+
+            .export-section {
+                margin-top: 20px;
+                padding-top: 20px;
+                border-top: 1px solid var(--border);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="project-header">
+                <div class="project-title">
+                    <button class="back-btn" id="back-btn">←</button>
+                    <span id="project-name">Project</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
+                    <button class="btn" id="add-secret-btn">Add Secret</button>
+                    <button class="btn btn-secondary" id="export-btn">Export .env</button>
+                </div>
+            </div>
+
+            <!-- 검색 바 -->
+            <div class="search-bar">
+                <input type="text" class="search-input" id="search-input" placeholder="Search secrets..." />
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <!-- 시크릿 목록 -->
+            <div class="secrets-container" id="secrets-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <!-- 내보내기 섹션 -->
+            <div class="export-section">
+                <button class="btn btn-secondary" id="export-env-btn">Export as .env file</button>
+            </div>
+        </div>
+
+        <!-- 시크릿 추가 모달 -->
+        <div id="add-secret-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Add New Secret</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label for="secret-key">Key</label>
+                        <input type="text" id="secret-key" placeholder="Enter secret key" autocomplete="off" />
+                    </div>
+                    <div class="input-group">
+                        <label for="secret-value">Value</label>
+                        <textarea id="secret-value" placeholder="Enter secret value" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancel-add-secret">Cancel</button>
+                    <button class="btn" id="confirm-add-secret">Add Secret</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 시크릿 편집 모달 -->
+        <div id="edit-secret-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">Edit Secret</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label for="edit-secret-key">Key</label>
+                        <input type="text" id="edit-secret-key" placeholder="Enter secret key" autocomplete="off" />
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-secret-value">Value</label>
+                        <textarea id="edit-secret-value" placeholder="Enter secret value" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancel-edit-secret">Cancel</button>
+                    <button class="btn" id="confirm-edit-secret">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const projectNameEl = document.getElementById("project-name");
+                const secretsContainer = document.getElementById("secrets-container");
+                const searchInput = document.getElementById("search-input");
+                const backBtn = document.getElementById("back-btn");
+                const refreshBtn = document.getElementById("refresh-btn");
+                const addSecretBtn = document.getElementById("add-secret-btn");
+                const exportBtn = document.getElementById("export-btn");
+                const exportEnvBtn = document.getElementById("export-env-btn");
+
+                // 모달 요소
+                const addSecretModal = document.getElementById("add-secret-modal");
+                const editSecretModal = document.getElementById("edit-secret-modal");
+                const secretKeyInput = document.getElementById("secret-key");
+                const secretValueInput = document.getElementById("secret-value");
+                const editSecretKeyInput = document.getElementById("edit-secret-key");
+                const editSecretValueInput = document.getElementById("edit-secret-value");
+                const cancelAddSecret = document.getElementById("cancel-add-secret");
+                const confirmAddSecret = document.getElementById("confirm-add-secret");
+                const cancelEditSecret = document.getElementById("cancel-edit-secret");
+                const confirmEditSecret = document.getElementById("confirm-edit-secret");
+
+                let projectName = "";
+                let secrets = {};
+                let filteredSecrets = {};
+                let editingKey = "";
+
+                // URL에서 프로젝트 이름 가져오기
+                function getProjectNameFromURL() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    return urlParams.get("name") || "";
+                }
+
+                // 시크릿 로드
+                async function loadSecrets() {
+                    try {
+                        const result = await window.localkeys.secrets.getAll(projectName);
+
+                        if (result.success) {
+                            secrets = result.data;
+                            filteredSecrets = secrets;
+                            renderSecrets();
+                        } else {
+                            showError("Failed to load secrets");
+                        }
+                    } catch (error) {
+                        showError(`Error loading secrets: ${error.message}`);
+                    }
+                }
+
+                // 시크릿 렌더링
+                function renderSecrets() {
+                    const secretKeys = Object.keys(filteredSecrets);
+
+                    if (secretKeys.length === 0) {
+                        secretsContainer.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🔑</div>
+              <div class="empty-state-title">No secrets found</div>
+              <div class="empty-state-description">
+                ${Object.keys(secrets).length === 0 ? "Add your first secret to this project." : "No secrets match your search criteria."}
+              </div>
+              ${Object.keys(secrets).length === 0 ? '<button class="btn" onclick="showAddSecretModal()">Add Secret</button>' : ""}
+            </div>
+          `;
+                        return;
+                    }
+
+                    const secretsHTML = secretKeys
+                        .map(
+                            (key) => `
+          <div class="secret-item">
+            <div class="secret-header">
+              <div class="secret-key">${escapeHtml(key)}</div>
+              <div class="secret-actions">
+                <button class="toggle-visibility" onclick="toggleVisibility('${key}')">👁️</button>
+                <button class="copy-btn" onclick="copyToClipboard('${key}')">📋</button>
+                <button class="btn btn-secondary" onclick="editSecret('${key}')">Edit</button>
+                <button class="btn btn-danger" onclick="deleteSecret('${key}')">Delete</button>
+              </div>
+            </div>
+            <div class="secret-value masked" id="value-${key}">${escapeHtml(filteredSecrets[key])}</div>
+          </div>
+        `
+                        )
+                        .join("");
+
+                    secretsContainer.innerHTML = secretsHTML;
+                }
+
+                // 시크릿 가시성 토글
+                function toggleVisibility(key) {
+                    const valueEl = document.getElementById(`value-${key}`);
+                    valueEl.classList.toggle("masked");
+                }
+
+                // 클립보드에 복사
+                async function copyToClipboard(key) {
+                    try {
+                        // 승인 필요
+                        const result = await window.localkeys.secrets.get(projectName, key);
+
+                        if (result.success) {
+                            await navigator.clipboard.writeText(result.data);
+                            showSuccess(`Secret "${key}" copied to clipboard`);
+                        } else {
+                            showError(`Failed to access secret: ${result.error}`);
+                        }
+                    } catch (error) {
+                        showError(`Error copying secret: ${error.message}`);
+                    }
+                }
+
+                // 시크릿 편집
+                function editSecret(key) {
+                    editingKey = key;
+                    editSecretKeyInput.value = key;
+                    editSecretValueInput.value = secrets[key];
+                    editSecretModal.classList.remove("hidden");
+                    editSecretKeyInput.focus();
+                }
+
+                // 시크릿 삭제
+                async function deleteSecret(key) {
+                    if (!confirm(`Are you sure you want to delete secret "${key}"?`)) {
+                        return;
+                    }
+
+                    try {
+                        const result = await window.localkeys.secrets.delete(projectName, key);
+
+                        if (result.success) {
+                            await loadSecrets();
+                            showSuccess(`Secret "${key}" deleted successfully`);
+                        } else {
+                            showError(`Failed to delete secret: ${result.error}`);
+                        }
+                    } catch (error) {
+                        showError(`Error deleting secret: ${error.message}`);
+                    }
+                }
+
+                // 시크릿 추가 모달 표시
+                function showAddSecretModal() {
+                    addSecretModal.classList.remove("hidden");
+                    secretKeyInput.value = "";
+                    secretValueInput.value = "";
+                    secretKeyInput.focus();
+                }
+
+                // 시크릿 추가 모달 숨기기
+                function hideAddSecretModal() {
+                    addSecretModal.classList.add("hidden");
+                }
+
+                // 시크릿 편집 모달 숨기기
+                function hideEditSecretModal() {
+                    editSecretModal.classList.add("hidden");
+                    editingKey = "";
+                }
+
+                // 시크릿 추가
+                async function addSecret() {
+                    const key = secretKeyInput.value.trim();
+                    const value = secretValueInput.value;
+
+                    if (!key) {
+                        showError("Please enter a secret key");
+                        return;
+                    }
+
+                    if (secrets.hasOwnProperty(key)) {
+                        showError("A secret with this key already exists");
+                        return;
+                    }
+
+                    try {
+                        const result = await window.localkeys.secrets.set(projectName, key, value);
+
+                        if (result.success) {
+                            hideAddSecretModal();
+                            await loadSecrets();
+                            showSuccess(`Secret "${key}" added successfully`);
+                        } else {
+                            showError(`Failed to add secret: ${result.error}`);
+                        }
+                    } catch (error) {
+                        showError(`Error adding secret: ${error.message}`);
+                    }
+                }
+
+                // 시크릿 편집 저장
+                async function saveSecret() {
+                    const key = editSecretKeyInput.value.trim();
+                    const value = editSecretValueInput.value;
+
+                    if (!key) {
+                        showError("Please enter a secret key");
+                        return;
+                    }
+
+                    // 키가 변경된 경우
+                    if (key !== editingKey && secrets.hasOwnProperty(key)) {
+                        showError("A secret with this key already exists");
+                        return;
+                    }
+
+                    try {
+                        // 키가 변경된 경우 기존 키 삭제 후 새 키로 추가
+                        if (key !== editingKey) {
+                            await window.localkeys.secrets.delete(projectName, editingKey);
+                        }
+
+                        const result = await window.localkeys.secrets.set(projectName, key, value);
+
+                        if (result.success) {
+                            hideEditSecretModal();
+                            await loadSecrets();
+                            showSuccess(`Secret "${key}" saved successfully`);
+                        } else {
+                            showError(`Failed to save secret: ${result.error}`);
+                        }
+                    } catch (error) {
+                        showError(`Error saving secret: ${error.message}`);
+                    }
+                }
+
+                // .env 파일로 내보내기
+                async function exportAsEnv() {
+                    try {
+                        const result = await window.localkeys.secrets.export(projectName);
+
+                        if (result.success) {
+                            showSuccess(`Secrets exported to ${result.path}`);
+                        } else {
+                            showError(`Failed to export secrets: ${result.error}`);
+                        }
+                    } catch (error) {
+                        showError(`Error exporting secrets: ${error.message}`);
+                    }
+                }
+
+                // 검색
+                function searchSecrets() {
+                    const query = searchInput.value.toLowerCase().trim();
+
+                    if (!query) {
+                        filteredSecrets = secrets;
+                    } else {
+                        filteredSecrets = {};
+                        Object.keys(secrets).forEach((key) => {
+                            if (key.toLowerCase().includes(query)) {
+                                filteredSecrets[key] = secrets[key];
+                            }
+                        });
+                    }
+
+                    renderSecrets();
+                }
+
+                // 유틸리티 함수
+                function escapeHtml(text) {
+                    const div = document.createElement("div");
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                function showSuccess(message) {
+                    showMessage(message, "success");
+                }
+
+                function showError(message) {
+                    showMessage(message, "error");
+                }
+
+                function showMessage(message, type) {
+                    const messageEl = document.createElement("div");
+                    messageEl.className = `message message-${type}`;
+                    messageEl.textContent = message;
+                    messageEl.style.position = "fixed";
+                    messageEl.style.top = "20px";
+                    messageEl.style.right = "20px";
+                    messageEl.style.zIndex = "1000";
+                    messageEl.style.maxWidth = "400px";
+
+                    document.body.appendChild(messageEl);
+
+                    setTimeout(() => {
+                        if (document.body.contains(messageEl)) {
+                            document.body.removeChild(messageEl);
+                        }
+                    }, 3000);
+                }
+
+                // 이벤트 리스너
+                searchInput.addEventListener("input", searchSecrets);
+                backBtn.addEventListener("click", function () {
+                    window.location.href = "dashboard.html";
+                });
+                refreshBtn.addEventListener("click", loadSecrets);
+                addSecretBtn.addEventListener("click", showAddSecretModal);
+                exportBtn.addEventListener("click", exportAsEnv);
+                exportEnvBtn.addEventListener("click", exportAsEnv);
+
+                cancelAddSecret.addEventListener("click", hideAddSecretModal);
+                confirmAddSecret.addEventListener("click", addSecret);
+                cancelEditSecret.addEventListener("click", hideEditSecretModal);
+                confirmEditSecret.addEventListener("click", saveSecret);
+
+                secretKeyInput.addEventListener("keypress", function (e) {
+                    if (e.key === "Enter") {
+                        secretValueInput.focus();
+                    }
+                });
+
+                editSecretKeyInput.addEventListener("keypress", function (e) {
+                    if (e.key === "Enter") {
+                        editSecretValueInput.focus();
+                    }
+                });
+
+                addSecretModal.addEventListener("click", function (e) {
+                    if (e.target === addSecretModal) {
+                        hideAddSecretModal();
+                    }
+                });
+
+                editSecretModal.addEventListener("click", function (e) {
+                    if (e.target === editSecretModal) {
+                        hideEditSecretModal();
+                    }
+                });
+
+                // 전역 함수로 등록 (HTML onclick에서 사용)
+                window.toggleVisibility = toggleVisibility;
+                window.copyToClipboard = copyToClipboard;
+                window.editSecret = editSecret;
+                window.deleteSecret = deleteSecret;
+                window.showAddSecretModal = showAddSecretModal;
+
+                // 초기화
+                projectName = getProjectNameFromURL();
+                if (projectName) {
+                    projectNameEl.textContent = projectName;
+                    loadSecrets();
+                } else {
+                    showError("No project specified");
+                    setTimeout(() => {
+                        window.location.href = "dashboard.html";
+                    }, 2000);
+                }
+            });
+        </script>
+    </body>
+</html>
