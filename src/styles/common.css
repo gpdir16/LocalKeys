@@ -60,7 +60,6 @@ body {
     color: white;
     border: none;
     padding: 10px 20px;
-    border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
@@ -122,7 +121,6 @@ body {
     padding: 12px;
     background-color: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: 6px;
     color: var(--text-primary);
     font-size: 14px;
 }
@@ -141,7 +139,6 @@ body {
 /* 카드 */
 .card {
     background-color: var(--bg-secondary);
-    border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
     border: 1px solid var(--border);
@@ -214,25 +211,29 @@ body {
 /* 알림 메시지 */
 .message {
     padding: 15px;
-    border-radius: 6px;
     margin-bottom: 20px;
     font-size: 14px;
+    position: "fixed";
+    top: "20px";
+    right: "20px";
+    z-index: "1000";
+    max-width: "400px";
 }
 
 .message-success {
-    background-color: rgba(76, 175, 80, 0.1);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--success);
     color: var(--success);
 }
 
 .message-error {
-    background-color: rgba(244, 67, 54, 0.1);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--error);
     color: var(--error);
 }
 
 .message-warning {
-    background-color: rgba(255, 152, 0, 0.1);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--warning);
     color: var(--warning);
 }
@@ -279,7 +280,6 @@ body {
 
 .modal {
     background-color: var(--bg-secondary);
-    border-radius: 8px;
     padding: 30px;
     max-width: 500px;
     width: 90%;

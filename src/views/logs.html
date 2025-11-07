@@ -48,7 +48,6 @@
                 padding: 8px 12px;
                 background-color: var(--bg-secondary);
                 border: 1px solid var(--border);
-                border-radius: 6px;
                 color: var(--text-primary);
                 font-size: 14px;
             }
@@ -69,7 +68,6 @@
                 padding: 8px 35px 8px 12px;
                 background-color: var(--bg-secondary);
                 border: 1px solid var(--border);
-                border-radius: 6px;
                 color: var(--text-primary);
                 font-size: 14px;
             }
@@ -90,7 +88,6 @@
 
             .logs-container {
                 background-color: var(--bg-secondary);
-                border-radius: 8px;
                 border: 1px solid var(--border);
                 overflow: hidden;
             }
@@ -124,7 +121,6 @@
 
             .log-type {
                 padding: 2px 8px;
-                border-radius: 12px;
                 font-size: 11px;
                 font-weight: 600;
                 text-transform: uppercase;
@@ -192,7 +188,6 @@
 
             .stat-card {
                 background-color: var(--bg-secondary);
-                border-radius: 8px;
                 padding: 20px;
                 border: 1px solid var(--border);
                 text-align: center;
@@ -222,7 +217,6 @@
                 padding: 8px 12px;
                 background-color: var(--bg-secondary);
                 border: 1px solid var(--border);
-                border-radius: 6px;
                 color: var(--text-primary);
                 cursor: pointer;
                 transition: background-color 0.2s;
@@ -241,7 +235,6 @@
                 padding: 8px 12px;
                 background-color: var(--accent);
                 color: white;
-                border-radius: 6px;
                 font-weight: 600;
             }
         </style>
@@ -253,6 +246,7 @@
                 <div class="header-actions">
                     <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
                     <button class="btn btn-secondary" id="back-btn">Back to Dashboard</button>
+                    <button class="btn btn-danger" id="quit-btn">Quit</button>
                 </div>
             </div>
 
@@ -327,6 +321,7 @@
                 const searchInput = document.getElementById("search-input");
                 const refreshBtn = document.getElementById("refresh-btn");
                 const backBtn = document.getElementById("back-btn");
+                const quitBtn = document.getElementById("quit-btn");
 
                 // 통계 요소
                 const totalLogsEl = document.getElementById("total-logs");
@@ -545,6 +540,16 @@
 
                 backBtn.addEventListener("click", function () {
                     window.location.href = "dashboard.html";
+                });
+
+                quitBtn.addEventListener("click", async function () {
+                    if (confirm("Are you sure you want to quit LocalKeys?")) {
+                        try {
+                            await window.localkeys.app.quit();
+                        } catch (error) {
+                            showError(`Error quitting app: ${error.message}`);
+                        }
+                    }
                 });
 
                 // 전역 함수로 등록 (HTML onclick에서 사용)

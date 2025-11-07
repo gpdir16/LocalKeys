@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
@@ -15,9 +15,94 @@ let logger = null;
 let httpServer = null;
 let isUnlocked = false;
 let autoLockTimer = null;
+let tray = null;
+let isQuitting = false;
 
 // LocalKeys 데이터 디렉토리 경로
 const LOCALKEYS_DIR = path.join(require("os").homedir(), ".localkeys");
+
+// 트레이 아이콘 생성
+function createTray() {
+    // 트레이 아이콘이 이미 있으면 제거
+    if (tray) {
+        tray.destroy();
+    }
+
+    // macOS 트레이 아이콘 생성 - 템플릿 이미지로 설정
+    const { nativeImage } = require("electron");
+    const path = require("path");
+
+    // 에셋 아이콘 파일 사용
+    const iconPath = path.join(__dirname, "assets", "icon.png");
+    let iconImage;
+
+    try {
+        // 아이콘 파일 로드
+        iconImage = nativeImage.createFromPath(iconPath);
+
+        // 트레이 아이콘 생성
+        tray = new Tray(iconImage);
+
+        // macOS에서 트레이 아이콘을 템플릿 이미지로 설정 (다크/라이트 모드 지원)
+        if (process.platform === "darwin") {
+            tray.setImage(iconImage.resize({ width: 16, height: 16 }));
+        }
+    } catch (error) {
+        console.error("트레이 아이콘 생성 실패:", error);
+
+        // 실패 시 빈 아이콘으로 대체
+        try {
+            iconImage = nativeImage.createEmpty();
+            tray = new Tray(iconImage);
+
+            if (process.platform === "darwin") {
+                tray.setImage(iconImage.resize({ width: 16, height: 16 }));
+            }
+        } catch (fallbackError) {
+            console.error("대체 아이콘 생성 실패:", fallbackError);
+            return;
+        }
+    }
+
+    // 트레이 메뉴 생성
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: "Show LocalKeys",
+            click: () => {
+                // macOS에서 Dock 아이콘 다시 보이기
+                if (process.platform === "darwin") {
+                    app.dock.show();
+                }
+
+                if (mainWindow) {
+                    mainWindow.show();
+                    mainWindow.focus();
+                } else {
+                    createWindow();
+                }
+            },
+        },
+        {
+            label: "Lock Vault",
+            click: () => {
+                if (isUnlocked) {
+                    lockVault();
+                }
+            },
+        },
+        { type: "separator" },
+        {
+            label: "Quit",
+            click: () => {
+                isQuitting = true;
+                app.quit();
+            },
+        },
+    ]);
+
+    tray.setToolTip("LocalKeys");
+    tray.setContextMenu(contextMenu);
+}
 
 // 앱 초기화
 function initializeApp() {
@@ -37,6 +122,9 @@ function initializeApp() {
 
     // 승인 콜백 설정
     httpServer.setApprovalCallback(showApprovalDialog);
+
+    // 트레이 아이콘 생성
+    createTray();
 }
 
 // 자동 잠금 타이머 설정
@@ -95,6 +183,7 @@ function createWindow() {
         },
         titleBarStyle: "hiddenInset",
         show: false,
+        icon: path.join(__dirname, "assets", "icon.png"),
     });
 
     // 화면 결정 - Vault 상태에 따라 동적으로 결정
@@ -116,10 +205,18 @@ function createWindow() {
 
     // 창 닫을 때 이벤트 처리 (백그라운드 유지)
     mainWindow.on("close", (event) => {
-        // 백그라운드 모드 유지 - 모든 플랫폼에서 동일하게 처리
-        event.preventDefault();
-        mainWindow.hide();
-        logger.log("창을 닫고 백그라운드 모드로 전환");
+        // 앱 종료 중이 아니면 백그라운드 모드 유지
+        if (!isQuitting) {
+            event.preventDefault();
+            mainWindow.hide();
+
+            // macOS에서 창을 닫으면 Dock 아이콘 숨기기
+            if (process.platform === "darwin") {
+                app.dock.hide();
+            }
+
+            logger.log("창을 닫고 백그라운드 모드로 전환");
+        }
     });
 
     // 창이 파괴되었을 때 처리
@@ -289,6 +386,13 @@ function setupIpcHandlers() {
         }
         return { success: true };
     });
+
+    // 앱 종료
+    ipcMain.handle("app:quit", async () => {
+        isQuitting = true;
+        app.quit();
+        return { success: true };
+    });
 }
 
 // 승인 다이얼로그 표시
@@ -345,6 +449,7 @@ function showApprovalDialog(projectName, key) {
                     contextIsolation: true,
                     preload: path.join(__dirname, "preload.js"),
                 },
+                icon: path.join(__dirname, "assets", "icon.png"),
             });
 
             // 로그 기록
@@ -419,6 +524,10 @@ app.whenReady().then(async () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();
         } else if (mainWindow && mainWindow.isDestroyed() === false) {
+            // macOS에서 Dock 아이콘 다시 보이기
+            if (process.platform === "darwin") {
+                app.dock.show();
+            }
             mainWindow.show();
             mainWindow.focus();
         }
@@ -426,13 +535,22 @@ app.whenReady().then(async () => {
 });
 
 app.on("window-all-closed", () => {
-    // 창이 모두 닫혀도 앱을 종료하지 않음 (백그라운드 모드 유지)
-    logger.log("모든 창이 닫혔지만 백그라운드에서 계속 실행");
+    // 종료 중이 아니면 백그라운드 모드 유지
+    if (!isQuitting) {
+        logger.log("모든 창이 닫혔지만 백그라운드에서 계속 실행");
+    }
 });
 
 // 앱 종료 시 정리
 app.on("before-quit", async () => {
+    isQuitting = true;
     logger.log("LocalKeys 앱 종료 시작");
+
+    // 트레이 제거
+    if (tray) {
+        tray.destroy();
+        tray = null;
+    }
 
     // 실제 Vault 상태 확인 및 잠금
     if (vault && !vault.isLocked) {

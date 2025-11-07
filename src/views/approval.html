@@ -18,38 +18,36 @@
                 justify-content: center;
                 align-items: center;
                 height: 100vh;
-                padding: 20px;
             }
 
             .approval-card {
                 background-color: var(--bg-secondary);
-                border-radius: 12px;
-                padding: 30px;
+                padding: 20px;
                 max-width: 450px;
                 width: 100%;
                 border: 1px solid var(--border);
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             }
 
+            .titlebar {
+                display: flex;
+                gap: 8px;
+            }
+
             .approval-icon {
-                text-align: center;
-                font-size: 48px;
+                font-size: 28px;
                 margin-bottom: 20px;
             }
 
             .approval-title {
-                font-size: 20px;
                 font-weight: 600;
-                color: var(--text-primary);
-                text-align: center;
-                margin-bottom: 20px;
+                margin-top: 2px;
             }
 
             .approval-details {
                 background-color: var(--bg-tertiary);
-                border-radius: 8px;
                 padding: 20px;
-                margin-bottom: 25px;
+                margin-bottom: 20px;
             }
 
             .detail-row {
@@ -82,16 +80,10 @@
             .approval-btn {
                 flex: 1;
                 padding: 12px;
-                border-radius: 8px;
                 font-size: 16px;
                 font-weight: 600;
                 cursor: pointer;
                 border: none;
-                transition: transform 0.2s, box-shadow 0.2s;
-            }
-
-            .approval-btn:active {
-                transform: scale(0.98);
             }
 
             .approve-btn {
@@ -99,25 +91,14 @@
                 color: white;
             }
 
-            .approve-btn:hover {
-                background-color: #388e3c;
-                box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-            }
-
             .deny-btn {
                 background-color: var(--error);
                 color: white;
             }
 
-            .deny-btn:hover {
-                background-color: #d32f2f;
-                box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
-            }
-
             .timeout-bar {
                 height: 4px;
                 background-color: var(--bg-tertiary);
-                border-radius: 2px;
                 margin-bottom: 20px;
                 overflow: hidden;
             }
@@ -128,33 +109,19 @@
                 transition: width 1s linear;
                 width: 100%;
             }
-
-            .timeout-text {
-                text-align: center;
-                font-size: 14px;
-                color: var(--text-secondary);
-                margin-bottom: 20px;
-            }
-
-            .warning-text {
-                text-align: center;
-                font-size: 12px;
-                color: var(--warning);
-                margin-top: 15px;
-            }
         </style>
     </head>
     <body>
         <div class="approval-container">
             <div class="approval-card">
-                <div class="approval-icon">🔐</div>
-                <h2 class="approval-title">Access Request</h2>
+                <div class="titlebar">
+                    <div class="approval-icon">🔐</div>
+                    <h2 class="approval-title">Access Request</h2>
+                </div>
 
                 <div class="timeout-bar">
                     <div class="timeout-progress" id="timeout-progress"></div>
                 </div>
-
-                <div class="timeout-text" id="timeout-text">Auto-deny in 30 seconds</div>
 
                 <div class="approval-details">
                     <div class="detail-row">
@@ -175,8 +142,6 @@
                     <button class="approval-btn deny-btn" id="deny-btn">Deny</button>
                     <button class="approval-btn approve-btn" id="approve-btn">Approve</button>
                 </div>
-
-                <div class="warning-text">Only approve if you initiated this request</div>
             </div>
         </div>
 
@@ -187,7 +152,6 @@
                 const approveBtn = document.getElementById("approve-btn");
                 const denyBtn = document.getElementById("deny-btn");
                 const timeoutProgress = document.getElementById("timeout-progress");
-                const timeoutText = document.getElementById("timeout-text");
 
                 let projectName = "";
                 let secretKey = "";
@@ -203,13 +167,6 @@
                         // 진행률 업데이트
                         const progressPercent = (timeRemaining / 30) * 100;
                         timeoutProgress.style.width = `${progressPercent}%`;
-
-                        // 텍스트 업데이트
-                        if (timeRemaining > 0) {
-                            timeoutText.textContent = `Auto-deny in ${timeRemaining} second${timeRemaining > 1 ? "s" : ""}`;
-                        } else {
-                            timeoutText.textContent = "Request timed out";
-                        }
 
                         // 타임아웃 처리
                         if (timeRemaining <= 0) {

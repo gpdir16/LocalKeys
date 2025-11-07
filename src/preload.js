@@ -34,6 +34,11 @@ const api = {
     // 화면 전환
     navigate: (page) => ipcRenderer.invoke("navigate", page),
 
+    // 앱 관리
+    app: {
+        quit: () => ipcRenderer.invoke("app:quit"),
+    },
+
     // 승인 다이얼로그
     approval: {
         onResponse: (callback) => ipcRenderer.on("approval:response", callback),

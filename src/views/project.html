@@ -31,7 +31,6 @@
                 font-size: 20px;
                 cursor: pointer;
                 padding: 5px;
-                border-radius: 4px;
                 transition: background-color 0.2s;
             }
 
@@ -50,7 +49,6 @@
 
             .secret-item {
                 background-color: var(--bg-secondary);
-                border-radius: 8px;
                 padding: 20px;
                 margin-bottom: 15px;
                 border: 1px solid var(--border);
@@ -76,7 +74,6 @@
                 color: var(--text-secondary);
                 background-color: var(--bg-tertiary);
                 padding: 10px;
-                border-radius: 4px;
                 word-break: break-all;
                 margin-bottom: 10px;
                 position: relative;
@@ -99,7 +96,6 @@
                 cursor: pointer;
                 font-size: 14px;
                 padding: 5px;
-                border-radius: 4px;
                 transition: background-color 0.2s;
             }
 
@@ -114,7 +110,6 @@
                 cursor: pointer;
                 font-size: 14px;
                 padding: 5px;
-                border-radius: 4px;
                 transition: background-color 0.2s;
             }
 
@@ -151,7 +146,6 @@
 
             .modal {
                 background-color: var(--bg-secondary);
-                border-radius: 8px;
                 padding: 30px;
                 max-width: 500px;
                 width: 90%;
@@ -168,7 +162,6 @@
                 padding: 12px 40px 12px 16px;
                 background-color: var(--bg-secondary);
                 border: 1px solid var(--border);
-                border-radius: 6px;
                 color: var(--text-primary);
                 font-size: 14px;
             }
@@ -204,6 +197,7 @@
                     <button class="btn btn-secondary" id="refresh-btn">Refresh</button>
                     <button class="btn" id="add-secret-btn">Add Secret</button>
                     <button class="btn btn-secondary" id="export-btn">Export .env</button>
+                    <button class="btn btn-danger" id="quit-btn">Quit</button>
                 </div>
             </div>
 
@@ -282,6 +276,7 @@
                 const addSecretBtn = document.getElementById("add-secret-btn");
                 const exportBtn = document.getElementById("export-btn");
                 const exportEnvBtn = document.getElementById("export-env-btn");
+                const quitBtn = document.getElementById("quit-btn");
 
                 // 모달 요소
                 const addSecretModal = document.getElementById("add-secret-modal");
@@ -576,6 +571,16 @@
                 addSecretBtn.addEventListener("click", showAddSecretModal);
                 exportBtn.addEventListener("click", exportAsEnv);
                 exportEnvBtn.addEventListener("click", exportAsEnv);
+
+                quitBtn.addEventListener("click", async function () {
+                    if (confirm("Are you sure you want to quit LocalKeys?")) {
+                        try {
+                            await window.localkeys.app.quit();
+                        } catch (error) {
+                            showError(`Error quitting app: ${error.message}`);
+                        }
+                    }
+                });
 
                 cancelAddSecret.addEventListener("click", hideAddSecretModal);
                 confirmAddSecret.addEventListener("click", addSecret);
