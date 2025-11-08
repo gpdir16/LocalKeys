@@ -5,78 +5,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>LocalKeys - Unlock</title>
         <link rel="stylesheet" href="../styles/common.css" />
-        <style>
-            .lock-container {
-                max-width: 400px;
-                margin: 0 auto;
-                padding-top: 100px;
-                text-align: center;
-            }
-
-            .logo {
-                margin-bottom: 40px;
-            }
-
-            .logo h1 {
-                font-size: 36px;
-                color: var(--accent);
-                margin-bottom: 10px;
-            }
-
-            .logo p {
-                color: var(--text-secondary);
-                font-size: 16px;
-            }
-
-            .lock-icon {
-                font-size: 64px;
-                color: var(--text-secondary);
-                margin-bottom: 30px;
-            }
-
-            .unlock-form {
-                background-color: var(--bg-secondary);
-                padding: 30px;
-                border: 1px solid var(--border);
-            }
-
-            .input-group {
-                margin-bottom: 20px;
-                text-align: left;
-            }
-
-            .unlock-btn {
-                width: 100%;
-                padding: 14px;
-                font-size: 16px;
-                margin-top: 10px;
-            }
-
-            .forgot-password {
-                margin-top: 20px;
-                font-size: 14px;
-                color: var(--text-secondary);
-            }
-
-            .forgot-password a {
-                color: var(--accent);
-                text-decoration: none;
-            }
-
-            .forgot-password a:hover {
-                text-decoration: underline;
-            }
-
-            .attempts-warning {
-                margin-top: 15px;
-                padding: 10px;
-                background-color: rgba(244, 67, 54, 0.1);
-                border: 1px solid var(--error);
-                color: var(--error);
-                font-size: 14px;
-                display: none;
-            }
-        </style>
     </head>
     <body>
         <div class="container">
@@ -100,8 +28,6 @@
                         <button type="submit" class="btn unlock-btn" id="unlock-btn">Unlock Vault</button>
                     </form>
 
-                    <div class="attempts-warning" id="attempts-warning">Too many failed attempts. Please wait before trying again.</div>
-
                     <div class="forgot-password">
                         <a href="#" id="forgot-link">Forgot password?</a>
                     </div>
@@ -115,13 +41,7 @@
                 const unlockBtn = document.getElementById("unlock-btn");
                 const unlockForm = document.getElementById("unlock-form");
                 const messageContainer = document.getElementById("message-container");
-                const attemptsWarning = document.getElementById("attempts-warning");
                 const forgotLink = document.getElementById("forgot-link");
-
-                let failedAttempts = 0;
-                let lastAttemptTime = 0;
-                const MAX_ATTEMPTS = 5;
-                const LOCKOUT_DURATION = 5 * 60 * 1000; // 5분
 
                 // 메시지 표시
                 function showMessage(message, type) {
@@ -137,56 +57,9 @@
                     }, 3000);
                 }
 
-                // 잠금 상태 확인
-                function checkLockout() {
-                    const now = Date.now();
-
-                    if (failedAttempts >= MAX_ATTEMPTS) {
-                        const timeSinceLastAttempt = now - lastAttemptTime;
-
-                        if (timeSinceLastAttempt < LOCKOUT_DURATION) {
-                            const remainingTime = Math.ceil((LOCKOUT_DURATION - timeSinceLastAttempt) / 1000 / 60);
-                            attemptsWarning.textContent = `Too many failed attempts. Please wait ${remainingTime} minutes before trying again.`;
-                            attemptsWarning.style.display = "block";
-                            passwordInput.disabled = true;
-                            unlockBtn.disabled = true;
-
-                            // 남은 시간 업데이트
-                            const updateTimer = setInterval(() => {
-                                const timeSinceLastAttempt = Date.now() - lastAttemptTime;
-                                if (timeSinceLastAttempt >= LOCKOUT_DURATION) {
-                                    clearInterval(updateTimer);
-                                    resetLockout();
-                                } else {
-                                    const remainingTime = Math.ceil((LOCKOUT_DURATION - timeSinceLastAttempt) / 1000 / 60);
-                                    attemptsWarning.textContent = `Too many failed attempts. Please wait ${remainingTime} minutes before trying again.`;
-                                }
-                            }, 30000); // 30초마다 업데이트
-
-                            return false;
-                        } else {
-                            resetLockout();
-                        }
-                    }
-
-                    return true;
-                }
-
-                // 잠금 해제
-                function resetLockout() {
-                    failedAttempts = 0;
-                    attemptsWarning.style.display = "none";
-                    passwordInput.disabled = false;
-                    unlockBtn.disabled = false;
-                }
-
                 // 폼 제출
                 unlockForm.addEventListener("submit", async function (e) {
                     e.preventDefault();
-
-                    if (!checkLockout()) {
-                        return;
-                    }
 
                     const password = passwordInput.value;
 
@@ -208,14 +81,9 @@
                                 window.localkeys.navigate("dashboard");
                             }, 1000);
                         } else {
-                            failedAttempts++;
-                            lastAttemptTime = Date.now();
-
-                            showMessage(`Invalid password. Attempt ${failedAttempts}/${MAX_ATTEMPTS}`, "error");
+                            showMessage("Invalid password. Please try again.", "error");
                             passwordInput.value = "";
                             passwordInput.focus();
-
-                            checkLockout();
 
                             unlockBtn.disabled = false;
                             unlockBtn.textContent = "Unlock Vault";
@@ -284,8 +152,6 @@
                     });
                 });
 
-                // 초기 상태 확인
-                checkLockout();
                 passwordInput.focus();
             });
         </script>
