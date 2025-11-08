@@ -531,7 +531,6 @@ body {
 .timeout-progress {
     height: 100%;
     background-color: var(--warning);
-    transition: width 1s linear;
     width: 100%;
 }
 
@@ -580,11 +579,9 @@ body {
     background-color: var(--bg-secondary);
     padding: 20px;
     cursor: pointer;
-    transition: transform 0.2s, border-color 0.2s;
 }
 
 .project-card:hover {
-    transform: translateY(-2px);
     border-color: var(--accent);
 }
 
@@ -909,7 +906,6 @@ body {
 
 .password-strength-bar {
     height: 100%;
-    transition: width 0.3s, background-color 0.3s;
     width: 0%;
 }
 
