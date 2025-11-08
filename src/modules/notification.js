@@ -6,7 +6,7 @@ class NotificationManager {
     }
 
     // 메시지 표시
-    show(message, type = 'info') {
+    show(message, type = "info") {
         // 기존 알림이 있으면 제거
         if (this.currentNotification) {
             this.hide();
@@ -19,9 +19,9 @@ class NotificationManager {
         messageEl.className = `message message-${type}`;
 
         // 아이콘 결정
-        let icon = '✓';
-        if (type === 'error') icon = '✕';
-        else if (type === 'warning') icon = '⚠';
+        let icon = "✓";
+        if (type === "error") icon = "✕";
+        else if (type === "warning") icon = "⚠";
 
         messageEl.innerHTML = `
             <div class="message-content">
@@ -40,12 +40,12 @@ class NotificationManager {
 
         // 애니메이션을 위해 약간의 딜레이 후 show 클래스 추가
         setTimeout(() => {
-            messageEl.classList.add('show');
+            messageEl.classList.add("show");
         }, 10);
 
         // 닫기 버튼 이벤트
-        const closeBtn = messageEl.querySelector('.message-close');
-        closeBtn.addEventListener('click', () => {
+        const closeBtn = messageEl.querySelector(".message-close");
+        closeBtn.addEventListener("click", () => {
             this.hide();
         });
 
@@ -67,9 +67,9 @@ class NotificationManager {
             this.autoCloseTimeout = null;
         }
 
-        messageEl.classList.add('hide');
+        messageEl.classList.add("hide");
         // 로컬스토리지에서 제거
-        localStorage.removeItem('localkeys_notifications');
+        localStorage.removeItem("localkeys_notifications");
 
         // 애니메이션이 끝난 후 DOM에서 제거
         setTimeout(() => {
@@ -82,17 +82,17 @@ class NotificationManager {
 
     // 성공 메시지
     success(message) {
-        this.show(message, 'success');
+        this.show(message, "success");
     }
 
     // 에러 메시지
     error(message) {
-        this.show(message, 'error');
+        this.show(message, "error");
     }
 
     // 경고 메시지
     warning(message) {
-        this.show(message, 'warning');
+        this.show(message, "warning");
     }
 
     // 유틸리티 함수
@@ -105,19 +105,22 @@ class NotificationManager {
     // 로컬스토리지에 저장
     saveToStorage(message, type) {
         try {
-            localStorage.setItem('localkeys_notifications', JSON.stringify({
-                message,
-                type,
-                timestamp: Date.now()
-            }));
+            localStorage.setItem(
+                "localkeys_notifications",
+                JSON.stringify({
+                    message,
+                    type,
+                    timestamp: Date.now(),
+                })
+            );
         } catch (error) {
-            console.error('Failed to save notification:', error);
+            console.error("Failed to save notification:", error);
         }
     }
 
     // 저장된 알림 불러오기
     loadStored() {
-        const stored = localStorage.getItem('localkeys_notifications');
+        const stored = localStorage.getItem("localkeys_notifications");
         if (stored) {
             try {
                 const notification = JSON.parse(stored);
@@ -125,8 +128,8 @@ class NotificationManager {
                     this.showStatic(notification.message, notification.type);
                 }
             } catch (error) {
-                console.error('Failed to load stored notifications:', error);
-                localStorage.removeItem('localkeys_notifications');
+                console.error("Failed to load stored notifications:", error);
+                localStorage.removeItem("localkeys_notifications");
             }
         }
     }
@@ -142,9 +145,9 @@ class NotificationManager {
         messageEl.className = `message message-${type}`;
 
         // 아이콘 결정
-        let icon = '✓';
-        if (type === 'error') icon = '✕';
-        else if (type === 'warning') icon = '⚠';
+        let icon = "✓";
+        if (type === "error") icon = "✕";
+        else if (type === "warning") icon = "⚠";
 
         messageEl.innerHTML = `
             <div class="message-content">
@@ -162,11 +165,11 @@ class NotificationManager {
         this.currentNotification = messageEl;
 
         // 애니메이션 없이 바로 표시
-        messageEl.classList.add('show');
+        messageEl.classList.add("show");
 
         // 닫기 버튼 이벤트
-        const closeBtn = messageEl.querySelector('.message-close');
-        closeBtn.addEventListener('click', () => {
+        const closeBtn = messageEl.querySelector(".message-close");
+        closeBtn.addEventListener("click", () => {
             this.hide();
         });
 

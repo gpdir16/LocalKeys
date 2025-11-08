@@ -16,7 +16,11 @@ body {
 }
 
 /* 입력 필드와 텍스트 선택이 필요한 영역에서는 선택 가능 */
-input, textarea, select, [contenteditable="true"], .selectable {
+input,
+textarea,
+select,
+[contenteditable="true"],
+.selectable {
     user-select: text !important;
 }
 

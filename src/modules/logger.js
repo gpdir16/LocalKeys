@@ -167,7 +167,7 @@ class Logger {
 
         try {
             const fileData = fs.readFileSync(this.logPath);
-            
+
             // 복호화
             try {
                 const decryptedData = CryptoUtil.decryptJson(fileData, this.encryptionKey);

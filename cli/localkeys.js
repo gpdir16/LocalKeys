@@ -144,7 +144,7 @@ async function handleRun() {
 
     const projectName = args[projectIndex].split("=")[1];
     let commandToRun = args.slice(projectIndex + 1);
-    
+
     // -- 구분자 제거
     const separatorIndex = commandToRun.indexOf("--");
     if (separatorIndex !== -1) {

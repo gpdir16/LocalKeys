@@ -418,8 +418,7 @@
                 // 마우스 업 이벤트 추적 - 클릭 해제도 밖에서 해야 함
                 document.addEventListener("mouseup", function (e) {
                     // 클릭 시작이 모달 오버레이였지만 클릭 해제가 모달 외부인 경우 모달 닫기
-                    if ((mouseDownTarget === addSecretModal && e.target !== addSecretModal) ||
-                        (mouseDownTarget === editSecretModal && e.target !== editSecretModal)) {
+                    if ((mouseDownTarget === addSecretModal && e.target !== addSecretModal) || (mouseDownTarget === editSecretModal && e.target !== editSecretModal)) {
                         mouseDownTarget = null; // 초기화
                         return;
                     }
