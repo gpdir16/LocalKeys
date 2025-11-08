@@ -18,7 +18,7 @@ const SERVER_INFO_PATH = path.join(LOCALKEYS_DIR, "server-info.json");
 // 도움말 표시
 function showHelp() {
     console.log(`
-LocalKeys - Secure Credential Management
+LocalKeys
 
 Usage:
   localkeys <command> [options]
