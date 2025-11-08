@@ -24,7 +24,7 @@
                         <div class="detail-value" id="project-name">-</div>
                     </div>
                     <div class="detail-row">
-                        <div class="detail-label">Secret:</div>
+                        <div class="detail-label">Key:</div>
                         <div class="detail-value" id="secret-key">-</div>
                     </div>
                     <div class="detail-row">
@@ -49,7 +49,7 @@
                 const timeoutProgress = document.getElementById("timeout-progress");
 
                 let projectName = "";
-                let secretKey = "";
+                let key = "";
                 let channel = "";
                 let timeRemaining = 30;
                 let timeoutInterval = null;
@@ -101,11 +101,11 @@
                 // 데이터 설정
                 function setApprovalData(data) {
                     projectName = data.projectName || "";
-                    secretKey = data.secretKey || "";
+                    key = data.key || "";
                     channel = data.channel || "";
 
                     projectNameEl.textContent = projectName;
-                    secretKeyEl.textContent = secretKey;
+                    secretKeyEl.textContent = key;
                 }
 
                 // 이벤트 리스너
