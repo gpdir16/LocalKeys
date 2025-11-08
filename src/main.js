@@ -159,20 +159,12 @@ function lockVault() {
             mainWindow.loadFile("src/views/lock.html");
         }
 
-        logger.log("Vault auto-locked");
+        logger.logLock("Vault auto-locked");
     }
 }
 
 // 윈도우 생성
 function createWindow() {
-    // 헤드리스 모드 확인
-    const isHeadless = process.argv.includes("--headless");
-
-    if (isHeadless) {
-        console.log("LocalKeys running in headless mode - GUI disabled");
-        return;
-    }
-
     mainWindow = new BrowserWindow({
         width: 1000,
         height: 700,
@@ -193,7 +185,7 @@ function createWindow() {
     } else if (isUnlocked && !vault.isLocked) {
         // Vault가 이미 잠금 해제된 상태면 대시보드 표시
         mainWindow.loadFile("src/views/dashboard.html");
-        logger.log("Vault 이미 잠금 해제 상태 - 대시보드 표시");
+        logger.logLock("Vault already unlocked - showing dashboard");
     } else {
         // Vault가 잠겨있으면 잠금 화면 표시
         mainWindow.loadFile("src/views/lock.html");
@@ -214,8 +206,6 @@ function createWindow() {
             if (process.platform === "darwin") {
                 app.dock.hide();
             }
-
-            logger.log("창을 닫고 백그라운드 모드로 전환");
         }
     });
 
@@ -338,10 +328,8 @@ function setupIpcHandlers() {
 
         if (result.approved) {
             const value = vault.getSecret(projectName, key);
-            logger.log(`Secret accessed: ${projectName}/${key}`);
             return { success: true, data: value };
         } else {
-            logger.log(`Secret access denied: ${projectName}/${key}`);
             return { success: false, error: "Access denied" };
         }
     });
@@ -368,7 +356,7 @@ function setupIpcHandlers() {
                 .join("\n");
 
             fs.writeFileSync(result.filePath, envContent);
-            logger.log(`Secrets exported: ${projectName} -> ${result.filePath}`);
+            logger.logApp(`Secrets exported: ${projectName} -> ${result.filePath}`);
             return { success: true, path: result.filePath };
         }
 
@@ -399,7 +387,6 @@ function setupIpcHandlers() {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
             await vault.saveNow();
-            logger.log("Vault 수동 저장 완료");
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -410,25 +397,11 @@ function setupIpcHandlers() {
 // 승인 다이얼로그 표시
 function showApprovalDialog(projectName, key) {
     return new Promise((resolve) => {
-        console.log("=== showApprovalDialog 시작 ===", { projectName, key });
-
-        // 헤드리스 모드 확인
-        const isHeadless = process.argv.includes("--headless");
-
-        if (isHeadless || !mainWindow) {
-            console.log("헤드리스 모드 또는 메인 창 없음 - 자동 거부");
-            // 헤드리스 모드나 메인 창이 없으면 콘솔 로그만 남기고 거부
-            logger.log(`Secret access request in headless mode: ${projectName}/${key} - Auto denied`);
-            resolve({ approved: false, reason: "Running in headless mode - no user interaction available" });
-            return;
-        }
-
         let approvalWindow = null;
         let timeout = null;
         let isResolved = false;
 
         const cleanup = () => {
-            console.log("cleanup 호출됨");
             if (timeout) {
                 clearTimeout(timeout);
                 timeout = null;
@@ -440,7 +413,6 @@ function showApprovalDialog(projectName, key) {
         };
 
         const doResolve = (result) => {
-            console.log("doResolve 호출됨:", result);
             if (isResolved) return; // 이미 처리됨
             isResolved = true;
             cleanup();
@@ -465,13 +437,12 @@ function showApprovalDialog(projectName, key) {
             });
 
             // 로그 기록
-            logger.log(`Secret access approval requested: ${projectName}/${key}`);
 
             approvalWindow.loadFile("src/views/approval.html");
 
             // 타임아웃 설정 (30초)
             timeout = setTimeout(() => {
-                logger.log(`Secret access timeout: ${projectName}/${key} - Auto denied after 30 seconds`);
+                logger.logAccess("Access denied", projectName, key);
                 doResolve({ approved: false, reason: "Timeout after 30 seconds" });
             }, 30000);
 
@@ -485,10 +456,10 @@ function showApprovalDialog(projectName, key) {
 
             ipcMain.once(channelName, (event, approved) => {
                 if (approved) {
-                    logger.log(`Secret access approved: ${projectName}/${key}`);
+                    logger.logAccess("Access approved", projectName, key);
                     doResolve({ approved: true });
                 } else {
-                    logger.log(`Secret access denied by user: ${projectName}/${key}`);
+                    logger.logAccess("Access denied", projectName, key);
                     doResolve({ approved: false, reason: "User denied" });
                 }
             });
@@ -496,7 +467,7 @@ function showApprovalDialog(projectName, key) {
             // 창 닫기 이벤트 처리 (사용자가 X 버튼 클릭 시)
             approvalWindow.on("close", () => {
                 if (!isResolved) {
-                    logger.log(`Secret access dialog closed: ${projectName}/${key} - Auto denied`);
+                    logger.logAccess("Access denied", projectName, key);
                     doResolve({ approved: false, reason: "Dialog closed" });
                 }
             });
@@ -508,11 +479,9 @@ function showApprovalDialog(projectName, key) {
 
             // 창 로드 에러 처리
             approvalWindow.webContents.on("did-fail-load", (event, errorCode, errorDescription) => {
-                logger.log(`Approval dialog failed to load: ${errorDescription}`);
                 doResolve({ approved: false, reason: `Failed to load dialog: ${errorDescription}` });
             });
         } catch (error) {
-            logger.log(`Error creating approval dialog: ${error.message}`);
             doResolve({ approved: false, reason: `Error: ${error.message}` });
         }
     });
@@ -546,17 +515,9 @@ app.whenReady().then(async () => {
     });
 });
 
-app.on("window-all-closed", () => {
-    // 종료 중이 아니면 백그라운드 모드 유지
-    if (!isQuitting) {
-        logger.log("모든 창이 닫혔지만 백그라운드에서 계속 실행");
-    }
-});
-
 // 앱 종료 시 정리
 app.on("before-quit", async () => {
     isQuitting = true;
-    logger.log("LocalKeys 앱 종료 시작");
 
     // 트레이 제거
     if (tray) {
@@ -569,14 +530,11 @@ app.on("before-quit", async () => {
         try {
             // 즉시 저장 호출 (자동 저장 타이머 취소 및 즉시 저장)
             await vault.saveNow();
-            logger.log("Vault 데이터 즉시 저장 완료");
 
             // Vault 잠금
             await vault.lock();
-            logger.log("Vault 잠금 완료");
         } catch (error) {
             console.error("Vault 저장/잠금 실패:", error);
-            logger.log(`Vault 저장/잠금 실패: ${error.message}`);
         }
     }
 
@@ -586,11 +544,10 @@ app.on("before-quit", async () => {
     if (httpServer) {
         try {
             await httpServer.stop();
-            logger.log("HTTP 서버 중지 완료");
         } catch (error) {
             console.error("HTTP 서버 중지 실패:", error);
         }
     }
 
-    logger.log("LocalKeys 앱 종료 완료");
+    logger.logApp("LocalKeys app shutdown");
 });

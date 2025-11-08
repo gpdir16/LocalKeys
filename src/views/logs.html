@@ -22,11 +22,10 @@
                 <div class="filter-group">
                     <label for="type-filter">Type:</label>
                     <select id="type-filter">
-                        <option value="">All Types</option>
-                        <option value="info">Info</option>
+                        <option value="">All Categories</option>
+                        <option value="app">App</option>
+                        <option value="lock">Lock</option>
                         <option value="access">Access</option>
-                        <option value="warning">Warning</option>
-                        <option value="error">Error</option>
                     </select>
                 </div>
 
@@ -97,9 +96,9 @@
                     const searchQuery = searchInput.value.toLowerCase().trim();
                     const limitValue = parseInt(limitFilter.value);
 
-                    // 타입 필터링
+                    // 카테고리 필터링
                     filteredLogs = allLogs.filter((log) => {
-                        if (typeFilterValue && log.type !== typeFilterValue) {
+                        if (typeFilterValue && log.category !== typeFilterValue) {
                             return false;
                         }
 
@@ -146,7 +145,7 @@
           <div class="log-item">
             <div class="log-header">
               <div class="log-timestamp">${formatTimestamp(log.timestamp)}</div>
-              <div class="log-type ${log.type}">${log.type}</div>
+              <div class="log-type ${log.category}">${log.category}</div>
             </div>
             <div class="log-message">${escapeHtml(log.message)}</div>
           </div>

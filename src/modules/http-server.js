@@ -36,7 +36,6 @@ class HttpServer {
             // 랜덤 포트에서 서버 시작
             this.server.listen(0, this.host, () => {
                 this.port = this.server.address().port;
-                this.logger.log(`HTTP 서버 시작: http://${this.host}:${this.port}`);
 
                 // 포트 정보를 파일에 저장 (CLI가 읽을 수 있도록)
                 const fs = require("fs");
@@ -73,8 +72,6 @@ class HttpServer {
         if (this.server) {
             return new Promise((resolve) => {
                 this.server.close(() => {
-                    this.logger.log("HTTP 서버 중지");
-
                     // 서버 정보 파일 삭제
                     const fs = require("fs");
                     const path = require("path");
@@ -157,7 +154,6 @@ class HttpServer {
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify(result));
         } catch (error) {
-            this.logger.log(`HTTP 요청 처리 오류: ${error.message}`);
             res.writeHead(500, { "Content-Type": "application/json" });
             res.end(
                 JSON.stringify({
@@ -224,11 +220,9 @@ class HttpServer {
 
                         if (approvalResult.approved) {
                             const value = this.vault.getSecret(data.projectName, data.key);
-                            this.logger.log(`Secret accessed via CLI: ${data.projectName}/${data.key}`);
                             result = { success: true, data: value };
                         } else {
                             const reason = approvalResult.reason || "User denied";
-                            this.logger.log(`Secret access denied via CLI: ${data.projectName}/${data.key} - ${reason}`);
                             result = { success: false, error: `Access denied: ${reason}` };
                         }
                     }
@@ -268,7 +262,7 @@ class HttpServer {
      */
     setUnlocked(unlocked) {
         this.isUnlocked = unlocked;
-        this.logger.log(`Vault ${unlocked ? "잠금 해제" : "잠금"}`);
+        this.logger.logLock(`Vault ${unlocked ? "unlocked" : "locked"}`);
     }
 
     /**
@@ -307,7 +301,6 @@ class HttpServer {
             fs.writeFileSync(infoPath, JSON.stringify(info));
         }
 
-        this.logger.log("인증 토큰 갱신");
         return this.authToken;
     }
 }

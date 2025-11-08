@@ -4,7 +4,6 @@ const CryptoUtil = require("./crypto");
 
 /**
  * 로그 관리 클래스
- * 모든 접근 기록을 안전하게 기록하고 민감 정보 마스킹
  */
 class Logger {
     constructor(logPath) {
@@ -15,13 +14,13 @@ class Logger {
     /**
      * 로그 기록
      * @param {string} message - 로그 메시지
-     * @param {string} type - 로그 타입 (info, warning, error, access)
+     * @param {string} category - 로그 카테고리 (app, lock, access)
      */
-    log(message, type = "info") {
+    log(message, category = "app") {
         const timestamp = new Date().toISOString();
         const logEntry = {
             timestamp,
-            type,
+            category,
             message: this._maskSensitiveInfo(message),
         };
 
@@ -50,40 +49,30 @@ class Logger {
     }
 
     /**
-     * 접근 로그 기록
-     * @param {string} action - 수행된 작업
+     * 접근 로그 기록 (승인/거부)
+     * @param {string} action - 수행된 작업 (Access approved/Access denied)
      * @param {string} project - 프로젝트 이름
-     * @param {string} secret - 시크릿 키 (선택사항)
-     * @param {string} result - 결과 (success, denied, error)
+     * @param {string} key - 키 이름
      */
-    logAccess(action, project, secret = null, result = "success") {
-        let message = `${action} - Project: ${project}`;
-        if (secret) {
-            message += `, Secret: ${secret}`;
-        }
-        message += `, Result: ${result}`;
-
+    logAccess(action, project, key) {
+        const message = `${action} - Project: ${project}, Key: ${key}`;
         this.log(message, "access");
     }
 
     /**
-     * 보안 이벤트 로그 기록
-     * @param {string} event - 보안 이벤트
-     * @param {string} details - 상세 정보
+     * 앱 로그 기록 (시작/종료)
+     * @param {string} event - 앱 이벤트
      */
-    logSecurity(event, details = "") {
-        const message = `SECURITY: ${event}${details ? ` - ${details}` : ""}`;
-        this.log(message, "warning");
+    logApp(event) {
+        this.log(event, "app");
     }
 
     /**
-     * 오류 로그 기록
-     * @param {string} error - 오류 메시지
-     * @param {string} context - 컨텍스트 정보
+     * 잠금 로그 기록 (잠금/잠금 해제)
+     * @param {string} event - 잠금 이벤트
      */
-    logError(error, context = "") {
-        const message = `ERROR: ${error}${context ? ` - Context: ${context}` : ""}`;
-        this.log(message, "error");
+    logLock(event) {
+        this.log(event, "lock");
     }
 
     /**
@@ -106,16 +95,16 @@ class Logger {
 
     /**
      * 필터링된 로그 가져오기
-     * @param {string} type - 필터링할 로그 타입
+     * @param {string} category - 필터링할 로그 카테고리
      * @param {number} limit - 최대 항목 수
      * @returns {Array} 필터링된 로그 항목 배열
      */
-    getFilteredLogs(type = null, limit = 100) {
+    getFilteredLogs(category = null, limit = 100) {
         let logs = this.getLogs();
 
-        // 타입으로 필터링
-        if (type) {
-            logs = logs.filter((log) => log.type === type);
+        // 카테고리로 필터링
+        if (category) {
+            logs = logs.filter((log) => log.category === category);
         }
 
         // 최신 항목부터 정렬 및 개수 제한
@@ -130,13 +119,13 @@ class Logger {
         const logs = this.getLogs();
         const stats = {
             total: logs.length,
-            byType: {},
+            byCategory: {},
             recentActivity: [],
         };
 
-        // 타입별 통계
+        // 카테고리별 통계
         logs.forEach((log) => {
-            stats.byType[log.type] = (stats.byType[log.type] || 0) + 1;
+            stats.byCategory[log.category] = (stats.byCategory[log.category] || 0) + 1;
         });
 
         // 최근 활동 (최근 10개)
