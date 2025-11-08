@@ -175,11 +175,7 @@
 
                 // 시크릿 편집
                 function editSecret(key) {
-                    editingKey = key;
-                    editSecretKeyInput.value = key;
-                    editSecretValueInput.value = secrets[key];
-                    editSecretModal.classList.remove("hidden");
-                    editSecretKeyInput.focus();
+                    showEditSecretModal(key, secrets[key]);
                 }
 
                 // 시크릿 삭제
@@ -207,17 +203,53 @@
                     addSecretModal.classList.remove("hidden");
                     secretKeyInput.value = "";
                     secretValueInput.value = "";
+
+                    // 다음 프레임에서 애니메이션 시작
+                    requestAnimationFrame(() => {
+                        addSecretModal.classList.add("show");
+                    });
+
                     secretKeyInput.focus();
                 }
 
                 // 시크릿 추가 모달 숨기기
                 function hideAddSecretModal() {
-                    addSecretModal.classList.add("hidden");
+                    addSecretModal.classList.remove("show");
+                    addSecretModal.classList.add("closing");
+
+                    // 애니메이션 완료 후 모달 완전히 숨기기
+                    setTimeout(() => {
+                        addSecretModal.classList.add("hidden");
+                        addSecretModal.classList.remove("closing");
+                    }, 250);
+                }
+
+                // 시크릿 편집 모달 표시
+                function showEditSecretModal(key, value) {
+                    editSecretModal.classList.remove("hidden");
+                    editSecretKeyInput.value = key;
+                    editSecretValueInput.value = value;
+                    editingKey = key;
+
+                    // 다음 프레임에서 애니메이션 시작
+                    requestAnimationFrame(() => {
+                        editSecretModal.classList.add("show");
+                    });
+
+                    editSecretKeyInput.focus();
                 }
 
                 // 시크릿 편집 모달 숨기기
                 function hideEditSecretModal() {
-                    editSecretModal.classList.add("hidden");
+                    editSecretModal.classList.remove("show");
+                    editSecretModal.classList.add("closing");
+
+                    // 애니메이션 완료 후 모달 완전히 숨기기
+                    setTimeout(() => {
+                        editSecretModal.classList.add("hidden");
+                        editSecretModal.classList.remove("closing");
+                    }, 250);
+
                     editingKey = "";
                 }
 

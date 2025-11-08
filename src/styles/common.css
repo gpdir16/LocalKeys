@@ -5,12 +5,19 @@
     box-sizing: border-box;
 }
 
+/* 네이티브 앱처럼 텍스트 선택 비활성화 (입력 필드 제외) */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background-color: #1a1a1a;
     color: #e0e0e0;
     height: 100vh;
     overflow: hidden;
+    user-select: none;
+}
+
+/* 입력 필드와 텍스트 선택이 필요한 영역에서는 선택 가능 */
+input, textarea, select, [contenteditable="true"], .selectable {
+    user-select: text !important;
 }
 
 /* 다크모드 색상 변수 */
@@ -70,7 +77,6 @@ body {
     color: #fff;
     background-origin: border-box;
     user-select: none;
-    -webkit-user-select: none;
     touch-action: manipulation;
     cursor: pointer;
     font-size: 14px;
@@ -354,23 +360,41 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+.modal-overlay.show {
+    opacity: 1;
 }
 
 .modal {
     background-color: var(--bg-secondary);
-    padding: 20px;
+    padding: 24px;
     max-width: 500px;
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
-    border-radius: 8px;
-    border: 1px solid #333;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translateY(-30px);
+    opacity: 0;
+    transition: all 0.25s linear;
+}
+
+.modal-overlay.show .modal {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.modal-overlay.closing .modal {
+    transform: translateY(-30px);
+    opacity: 0;
 }
 
 .modal-header {
@@ -966,6 +990,7 @@ body {
     margin-bottom: 10px;
     position: relative;
     border-radius: 8px;
+    user-select: text;
 }
 
 .secret-value.masked {

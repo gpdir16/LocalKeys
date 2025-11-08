@@ -147,12 +147,25 @@
                 function showAddProjectModal() {
                     addProjectModal.classList.remove("hidden");
                     projectNameInput.value = "";
+
+                    // 다음 프레임에서 애니메이션 시작
+                    requestAnimationFrame(() => {
+                        addProjectModal.classList.add("show");
+                    });
+
                     projectNameInput.focus();
                 }
 
                 // 프로젝트 추가 모달 숨기기
                 function hideAddProjectModal() {
-                    addProjectModal.classList.add("hidden");
+                    addProjectModal.classList.remove("show");
+                    addProjectModal.classList.add("closing");
+
+                    // 애니메이션 완료 후 모달 완전히 숨기기
+                    setTimeout(() => {
+                        addProjectModal.classList.add("hidden");
+                        addProjectModal.classList.remove("closing");
+                    }, 250);
                 }
 
                 // 프로젝트 추가
