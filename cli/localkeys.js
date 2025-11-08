@@ -71,39 +71,6 @@ function isElectronAppRunning() {
     });
 }
 
-// Electron 앱 시작
-function startElectronApp(headless = false) {
-    return new Promise((resolve, reject) => {
-        const electronArgs = [ELECTRON_APP_PATH];
-
-        if (headless) {
-            electronArgs.push("--headless");
-        }
-
-        const child = spawn("npx", ["electron", ...electronArgs], {
-            detached: true,
-            stdio: "ignore",
-        });
-
-        child.unref();
-
-        // 서버가 시작될 때까지 대기
-        const maxWaitTime = 10000; // 10초
-        const startTime = Date.now();
-
-        const checkServer = setInterval(() => {
-            const serverInfo = getServerInfo();
-            if (serverInfo) {
-                clearInterval(checkServer);
-                resolve(child.pid);
-            } else if (Date.now() - startTime > maxWaitTime) {
-                clearInterval(checkServer);
-                reject(new Error("Electron 앱 시작 실패"));
-            }
-        }, 500);
-    });
-}
-
 // HTTP 요청 전송
 async function sendRequest(action, data = {}) {
     const serverInfo = getServerInfo();
@@ -157,7 +124,7 @@ async function sendRequest(action, data = {}) {
             reject(new Error(`요청 실패: ${error.message}`));
         });
 
-        req.setTimeout(10000, () => {
+        req.setTimeout(30000, () => {
             req.destroy();
             reject(new Error("요청 타임아웃"));
         });
@@ -305,8 +272,7 @@ async function main() {
     const isRunning = await isElectronAppRunning();
 
     if (!isRunning) {
-        console.log("Starting LocalKeys application...");
-        await startElectronApp(true);
+        console.log("Error: LocalKeys is not started");
     }
 
     // 명령어 처리
@@ -356,7 +322,6 @@ if (require.main === module) {
 
 module.exports = {
     isElectronAppRunning,
-    startElectronApp,
     sendRequest,
     getServerInfo,
 };

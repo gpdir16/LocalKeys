@@ -438,7 +438,7 @@ function showApprovalDialog(projectName, key) {
         try {
             approvalWindow = new BrowserWindow({
                 width: 450,
-                height: 220,
+                height: 330,
                 parent: mainWindow,
                 modal: true,
                 frame: false,
