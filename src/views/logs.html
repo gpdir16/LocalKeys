@@ -17,26 +17,6 @@
                 </div>
             </div>
 
-            <!-- 통계 카드 -->
-            <div class="stats-container">
-                <div class="stat-card">
-                    <div class="stat-value" id="total-logs">0</div>
-                    <div class="stat-label">Total Logs</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="access-logs">0</div>
-                    <div class="stat-label">Access Events</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="security-logs">0</div>
-                    <div class="stat-label">Security Events</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="error-logs">0</div>
-                    <div class="stat-label">Errors</div>
-                </div>
-            </div>
-
             <!-- 필터 -->
             <div class="filters">
                 <div class="filter-group">
@@ -90,12 +70,6 @@
                 const backBtn = document.getElementById("back-btn");
                 const quitBtn = document.getElementById("quit-btn");
 
-                // 통계 요소
-                const totalLogsEl = document.getElementById("total-logs");
-                const accessLogsEl = document.getElementById("access-logs");
-                const securityLogsEl = document.getElementById("security-logs");
-                const errorLogsEl = document.getElementById("error-logs");
-
                 let allLogs = [];
                 let filteredLogs = [];
                 let currentPage = 1;
@@ -109,7 +83,6 @@
                         if (result.success) {
                             allLogs = result.data.reverse(); // 최신 로그부터 표시
                             applyFilters();
-                            updateStats();
                         } else {
                             showError("Failed to load logs");
                         }
@@ -237,14 +210,6 @@
 
                     // 스크롤을 맨 위로
                     logsContainer.scrollTop = 0;
-                }
-
-                // 통계 업데이트
-                function updateStats() {
-                    totalLogsEl.textContent = allLogs.length;
-                    accessLogsEl.textContent = allLogs.filter((log) => log.type === "access").length;
-                    securityLogsEl.textContent = allLogs.filter((log) => log.message.includes("SECURITY")).length;
-                    errorLogsEl.textContent = allLogs.filter((log) => log.type === "error").length;
                 }
 
                 // 타임스탬프 포맷
