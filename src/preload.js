@@ -30,6 +30,7 @@ const api = {
     // 로그 관리
     logs: {
         get: () => ipcRenderer.invoke("logs:get"),
+        clear: () => ipcRenderer.invoke("logs:clear"),
     },
 
     // 화면 전환

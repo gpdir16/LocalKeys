@@ -13,7 +13,9 @@
                     <button class="back-btn" id="back-btn">←</button>
                     Access Logs
                 </div>
-                <div class="header-actions"></div>
+                <div class="header-actions">
+                    <button class="btn btn-danger" id="clear-logs-btn">Clear All Logs</button>
+                </div>
             </div>
 
             <!-- 로그 목록 -->
@@ -29,6 +31,7 @@
             document.addEventListener("DOMContentLoaded", function () {
                 const logsContainer = document.getElementById("logs-container");
                 const backBtn = document.getElementById("back-btn");
+                const clearLogsBtn = document.getElementById("clear-logs-btn");
 
                 let allLogs = [];
                 let displayedLogsCount = 0;
@@ -155,6 +158,24 @@
 
                 backBtn.addEventListener("click", function () {
                     window.location.href = "dashboard.html";
+                });
+
+                // 로그 삭제 버튼 클릭
+                clearLogsBtn.addEventListener("click", async function () {
+                    if (confirm("Are you sure you want to clear all logs? This action cannot be undone.")) {
+                        try {
+                            const result = await window.localkeys.logs.clear();
+                            if (result.success) {
+                                notificationManager.success("All logs have been cleared");
+                                allLogs = [];
+                                renderLogs();
+                            } else {
+                                notificationManager.error("Failed to clear logs");
+                            }
+                        } catch (error) {
+                            notificationManager.error(`Error clearing logs: ${error.message}`);
+                        }
+                    }
                 });
 
                 // 자동 새로고침 설정 (15초마다)

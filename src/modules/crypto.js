@@ -9,11 +9,11 @@ class CryptoUtil {
      * PBKDF2를 사용하여 비밀번호에서 키 파생
      * @param {string} password - 사용자 비밀번호
      * @param {Buffer} salt - 솔트 값
-     * @param {number} iterations - 반복 횟수 (기본값: 100000)
+     * @param {number} iterations - 반복 횟수 (기본값: 4000000)
      * @param {number} keyLength - 키 길이 (기본값: 32바이트)
      * @returns {Buffer} 파생된 키
      */
-    static deriveKey(password, salt, iterations = 100000, keyLength = 32) {
+    static deriveKey(password, salt, iterations = 4000000, keyLength = 32) {
         return crypto.pbkdf2Sync(password, salt, iterations, keyLength, "sha256");
     }
 

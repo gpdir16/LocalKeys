@@ -11,7 +11,6 @@ class Vault {
         this.dataDir = dataDir;
         this.vaultPath = path.join(dataDir, "vault.enc");
         this.saltPath = path.join(dataDir, "salt.txt");
-        this.configPath = path.join(dataDir, "config.json");
 
         this.isLocked = true;
         this.data = null; // 메모리에만 저장되는 복호화된 데이터
@@ -54,9 +53,6 @@ class Vault {
         // 암호화하여 저장
         await this._save();
         this.isLocked = false;
-
-        // 기본 설정 파일 생성
-        this._createDefaultConfig();
     }
 
     /**
@@ -89,8 +85,9 @@ class Vault {
 
     /**
      * Vault 잠금
+     * @param {boolean} sync - 동기 저장 여부 (기본값: false)
      */
-    async lock() {
+    async lock(sync = false) {
         if (!this.isLocked) {
             // 자동 저장 타이머 취소
             if (this.saveTimeout) {
@@ -98,7 +95,13 @@ class Vault {
                 this.saveTimeout = null;
             }
 
-            await this._save(); // 변경사항 저장
+            // 변경사항 저장
+            if (sync) {
+                this._saveSync(); // 동기 저장 (앱 종료시)
+            } else {
+                await this._save(); // 비동기 저장 (일반적인 경우)
+            }
+
             this.data = null;
             this.key = null;
             this.isLocked = true;
@@ -267,6 +270,19 @@ class Vault {
     }
 
     /**
+     * 데이터를 암호화하여 파일에 동기적으로 저장 (앱 종료시 사용)
+     * @private
+     */
+    _saveSync() {
+        if (!this.data || !this.key) {
+            return;
+        }
+
+        const encryptedData = CryptoUtil.encryptJson(this.data, this.key);
+        fs.writeFileSync(this.vaultPath, encryptedData);
+    }
+
+    /**
      * 자동 저장 스케줄링 (1초 후 저장)
      * @private
      */
@@ -302,21 +318,6 @@ class Vault {
         }
 
         return this._save();
-    }
-
-    /**
-     * 기본 설정 파일 생성
-     * @private
-     */
-    _createDefaultConfig() {
-        const config = {
-            version: "1.0.0",
-            autoLockMinutes: 5,
-            theme: "dark",
-            language: "ko",
-        };
-
-        fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
     }
 }
 

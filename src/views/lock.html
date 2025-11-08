@@ -76,22 +76,26 @@
                         const result = await window.localkeys.vault.unlock(password);
 
                         if (result.success) {
-                            showMessage("Vault unlocked successfully!", "success");
-                            setTimeout(() => {
-                                window.localkeys.navigate("dashboard");
-                            }, 1000);
+                            // 올바른 비밀번호 - 즉시 잠금 해제
+                            window.localkeys.navigate("dashboard");
                         } else {
-                            showMessage("Invalid password. Please try again.", "error");
-                            passwordInput.value = "";
-                            passwordInput.focus();
+                            // 틀린 비밀번호 - 3초 대기 후 에러 표시
+                            setTimeout(() => {
+                                showMessage("Invalid password. Please try again.", "error");
+                                passwordInput.value = "";
+                                passwordInput.focus();
 
-                            unlockBtn.disabled = false;
-                            unlockBtn.textContent = "Unlock Vault";
+                                unlockBtn.disabled = false;
+                                unlockBtn.textContent = "Unlock Vault";
+                            }, 3000);
                         }
                     } catch (error) {
-                        showMessage(`Error: ${error.message}`, "error");
-                        unlockBtn.disabled = false;
-                        unlockBtn.textContent = "Unlock Vault";
+                        // 에러 발생 - 3초 대기 후 에러 표시
+                        setTimeout(() => {
+                            showMessage(`Error: ${error.message}`, "error");
+                            unlockBtn.disabled = false;
+                            unlockBtn.textContent = "Unlock Vault";
+                        }, 3000);
                     }
                 });
 

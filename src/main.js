@@ -355,6 +355,17 @@ function setupIpcHandlers() {
         return { success: true, data: logger.getLogs() };
     });
 
+    // 로그 삭제
+    ipcMain.handle("logs:clear", () => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        try {
+            logger.clearLogs();
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
     // .env 파일로 내보내기
     ipcMain.handle("secrets:export", async (event, projectName) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
@@ -543,11 +554,8 @@ app.on("before-quit", async () => {
     // Vault 상태 확인 및 데이터 저장
     if (vault && !vault.isLocked) {
         try {
-            // 즉시 저장 호출 (자동 저장 타이머 취소 및 즉시 저장)
-            await vault.saveNow();
-
-            // Vault 잠금
-            await vault.lock();
+            // 동기 저장으로 Vault 잠금 (앱 종료시 비동기가 완료되기 전에 프로세스 종료되는 것 방지)
+            await vault.lock(true);
         } catch (error) {
             console.error("Vault 저장/잠금 실패:", error);
         }
