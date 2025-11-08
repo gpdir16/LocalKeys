@@ -9,6 +9,22 @@ class Logger {
     constructor(logPath) {
         this.logPath = logPath;
         this.maxLogEntries = 1000; // 최대 로그 항목 수
+        this.encryptionKey = null; // 암호화 키
+    }
+
+    /**
+     * 암호화 키 설정
+     * @param {Buffer} key - 암호화 키
+     */
+    setEncryptionKey(key) {
+        this.encryptionKey = key;
+    }
+
+    /**
+     * 암호화 키 제거
+     */
+    clearEncryptionKey() {
+        this.encryptionKey = null;
     }
 
     /**
@@ -25,16 +41,7 @@ class Logger {
         };
 
         // 기존 로그 읽기
-        let logs = [];
-        if (fs.existsSync(this.logPath)) {
-            try {
-                const logData = fs.readFileSync(this.logPath, "utf8");
-                logs = JSON.parse(logData);
-            } catch (error) {
-                // 로그 파일이 손상된 경우 새로 시작
-                logs = [];
-            }
-        }
+        let logs = this._readLogs();
 
         // 새 로그 항목 추가
         logs.push(logEntry);
@@ -45,7 +52,7 @@ class Logger {
         }
 
         // 로그 파일에 쓰기
-        fs.writeFileSync(this.logPath, JSON.stringify(logs, null, 2));
+        this._writeLogs(logs);
     }
 
     /**
@@ -85,10 +92,9 @@ class Logger {
         }
 
         try {
-            const logData = fs.readFileSync(this.logPath, "utf8");
-            return JSON.parse(logData);
+            return this._readLogs();
         } catch (error) {
-            this.logError("Failed to read log file", error.message);
+            console.error("Failed to read log file:", error.message);
             return [];
         }
     }
@@ -141,6 +147,60 @@ class Logger {
         if (fs.existsSync(this.logPath)) {
             fs.unlinkSync(this.logPath);
             this.log("Log file cleared", "info");
+        }
+    }
+
+    /**
+     * 로그 파일에서 읽기 (암호화 지원)
+     * @returns {Array} 로그 항목 배열
+     * @private
+     */
+    _readLogs() {
+        // 암호화 키가 없으면 빈 배열 반환
+        if (!this.encryptionKey) {
+            return [];
+        }
+
+        if (!fs.existsSync(this.logPath)) {
+            return [];
+        }
+
+        try {
+            const fileData = fs.readFileSync(this.logPath);
+            
+            // 복호화
+            try {
+                const decryptedData = CryptoUtil.decryptJson(fileData, this.encryptionKey);
+                return decryptedData;
+            } catch (error) {
+                // 복호화 실패 시 빈 배열 반환 (잘못된 키 또는 손상된 파일)
+                console.error("Failed to decrypt logs:", error.message);
+                return [];
+            }
+        } catch (error) {
+            console.error("Failed to read logs:", error.message);
+            return [];
+        }
+    }
+
+    /**
+     * 로그 파일에 쓰기 (암호화 지원)
+     * @param {Array} logs - 로그 항목 배열
+     * @private
+     */
+    _writeLogs(logs) {
+        // 암호화 키가 없으면 로그를 저장하지 않음
+        if (!this.encryptionKey) {
+            console.warn("Encryption key not set - logs will not be saved");
+            return;
+        }
+
+        try {
+            // 암호화하여 저장
+            const dataToWrite = CryptoUtil.encryptJson(logs, this.encryptionKey);
+            fs.writeFileSync(this.logPath, dataToWrite);
+        } catch (error) {
+            console.error("Failed to write logs:", error.message);
         }
     }
 

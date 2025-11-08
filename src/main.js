@@ -112,7 +112,7 @@ function initializeApp() {
     }
 
     // 로거 초기화
-    logger = new Logger(path.join(LOCALKEYS_DIR, "access.log"));
+    logger = new Logger(path.join(LOCALKEYS_DIR, "logs.enc"));
 
     // Vault 초기화
     vault = new Vault(LOCALKEYS_DIR);
@@ -145,6 +145,11 @@ function lockVault() {
     if (isUnlocked && vault) {
         // 실제 Vault 잠금 상태 확인
         if (!vault.isLocked) {
+            // Logger 암호화 키 제거
+            if (logger) {
+                logger.clearEncryptionKey();
+            }
+
             vault.lock();
         }
 
@@ -226,6 +231,11 @@ function setupIpcHandlers() {
             isUnlocked = !vault.isLocked;
             setAutoLockTimer();
 
+            // Logger 암호화 키 설정
+            if (logger && vault.key) {
+                logger.setEncryptionKey(vault.key);
+            }
+
             // HTTP 서버 상태 업데이트
             if (httpServer) {
                 httpServer.setUnlocked(isUnlocked);
@@ -245,6 +255,11 @@ function setupIpcHandlers() {
             // Vault 상태 동기화
             isUnlocked = !vault.isLocked;
             setAutoLockTimer();
+
+            // Logger 암호화 키 설정
+            if (logger && vault.key) {
+                logger.setEncryptionKey(vault.key);
+            }
 
             // HTTP 서버 상태 업데이트
             if (httpServer) {
