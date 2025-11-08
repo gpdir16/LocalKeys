@@ -143,7 +143,13 @@ async function handleRun() {
     }
 
     const projectName = args[projectIndex].split("=")[1];
-    const commandToRun = args.slice(projectIndex + 1);
+    let commandToRun = args.slice(projectIndex + 1);
+    
+    // -- 구분자 제거
+    const separatorIndex = commandToRun.indexOf("--");
+    if (separatorIndex !== -1) {
+        commandToRun = commandToRun.slice(separatorIndex + 1);
+    }
 
     if (commandToRun.length === 0) {
         console.error("Error: No command to run");
@@ -167,7 +173,6 @@ async function handleRun() {
             env[key] = value;
         });
 
-        const command = commandToRun.join(" ");
         const [cmd, ...cmdArgs] = commandToRun;
 
         console.log(`Running command with environment variables from project "${projectName}"...`);
@@ -175,6 +180,7 @@ async function handleRun() {
         const child = spawn(cmd, cmdArgs, {
             env,
             stdio: "inherit",
+            shell: true, // 셸을 통해 실행하여 npm 같은 명령어도 잘 작동하도록
         });
 
         child.on("exit", (code) => {
@@ -272,7 +278,8 @@ async function main() {
     const isRunning = await isElectronAppRunning();
 
     if (!isRunning) {
-        console.log("Error: LocalKeys is not started");
+        console.error("Error: LocalKeys app is not running. Please start the GUI application first.");
+        process.exit(1);
     }
 
     // 명령어 처리
