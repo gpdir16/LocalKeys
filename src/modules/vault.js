@@ -16,6 +16,7 @@ class Vault {
         this.isLocked = true;
         this.data = null; // 메모리에만 저장되는 복호화된 데이터
         this.key = null; // 메모리에만 저장되는 암호화 키
+        this.saveTimeout = null; // 자동 저장 타이머
     }
 
     /**
@@ -91,6 +92,12 @@ class Vault {
      */
     async lock() {
         if (!this.isLocked) {
+            // 자동 저장 타이머 취소
+            if (this.saveTimeout) {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = null;
+            }
+
             await this._save(); // 변경사항 저장
             this.data = null;
             this.key = null;
@@ -131,6 +138,7 @@ class Vault {
         };
 
         this.data.updatedAt = new Date().toISOString();
+        this._scheduleAutoSave();
     }
 
     /**
@@ -146,6 +154,7 @@ class Vault {
 
         delete this.data.projects[name];
         this.data.updatedAt = new Date().toISOString();
+        this._scheduleAutoSave();
     }
 
     /**
@@ -200,6 +209,7 @@ class Vault {
         this.data.projects[projectName].secrets[key] = value;
         this.data.projects[projectName].updatedAt = new Date().toISOString();
         this.data.updatedAt = new Date().toISOString();
+        this._scheduleAutoSave();
     }
 
     /**
@@ -221,6 +231,7 @@ class Vault {
         delete this.data.projects[projectName].secrets[key];
         this.data.projects[projectName].updatedAt = new Date().toISOString();
         this.data.updatedAt = new Date().toISOString();
+        this._scheduleAutoSave();
     }
 
     /**
@@ -253,6 +264,44 @@ class Vault {
                 }
             });
         });
+    }
+
+    /**
+     * 자동 저장 스케줄링 (1초 후 저장)
+     * @private
+     */
+    _scheduleAutoSave() {
+        // 기존 타이머 취소
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+        }
+
+        // 1초 후 자동 저장
+        this.saveTimeout = setTimeout(async () => {
+            try {
+                await this._save();
+            } catch (error) {
+                console.error("자동 저장 실패:", error);
+            }
+        }, 1000);
+    }
+
+    /**
+     * 즉시 저장
+     * @public
+     */
+    async saveNow() {
+        if (this.isLocked) {
+            throw new Error("Vault is locked");
+        }
+
+        // 기존 타이머 취소
+        if (this.saveTimeout) {
+            clearTimeout(this.saveTimeout);
+            this.saveTimeout = null;
+        }
+
+        return this._save();
     }
 
     /**

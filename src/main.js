@@ -393,6 +393,18 @@ function setupIpcHandlers() {
         app.quit();
         return { success: true };
     });
+
+    // Vault 즉시 저장
+    ipcMain.handle("vault:save", async () => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        try {
+            await vault.saveNow();
+            logger.log("Vault 수동 저장 완료");
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
 }
 
 // 승인 다이얼로그 표시
@@ -552,10 +564,20 @@ app.on("before-quit", async () => {
         tray = null;
     }
 
-    // 실제 Vault 상태 확인 및 잠금
+    // Vault 상태 확인 및 데이터 저장
     if (vault && !vault.isLocked) {
-        await vault.lock();
-        logger.log("Vault 잠금 완료");
+        try {
+            // 즉시 저장 호출 (자동 저장 타이머 취소 및 즉시 저장)
+            await vault.saveNow();
+            logger.log("Vault 데이터 즉시 저장 완료");
+
+            // Vault 잠금
+            await vault.lock();
+            logger.log("Vault 잠금 완료");
+        } catch (error) {
+            console.error("Vault 저장/잠금 실패:", error);
+            logger.log(`Vault 저장/잠금 실패: ${error.message}`);
+        }
     }
 
     isUnlocked = false;

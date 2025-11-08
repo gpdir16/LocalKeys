@@ -7,6 +7,7 @@ const api = {
         setup: (password) => ipcRenderer.invoke("vault:setup", password),
         unlock: (password) => ipcRenderer.invoke("vault:unlock", password),
         lock: () => ipcRenderer.invoke("vault:lock"),
+        save: () => ipcRenderer.invoke("vault:save"),
         exists: () => ipcRenderer.invoke("vault:exists"),
     },
 

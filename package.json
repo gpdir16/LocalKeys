@@ -11,10 +11,8 @@
         "build": "electron-builder"
     },
     "author": "PrivateStater",
-    "dependencies": {
-    },
     "devDependencies": {
-        "electron": "^28.0.0",
+        "electron": "^39.1.1",
         "electron-builder": "^24.0.0"
     },
     "build": {
