@@ -552,6 +552,63 @@ function setupIpcHandlers() {
                     try { fs.chmodSync(targetPath, "755"); } catch {}
 
                     const pathInfo = ` at ${targetPath}`;
+
+                    // 맥/리눅스에서 PATH 자동 추가
+                    if (os.platform() !== "win32") {
+                        try {
+                            const homeDir = os.homedir();
+                            const shellConfigs = [
+                                path.join(homeDir, ".zshrc"),
+                                path.join(homeDir, ".bashrc"),
+                                path.join(homeDir, ".bash_profile"),
+                                path.join(homeDir, ".profile")
+                            ];
+
+                            const localBinPath = path.join(homeDir, ".local", "bin");
+                            const pathLine = `\n# LocalKeys CLI\nexport PATH="$PATH:${localBinPath}"\n`;
+
+                            let configFileUpdated = false;
+                            let updatedConfig = null;
+
+                            for (const configPath of shellConfigs) {
+                                try {
+                                    if (fs.existsSync(configPath)) {
+                                        const content = fs.readFileSync(configPath, 'utf8');
+
+                                        // 이미 PATH가 추가되어 있는지 확인
+                                        if (!content.includes(localBinPath)) {
+                                            fs.appendFileSync(configPath, pathLine);
+                                            configFileUpdated = true;
+                                            updatedConfig = path.basename(configPath);
+                                            break;
+                                        }
+                                    }
+                                } catch (error) {
+                                    // 다음 파일 시도
+                                    continue;
+                                }
+                            }
+
+                            if (configFileUpdated) {
+                                return {
+                                    success: true,
+                                    message: `CLI installed successfully${pathInfo}. Please restart your terminal.`
+                                };
+                            } else {
+                                return {
+                                    success: true,
+                                    message: `CLI installed successfully${pathInfo}. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`
+                                };
+                            }
+                        } catch (error) {
+                            // PATH 추가 실패해도 CLI 설치는 성공
+                            return {
+                                success: true,
+                                message: `CLI installed successfully${pathInfo}. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`
+                            };
+                        }
+                    }
+
                     return { success: true, message: `CLI installed successfully${pathInfo}` };
                 } catch {
                     continue;
