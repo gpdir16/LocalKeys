@@ -22,43 +22,8 @@ let isQuitting = false;
 const LOCALKEYS_DIR = path.join(require("os").homedir(), ".localkeys");
 
 // 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
 const APP_VERSION = "0.1";
 // 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-// 앱 버전 정보
-
 // 트레이 아이콘 생성
 function createTray() {
     // 트레이 아이콘이 이미 있으면 제거
@@ -196,165 +161,6 @@ async function checkVersion() {
     }
 }
 
-// 베타 체커 함수
-async function checkBetaStatus() {
-    try {
-        const https = require("https");
-        const { URL } = require("url");
-
-        return new Promise((resolve, reject) => {
-            const url = new URL("https://id.privatestater.com/api/betachecker/localkeys");
-
-            const options = {
-                method: "GET",
-                timeout: 5000,
-                headers: {
-                    "User-Agent": "LocalKeys-App/1.0",
-                },
-            };
-
-            const req = https.request(url, options, (res) => {
-                resolve(res.statusCode === 200); // 200이면 베타 종료
-            });
-
-            req.on("error", () => {
-                resolve(false); // 에러 시 베타 계속 진행
-            });
-
-            req.on("timeout", () => {
-                req.destroy();
-                resolve(false); // 타임아웃 시 베타 계속 진행
-            });
-
-            req.end();
-        });
-    } catch (error) {
-        return false; // 예외 발생 시 베타 계속 진행
-    }
-}
-
-// 베타 종료 알림창 표시
-function showBetaEndDialog() {
-    const { BrowserWindow } = require("electron");
-
-    const betaEndWindow = new BrowserWindow({
-        width: 450,
-        height: 280,
-        parent: mainWindow,
-        modal: true,
-        frame: false,
-        alwaysOnTop: true,
-        resizable: false,
-        webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-        },
-        icon: path.join(__dirname, "assets", "icon.png"),
-    });
-
-    // 베타 종료 알림창 HTML 생성
-    const betaEndHTML = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>LocalKeys</title>
-        <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                background-color: #1a1a1a;
-                color: #e0e0e0;
-                margin: 0;
-                padding: 30px;
-                text-align: center;
-                height: 100vh;
-                box-sizing: border-box;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-            }
-            .title {
-                font-size: 24px;
-                font-weight: 600;
-                margin-bottom: 15px;
-                color: #e0e0e0;
-            }
-            .description {
-                color: #a0a0a0;
-                line-height: 1.5;
-                margin-bottom: 25px;
-            }
-            .actions {
-                display: flex;
-                gap: 15px;
-                justify-content: center;
-            }
-            .btn {
-                padding: 12px 24px;
-                border-radius: 6px;
-                text-decoration: none;
-                font-weight: 500;
-                transition: all 0.2s ease;
-                cursor: pointer;
-                border: none;
-                font-size: 14px;
-            }
-            .btn-primary {
-                background: linear-gradient(180deg, rgb(75, 145, 247) 0%, rgb(54, 122, 246) 100%);
-                color: white;
-            }
-            .btn-primary:hover {
-                background: linear-gradient(180deg, rgb(107, 163, 249) 0%, #4b91f7 100%);
-            }
-            .btn-secondary {
-                background: #303030;
-                color: #a0a0a0;
-            }
-            .btn-secondary:hover {
-                background: #212121;
-                color: #e0e0e0;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="title">🎉 Beta Has Ended!</div>
-        <div class="description">
-            Thank you for participating in the LocalKeys beta.<br>
-            The stable version is now available.
-        </div>
-        <div class="actions">
-            <button class="btn btn-primary" onclick="openOfficialSite()">Buy LocalKeys</button>
-            <button class="btn btn-secondary" onclick="closeDialog()">Continue Anyway</button>
-        </div>
-        <script>
-            function openOfficialSite() {
-                // 새 창으로 링크 열기
-                window.open('https://localkeys.privatestater.com', '_blank');
-                closeDialog();
-            }
-
-            function closeDialog() {
-                window.close();
-            }
-        </script>
-    </body>
-    </html>`;
-
-    betaEndWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(betaEndHTML)}`);
-
-    // 새 창에서 링크 열기 처리
-    betaEndWindow.webContents.setWindowOpenHandler(({ url }) => {
-        require("electron").shell.openExternal(url);
-        return { action: "deny" };
-    });
-
-    // 창이 닫힐 때 처리
-    betaEndWindow.on("closed", () => {
-        betaEndWindow = null;
-    });
-}
 
 // 업데이트 알림창 표시
 function showUpdateDialog(newVersion) {
@@ -505,16 +311,6 @@ function initializeApp() {
             // 새 버전이 있으면 업데이트 알림창 표시
             setTimeout(() => {
                 showUpdateDialog(newVersion);
-            }, 2000); // 앱이 완전히 로드된 후 표시
-        }
-    });
-
-    // 베타 상태 확인 (백그라운드에서)
-    checkBetaStatus().then((isBetaEnded) => {
-        if (isBetaEnded && mainWindow) {
-            // 베타가 종료되었으면 알림창 표시
-            setTimeout(() => {
-                showBetaEndDialog();
             }, 2000); // 앱이 완전히 로드된 후 표시
         }
     });
