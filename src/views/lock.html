@@ -14,21 +14,14 @@
                     <p>Enter your master password to unlock</p>
                 </div>
 
-                <div class="lock-icon">🔒</div>
+                <div id="message-container"></div>
 
-                <div class="unlock-form">
-                    <div id="message-container"></div>
-
-                    <form id="unlock-form">
-                        <div class="input-group">
-                            <label for="password">Master Password</label>
-                            <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" autofocus />
-                        </div>
-
-                        <button type="submit" class="btn unlock-btn" id="unlock-btn">Unlock Vault</button>
-                    </form>
-
-                  </div>
+                <form id="unlock-form">
+                    <div class="input-group input-inline">
+                        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" autofocus />
+                        <button type="submit" class="btn unlock-btn" id="unlock-btn">▶︎</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -38,20 +31,6 @@
                 const unlockBtn = document.getElementById("unlock-btn");
                 const unlockForm = document.getElementById("unlock-form");
                 const messageContainer = document.getElementById("message-container");
-  
-                // 메시지 표시
-                function showMessage(message, type) {
-                    messageContainer.innerHTML = `
-          <div class="message message-${type}">
-            ${message}
-          </div>
-        `;
-
-                    // 3초 후 메시지 숨기기
-                    setTimeout(() => {
-                        messageContainer.innerHTML = "";
-                    }, 3000);
-                }
 
                 // 폼 제출
                 unlockForm.addEventListener("submit", async function (e) {
@@ -60,42 +39,38 @@
                     const password = passwordInput.value;
 
                     if (!password) {
-                        showMessage("Please enter your password", "error");
                         return;
                     }
 
                     // 버튼 비활성화 및 로딩 표시
                     unlockBtn.disabled = true;
-                    unlockBtn.textContent = "Unlocking...";
+                    unlockBtn.textContent = "⏳";
 
                     try {
                         const result = await window.localkeys.vault.unlock(password);
 
                         if (result.success) {
-                            // 올바른 비밀번호 - 즉시 잠금 해제
+                            // 올바른 비밀번호
                             window.localkeys.navigate("dashboard");
                         } else {
-                            // 틀린 비밀번호 - 3초 대기 후 에러 표시
+                            // 틀린 비밀번호
                             setTimeout(() => {
-                                showMessage("Invalid password. Please try again.", "error");
                                 passwordInput.value = "";
                                 passwordInput.focus();
 
                                 unlockBtn.disabled = false;
-                                unlockBtn.textContent = "Unlock Vault";
+                                unlockBtn.textContent = "▶︎";
                             }, 3000);
                         }
                     } catch (error) {
-                        // 에러 발생 - 3초 대기 후 에러 표시
+                        // 에러 발생
                         setTimeout(() => {
-                            showMessage(`Error: ${error.message}`, "error");
                             unlockBtn.disabled = false;
-                            unlockBtn.textContent = "Unlock Vault";
+                            unlockBtn.textContent = "▶︎";
                         }, 3000);
                     }
                 });
 
-  
                 passwordInput.focus();
             });
         </script>
