@@ -165,7 +165,7 @@ async function checkVersion() {
 function showUpdateDialog(newVersion) {
     const { BrowserWindow } = require("electron");
 
-    const updateWindow = new BrowserWindow({
+    let updateWindow = new BrowserWindow({
         width: 450,
         height: 240,
         parent: mainWindow,
@@ -380,7 +380,6 @@ ELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliJsPath}" "$@"`;
         // CLI 자동 설치 실패 시 무시
     }
 }
-
 
 // Vault 잠금
 function lockVault() {
@@ -943,7 +942,7 @@ function setupIpcHandlers() {
 
             // PATH에서 LocalKeys 관련 설정 제거
             const removeFromPath = () => {
-                if (os.platform() === "win32") return; // Windows는 건드리지 않음
+                if (os.platform() === "win32") return { pathRemoved: false, modifiedConfigs: [] }; // Windows는 건드리지 않음
 
                 try {
                     const homeDir = os.homedir();
@@ -1004,17 +1003,17 @@ function setupIpcHandlers() {
 }
 
 // 승인 다이얼로그 표시
-function showApprovalDialog(projectName, key) {
+function showApprovalDialog(projectName, keys) {
     return new Promise((resolve) => {
         let approvalWindow = null;
-        let timeout = null;
         let isResolved = false;
 
+        // keys가 배열이 아니면 배열로 변환
+        if (!Array.isArray(keys)) {
+            keys = [keys];
+        }
+
         const cleanup = () => {
-            if (timeout) {
-                clearTimeout(timeout);
-                timeout = null;
-            }
             if (approvalWindow && !approvalWindow.isDestroyed()) {
                 approvalWindow.close();
                 approvalWindow = null;
@@ -1045,15 +1044,7 @@ function showApprovalDialog(projectName, key) {
                 icon: path.join(__dirname, "assets", "icon.png"),
             });
 
-            // 로그 기록
-
             approvalWindow.loadFile("src/views/approval.html");
-
-            // 타임아웃 설정 (30초)
-            timeout = setTimeout(() => {
-                logger.logAccess("Access denied", projectName, key);
-                doResolve({ approved: false, reason: "Timeout after 30 seconds" });
-            }, 30000);
 
             // 간단한 IPC 핸들러 사용
             const channelName = "approval-response-simple";
@@ -1064,11 +1055,12 @@ function showApprovalDialog(projectName, key) {
             }
 
             ipcMain.once(channelName, (event, approved) => {
+                const keysString = keys.join(", ");
                 if (approved) {
-                    logger.logAccess("Access approved", projectName, key);
+                    logger.logAccess("Access approved", projectName, keysString);
                     doResolve({ approved: true });
                 } else {
-                    logger.logAccess("Access denied", projectName, key);
+                    logger.logAccess("Access denied", projectName, keysString);
                     doResolve({ approved: false, reason: "User denied" });
                 }
             });
@@ -1076,14 +1068,15 @@ function showApprovalDialog(projectName, key) {
             // 창 닫기 이벤트 처리 (사용자가 X 버튼 클릭 시)
             approvalWindow.on("close", () => {
                 if (!isResolved) {
-                    logger.logAccess("Access denied", projectName, key);
+                    const keysString = keys.join(", ");
+                    logger.logAccess("Access denied", projectName, keysString);
                     doResolve({ approved: false, reason: "Dialog closed" });
                 }
             });
 
-            // 프로젝트명과 키 전달
+            // 프로젝트명과 키 목록 전달
             approvalWindow.webContents.once("did-finish-load", () => {
-                approvalWindow.webContents.send("approval:data", { projectName, key, channel: channelName });
+                approvalWindow.webContents.send("approval:data", { projectName, keys, channel: channelName });
             });
 
             // 창 로드 에러 처리

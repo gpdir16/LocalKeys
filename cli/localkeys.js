@@ -12,7 +12,6 @@ const command = args[0];
 
 // LocalKeys 데이터 디렉토리
 const LOCALKEYS_DIR = path.join(os.homedir(), ".localkeys");
-const ELECTRON_APP_PATH = path.join(__dirname, "..", "src", "main.js");
 const SERVER_INFO_PATH = path.join(LOCALKEYS_DIR, "server-info.json");
 
 // 도움말 표시
@@ -157,15 +156,49 @@ async function handleRun() {
     }
 
     try {
-        // 프로젝트의 모든 시크릿 가져오기
-        const response = await sendRequest("getSecrets", { projectName });
+        // 프로젝트의 시크릿 키 목록 가져오기 (값은 가져오지 않음)
+        const response = await sendRequest("listSecretKeys", { projectName });
 
         if (!response.success) {
             console.error(`Error: ${response.error}`);
             process.exit(1);
         }
 
-        const secrets = response.data;
+        const secretKeys = response.data;
+
+        if (secretKeys.length === 0) {
+            console.log(`No secrets found in project "${projectName}". Running command without environment variables...`);
+        } else {
+            console.log(`Requesting approval for ${secretKeys.length} secret(s) from project "${projectName}"...`);
+            console.log(`Keys: ${secretKeys.join(", ")}`);
+        }
+
+        // 모든 시크릿을 한번에 승인 요청 (배치 승인)
+        let secrets = {};
+        if (secretKeys.length > 0) {
+            try {
+                const batchResponse = await sendRequest("getBatchSecrets", { projectName, keys: secretKeys });
+
+                if (batchResponse.success) {
+                    secrets = batchResponse.data;
+                    console.log(`✓ Approved: All secrets`);
+                } else {
+                    console.log(`✗ Denied: ${batchResponse.error}`);
+                }
+            } catch (error) {
+                console.log(`✗ Failed: ${error.message}`);
+            }
+        }
+
+        const approvedCount = Object.keys(secrets).length;
+        if (approvedCount === 0 && secretKeys.length > 0) {
+            console.error("\nError: Secrets were not approved. Cannot run command.");
+            process.exit(1);
+        }
+
+        if (approvedCount > 0) {
+            console.log(`${approvedCount} secret(s) approved.`);
+        }
 
         // 환경변수 설정하여 명령 실행
         const env = { ...process.env };
@@ -175,7 +208,7 @@ async function handleRun() {
 
         const [cmd, ...cmdArgs] = commandToRun;
 
-        console.log(`Running command with environment variables from project "${projectName}"...`);
+        console.log(`\nRunning command: ${commandToRun.join(" ")}\n`);
 
         const child = spawn(cmd, cmdArgs, {
             env,
@@ -314,7 +347,7 @@ process.on("uncaughtException", (error) => {
     process.exit(1);
 });
 
-process.on("unhandledRejection", (reason, promise) => {
+process.on("unhandledRejection", (reason) => {
     console.error(`Unhandled rejection: ${reason}`);
     process.exit(1);
 });

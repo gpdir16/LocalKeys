@@ -39,6 +39,13 @@ class Vault {
         const salt = CryptoUtil.generateSalt();
         fs.writeFileSync(this.saltPath, salt.toString("hex"));
 
+        // Salt 파일 권한을 600으로 설정 (소유자만 읽기/쓰기)
+        try {
+            fs.chmodSync(this.saltPath, 0o600);
+        } catch (error) {
+            console.error("Failed to set salt file permissions:", error.message);
+        }
+
         // 키 파생
         this.key = CryptoUtil.deriveKey(password, salt);
 
@@ -62,6 +69,28 @@ class Vault {
     async unlock(password) {
         if (!this.exists()) {
             throw new Error("Vault does not exist");
+        }
+
+        // Salt 파일 권한 확인 및 복구
+        try {
+            const stats = fs.statSync(this.saltPath);
+            const mode = stats.mode & 0o777;
+            if (mode !== 0o600) {
+                fs.chmodSync(this.saltPath, 0o600);
+            }
+        } catch (error) {
+            // 권한 확인/설정 실패는 무시 (Windows 등)
+        }
+
+        // Vault 파일 권한 확인 및 복구
+        try {
+            const stats = fs.statSync(this.vaultPath);
+            const mode = stats.mode & 0o777;
+            if (mode !== 0o600) {
+                fs.chmodSync(this.vaultPath, 0o600);
+            }
+        } catch (error) {
+            // 권한 확인/설정 실패는 무시 (Windows 등)
         }
 
         // 솔트 로드
@@ -263,6 +292,12 @@ class Vault {
                 if (err) {
                     reject(err);
                 } else {
+                    // Vault 파일 권한 설정
+                    try {
+                        fs.chmodSync(this.vaultPath, 0o600);
+                    } catch (error) {
+                        // 권한 설정 실패는 무시
+                    }
                     resolve();
                 }
             });
@@ -280,6 +315,13 @@ class Vault {
 
         const encryptedData = CryptoUtil.encryptJson(this.data, this.key);
         fs.writeFileSync(this.vaultPath, encryptedData);
+
+        // Vault 파일 권한 설정
+        try {
+            fs.chmodSync(this.vaultPath, 0o600);
+        } catch (error) {
+            // 권한 설정 실패는 무시
+        }
     }
 
     /**

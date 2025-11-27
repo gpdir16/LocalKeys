@@ -52,6 +52,13 @@ class HttpServer {
                     })
                 );
 
+                // 파일 권한을 600으로 설정 (소유자만 읽기/쓰기)
+                try {
+                    fs.chmodSync(infoPath, 0o600);
+                } catch (error) {
+                    console.error("Failed to set server-info.json permissions:", error.message);
+                }
+
                 resolve({
                     host: this.host,
                     port: this.port,
@@ -110,11 +117,11 @@ class HttpServer {
     }
 
     /**
-     * CORS 헤더 설정
+     * CORS 헤더 설정 (localhost만 허용)
      */
     setCorsHeaders(res) {
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        res.setHeader("Access-Control-Allow-Origin", "http://localhost");
+        res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
         res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
 
@@ -203,11 +210,39 @@ class HttpServer {
                     }
                     break;
 
-                case "getSecrets":
+                case "listSecretKeys":
+                    // 프로젝트의 시크릿 키 목록만 반환 (값은 반환하지 않음)
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        result = { success: true, data: this.vault.getSecrets(data.projectName) };
+                        const secrets = this.vault.getSecrets(data.projectName);
+                        const keys = Object.keys(secrets);
+                        result = { success: true, data: keys };
+                    }
+                    break;
+
+                case "getBatchSecrets":
+                    // 여러 시크릿을 한번에 승인 요청
+                    if (!this.isUnlocked) {
+                        result = { success: false, error: "Vault is locked" };
+                    } else {
+                        // 승인 다이얼로그 표시 (여러 키를 함께 표시)
+                        const approvalResult = await this.requestBatchApproval(data.projectName, data.keys);
+
+                        if (approvalResult.approved) {
+                            const secrets = {};
+                            for (const key of data.keys) {
+                                try {
+                                    secrets[key] = this.vault.getSecret(data.projectName, key);
+                                } catch (error) {
+                                    // 존재하지 않는 키는 무시
+                                }
+                            }
+                            result = { success: true, data: secrets };
+                        } else {
+                            const reason = approvalResult.reason || "User denied";
+                            result = { success: false, error: `Access denied: ${reason}` };
+                        }
                     }
                     break;
 
@@ -216,7 +251,7 @@ class HttpServer {
                         result = { success: false, error: "Vault is locked" };
                     } else {
                         // 승인 다이얼로그 표시
-                        const approvalResult = await this.requestApproval(data.projectName, data.key);
+                        const approvalResult = await this.requestBatchApproval(data.projectName, [data.key]);
 
                         if (approvalResult.approved) {
                             const value = this.vault.getSecret(data.projectName, data.key);
@@ -273,35 +308,15 @@ class HttpServer {
     }
 
     /**
-     * 승인 요청 처리
+     * 배치 승인 요청 처리
      */
-    async requestApproval(projectName, key) {
+    async requestBatchApproval(projectName, keys) {
         if (!this.approvalCallback) {
             // 승인 콜백이 없으면 기본적으로 거부
             return { approved: false, reason: "No approval handler available" };
         }
 
-        return await this.approvalCallback(projectName, key);
-    }
-
-    /**
-     * 새 인증 토큰 생성 (서버 정보 업데이트)
-     */
-    rotateAuthToken() {
-        this.authToken = this.generateAuthToken();
-
-        // 서버 정보 파일 업데이트
-        const fs = require("fs");
-        const path = require("path");
-        const infoPath = path.join(require("os").homedir(), ".localkeys", "server-info.json");
-
-        if (fs.existsSync(infoPath)) {
-            const info = JSON.parse(fs.readFileSync(infoPath, "utf8"));
-            info.authToken = this.authToken;
-            fs.writeFileSync(infoPath, JSON.stringify(info));
-        }
-
-        return this.authToken;
+        return await this.approvalCallback(projectName, keys);
     }
 }
 

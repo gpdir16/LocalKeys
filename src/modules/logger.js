@@ -1,5 +1,4 @@
 const fs = require("fs");
-const path = require("path");
 const CryptoUtil = require("./crypto");
 
 /**
@@ -227,8 +226,8 @@ class Logger {
         });
 
         // 토큰 패턴 마스킹
-        message = message.replace(/\b(token[:\s=]+)([^\s]+)/gi, (match, prefix, token) => {
-            return prefix + CryptoUtil.maskSensitiveValue(token, 4);
+        message = message.replace(/\b(token[:\s=]+)([^\s]+)/gi, (match, prefix) => {
+            return prefix + "***";
         });
 
         return message;
