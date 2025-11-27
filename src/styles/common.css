@@ -1050,6 +1050,8 @@ select,
 }
 
 .secrets-container {
+    display: grid;
+    gap: 15px;
     margin-bottom: 15px;
 }
 
@@ -1096,7 +1098,7 @@ select,
     border: none;
     color: var(--accent);
     cursor: pointer;
-    font-size: 14px;
+    font-size: 11px;
     padding: 5px;
     display: inline-flex;
     align-items: center;

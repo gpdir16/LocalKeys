@@ -73,26 +73,15 @@
                             return;
                         }
 
-                        const newLogs = allLogs.slice(startIndex, endIndex);
-                        const logsHTML = newLogs
-                            .map(
-                                (log) => `
-                  <div class="log-item">
-                    <div class="log-header">
-                      <div class="log-timestamp">${formatTimestamp(log.timestamp)}</div>
-                      <div class="log-type ${log.category}">${log.category}</div>
-                    </div>
-                    <div class="log-message">${escapeHtml(log.message)}</div>
-                  </div>
-                `
-                            )
-                            .join("");
-
                         if (displayedLogsCount === 0) {
-                            logsContainer.innerHTML = logsHTML;
-                        } else {
-                            logsContainer.innerHTML += logsHTML;
+                            logsContainer.innerHTML = ""; // Clear loading spinner
                         }
+
+                        const fragment = document.createDocumentFragment();
+                        allLogs.slice(startIndex, endIndex).forEach((log) => {
+                            fragment.appendChild(createLogElement(log));
+                        });
+                        logsContainer.appendChild(fragment);
 
                         displayedLogsCount = endIndex;
                         hasMoreLogs = endIndex < allLogs.length;
@@ -100,22 +89,62 @@
                     }, 100);
                 }
 
+                function createLogElement(log) {
+                    const logItem = document.createElement("div");
+                    logItem.className = "log-item";
+
+                    const logHeader = document.createElement("div");
+                    logHeader.className = "log-header";
+
+                    const timestampDiv = document.createElement("div");
+                    timestampDiv.className = "log-timestamp";
+                    timestampDiv.textContent = formatTimestamp(log.timestamp);
+
+                    const typeDiv = document.createElement("div");
+                    typeDiv.className = `log-type ${log.category}`;
+                    typeDiv.textContent = log.category;
+
+                    logHeader.appendChild(timestampDiv);
+                    logHeader.appendChild(typeDiv);
+
+                    const messageDiv = document.createElement("div");
+                    messageDiv.className = "log-message";
+                    messageDiv.textContent = log.message;
+
+                    logItem.appendChild(logHeader);
+                    logItem.appendChild(messageDiv);
+
+                    return logItem;
+                }
+
                 // 로그 렌더링
                 function renderLogs() {
+                    logsContainer.innerHTML = ""; // 초기화
+
                     if (allLogs.length === 0) {
-                        logsContainer.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon">📋</div>
-              <div class="empty-state-title">No logs found</div>
-              <div class="empty-state-description">
-                No logs have been recorded yet.
-              </div>
-            </div>
-          `;
+                        const emptyState = document.createElement("div");
+                        emptyState.className = "empty-state";
+
+                        const icon = document.createElement("div");
+                        icon.className = "empty-state-icon";
+                        icon.textContent = "📋";
+
+                        const title = document.createElement("div");
+                        title.className = "empty-state-title";
+                        title.textContent = "No logs found";
+
+                        const description = document.createElement("div");
+                        description.className = "empty-state-description";
+                        description.textContent = "No logs have been recorded yet.";
+
+                        emptyState.appendChild(icon);
+                        emptyState.appendChild(title);
+                        emptyState.appendChild(description);
+
+                        logsContainer.appendChild(emptyState);
                         return;
                     }
 
-                    logsContainer.innerHTML = ""; // 초기화
                     displayedLogsCount = 0;
                     loadMoreLogs(); // 첫 50개 로드
                 }
@@ -140,13 +169,6 @@
                     } else {
                         return date.toLocaleString();
                     }
-                }
-
-                // 유틸리티 함수
-                function escapeHtml(text) {
-                    const div = document.createElement("div");
-                    div.textContent = text;
-                    return div.innerHTML;
                 }
 
                 // 이벤트 리스너 - 무한 스크롤

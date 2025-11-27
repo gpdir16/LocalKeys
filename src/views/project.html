@@ -129,48 +129,119 @@
                     }
                 }
 
+                function createSecretRow(key, value) {
+                    const item = document.createElement("div");
+                    item.className = "secret-item";
+
+                    const header = document.createElement("div");
+                    header.className = "secret-header";
+
+                    const keyDiv = document.createElement("div");
+                    keyDiv.className = "secret-key";
+                    keyDiv.textContent = key;
+
+                    const actionsDiv = document.createElement("div");
+                    actionsDiv.className = "secret-actions";
+
+                    const toggleBtn = document.createElement("button");
+                    toggleBtn.className = "toggle-visibility";
+                    toggleBtn.textContent = "👁️";
+                    toggleBtn.onclick = () => toggleVisibility(key);
+
+                    const editBtn = document.createElement("button");
+                    editBtn.className = "btn btn-secondary";
+                    editBtn.textContent = "Edit";
+                    editBtn.onclick = () => editSecret(key);
+
+                    const dropdownDiv = document.createElement("div");
+                    dropdownDiv.className = "dropdown";
+
+                    const dropdownBtn = document.createElement("button");
+                    dropdownBtn.className = "btn btn-secondary dropdown-toggle";
+                    dropdownBtn.textContent = "⋯";
+                    dropdownBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleDropdown(key);
+                    };
+
+                    const dropdownMenu = document.createElement("div");
+                    dropdownMenu.className = "dropdown-menu hidden";
+                    dropdownMenu.id = `dropdown-${key}`;
+
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.className = "dropdown-item dropdown-item-danger";
+                    deleteBtn.textContent = "Delete Secret";
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteSecret(key);
+                    };
+
+                    dropdownMenu.appendChild(deleteBtn);
+                    dropdownDiv.appendChild(dropdownBtn);
+                    dropdownDiv.appendChild(dropdownMenu);
+                    actionsDiv.appendChild(toggleBtn);
+                    actionsDiv.appendChild(editBtn);
+                    actionsDiv.appendChild(dropdownDiv);
+                    header.appendChild(keyDiv);
+                    header.appendChild(actionsDiv);
+
+                    const valueDiv = document.createElement("div");
+                    valueDiv.className = "secret-value masked";
+                    valueDiv.id = `value-${key}`;
+                    valueDiv.textContent = value;
+
+                    item.appendChild(header);
+                    item.appendChild(valueDiv);
+
+                    return item;
+                }
+
+                function createEmptyStateElement() {
+                    const emptyState = document.createElement("div");
+                    emptyState.className = "empty-state";
+
+                    const icon = document.createElement("div");
+                    icon.className = "empty-state-icon";
+                    icon.textContent = "🔑";
+
+                    const title = document.createElement("div");
+                    title.className = "empty-state-title";
+                    title.textContent = "No secrets found";
+
+                    const description = document.createElement("div");
+                    description.className = "empty-state-description";
+                    description.textContent =
+                        Object.keys(secrets).length === 0 ? "Add your first secret to this project." : "No secrets match your search criteria.";
+
+                    emptyState.appendChild(icon);
+                    emptyState.appendChild(title);
+                    emptyState.appendChild(description);
+
+                    if (Object.keys(secrets).length === 0) {
+                        const addBtn = document.createElement("button");
+                        addBtn.className = "btn";
+                        addBtn.textContent = "Add Secret";
+                        addBtn.onclick = showAddSecretModal;
+                        emptyState.appendChild(addBtn);
+                    }
+                    return emptyState;
+                }
+
                 // 시크릿 렌더링
                 function renderSecrets() {
+                    secretsContainer.innerHTML = ""; // Clear existing content
                     const secretKeys = Object.keys(filteredSecrets);
 
                     if (secretKeys.length === 0) {
-                        secretsContainer.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-state-icon">🔑</div>
-              <div class="empty-state-title">No secrets found</div>
-              <div class="empty-state-description">
-                ${Object.keys(secrets).length === 0 ? "Add your first secret to this project." : "No secrets match your search criteria."}
-              </div>
-              ${Object.keys(secrets).length === 0 ? '<button class="btn" onclick="showAddSecretModal()">Add Secret</button>' : ""}
-            </div>
-          `;
+                        secretsContainer.appendChild(createEmptyStateElement());
                         return;
                     }
 
-                    const secretsHTML = secretKeys
-                        .map(
-                            (key) => `
-          <div class="secret-item">
-            <div class="secret-header">
-              <div class="secret-key">${escapeHtml(key)}</div>
-              <div class="secret-actions">
-                <button class="toggle-visibility" onclick="toggleVisibility('${key}')">👁️</button>
-                  <button class="btn btn-secondary" onclick="editSecret('${key}')">Edit</button>
-                  <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" onclick="event.stopPropagation(); toggleDropdown('${key}')">⋯</button>
-                    <div class="dropdown-menu hidden" id="dropdown-${key}">
-                      <button class="dropdown-item dropdown-item-danger" onclick="event.stopPropagation(); deleteSecret('${key}')">Delete Secret</button>
-                    </div>
-                  </div>
-              </div>
-            </div>
-            <div class="secret-value masked" id="value-${key}">${escapeHtml(filteredSecrets[key])}</div>
-          </div>
-        `
-                        )
-                        .join("");
-
-                    secretsContainer.innerHTML = secretsHTML;
+                    const fragment = document.createDocumentFragment();
+                    secretKeys.forEach((key) => {
+                        fragment.appendChild(createSecretRow(key, filteredSecrets[key]));
+                    });
+                    secretsContainer.appendChild(fragment);
                 }
 
                 // 시크릿 가시성 토글
@@ -354,13 +425,6 @@
                     renderSecrets();
                 }
 
-                // 유틸리티 함수
-                function escapeHtml(text) {
-                    const div = document.createElement("div");
-                    div.textContent = text;
-                    return div.innerHTML;
-                }
-
                 // 이벤트 리스너
                 searchInput.addEventListener("input", searchSecrets);
                 backBtn.addEventListener("click", function () {
@@ -432,31 +496,24 @@
                 // 드롭다운 토글 함수
                 function toggleDropdown(key) {
                     const dropdown = document.getElementById(`dropdown-${key}`);
-                    const allDropdowns = document.querySelectorAll('.dropdown-menu');
+                    const allDropdowns = document.querySelectorAll(".dropdown-menu");
 
                     // 다른 드롭다운 모두 닫기
-                    allDropdowns.forEach(d => {
+                    allDropdowns.forEach((d) => {
                         if (d !== dropdown) {
-                            d.classList.add('hidden');
+                            d.classList.add("hidden");
                         }
                     });
 
                     // 현재 드롭다운 토글
-                    dropdown.classList.toggle('hidden');
+                    dropdown.classList.toggle("hidden");
                 }
 
-                // 전역 함수로 등록 (HTML onclick에서 사용)
-                window.toggleVisibility = toggleVisibility;
-                window.editSecret = editSecret;
-                window.deleteSecret = deleteSecret;
-                window.showAddSecretModal = showAddSecretModal;
-                window.toggleDropdown = toggleDropdown;
-
                 // 외부 클릭 시 드롭다운 닫기
-                document.addEventListener('click', function(e) {
-                    if (!e.target.closest('.dropdown')) {
-                        const allDropdowns = document.querySelectorAll('.dropdown-menu');
-                        allDropdowns.forEach(d => d.classList.add('hidden'));
+                document.addEventListener("click", function (e) {
+                    if (!e.target.closest(".dropdown")) {
+                        const allDropdowns = document.querySelectorAll(".dropdown-menu");
+                        allDropdowns.forEach((d) => d.classList.add("hidden"));
                     }
                 });
 
