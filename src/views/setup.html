@@ -10,20 +10,20 @@
         <div class="container">
             <div class="setup-container">
                 <div class="logo">
-                    <h1>LocalKeys</h1>
-                    <p>Secure Credential Management</p>
+                    <h1 id="title">LocalKeys</h1>
+                    <p id="subtitle">Secure Credential Management</p>
                 </div>
 
                 <div class="card">
                     <div class="card-header">
-                        <h2 class="card-title">Master Password Setup</h2>
+                        <h2 class="card-title" id="card-title">Master Password Setup</h2>
                     </div>
 
                     <div id="message-container"></div>
 
                     <form id="setup-form">
                         <div class="input-group">
-                            <label for="password">Master Password</label>
+                            <label for="password" id="label-password">Master Password</label>
                             <input type="password" id="password" placeholder="Enter a strong password" autocomplete="new-password" />
                             <div class="password-strength">
                                 <div class="password-strength-bar" id="strength-bar"></div>
@@ -38,7 +38,7 @@
                         </div>
 
                         <div class="input-group">
-                            <label for="confirm-password">Confirm Password</label>
+                            <label for="confirm-password" id="label-confirm-password">Confirm Password</label>
                             <input type="password" id="confirm-password" placeholder="Confirm your password" autocomplete="new-password" />
                         </div>
 
@@ -49,8 +49,8 @@
                 </div>
 
                 <div class="text-center" style="margin-top: 30px; color: var(--text-secondary); font-size: 14px">
-                    <p>Your master password is used to encrypt all your data.</p>
-                    <p>It cannot be recovered if lost. Please store it safely.</p>
+                    <p id="warning-line1">Your master password is used to encrypt all your data.</p>
+                    <p id="warning-line2">It cannot be recovered if lost. Please store it safely.</p>
                 </div>
             </div>
         </div>
@@ -59,16 +59,16 @@
         <div id="cli-install-modal" class="modal-overlay hidden">
             <div class="modal">
                 <div class="modal-header">
-                    <h3 class="modal-title">Install CLI Tool</h3>
+                    <h3 class="modal-title" id="cli-modal-title">Install CLI Tool</h3>
                 </div>
                 <div class="modal-body">
-                    <p>Would you like to install the LocalKeys CLI tool? This allows you to use LocalKeys from the command line.</p>
-                    <div style="margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px;">
-                        <strong>CLI Features:</strong>
-                        <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>Manage secrets from terminal</li>
-                            <li>Run commands with environment variables</li>
-                            <li>Automated workflows</li>
+                    <p id="cli-modal-description">Would you like to install the LocalKeys CLI tool? This allows you to use LocalKeys from the command line.</p>
+                    <div style="margin-top: 15px; padding: 15px; background: var(--bg-secondary); border-radius: 8px">
+                        <strong id="cli-features-title">CLI Features:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px">
+                            <li id="cli-feature1">Manage secrets from terminal</li>
+                            <li id="cli-feature2">Run commands with environment variables</li>
+                            <li id="cli-feature3">Automated workflows</li>
                         </ul>
                     </div>
                 </div>
@@ -79,8 +79,36 @@
             </div>
         </div>
 
+        <script src="../modules/i18n-helper.js"></script>
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("DOMContentLoaded", async function () {
+                // 다국어 초기화
+                await i18n.init();
+
+                // UI 번역 적용
+                document.getElementById("title").textContent = i18n.t("setup.title");
+                document.getElementById("subtitle").textContent = i18n.t("setup.subtitle");
+                document.getElementById("card-title").textContent = i18n.t("setup.cardTitle");
+                document.getElementById("label-password").textContent = i18n.t("setup.password");
+                document.getElementById("password").placeholder = i18n.t("setup.passwordPlaceholder");
+                document.getElementById("label-confirm-password").textContent = i18n.t("setup.confirmPassword");
+                document.getElementById("confirm-password").placeholder = i18n.t("setup.confirmPasswordPlaceholder");
+                document.getElementById("setup-btn").textContent = i18n.t("setup.createVault");
+                document.getElementById("req-length").textContent = i18n.t("setup.requirements.length");
+                document.getElementById("req-uppercase").textContent = i18n.t("setup.requirements.uppercase");
+                document.getElementById("req-lowercase").textContent = i18n.t("setup.requirements.lowercase");
+                document.getElementById("req-number").textContent = i18n.t("setup.requirements.number");
+                document.getElementById("req-special").textContent = i18n.t("setup.requirements.special");
+                document.getElementById("warning-line1").textContent = i18n.t("setup.warning.line1");
+                document.getElementById("warning-line2").textContent = i18n.t("setup.warning.line2");
+                document.getElementById("cli-modal-title").textContent = i18n.t("setup.cliModal.title");
+                document.getElementById("cli-modal-description").textContent = i18n.t("setup.cliModal.description");
+                document.getElementById("cli-features-title").textContent = i18n.t("setup.cliModal.features");
+                document.getElementById("cli-feature1").textContent = i18n.t("setup.cliModal.feature1");
+                document.getElementById("cli-feature2").textContent = i18n.t("setup.cliModal.feature2");
+                document.getElementById("cli-feature3").textContent = i18n.t("setup.cliModal.feature3");
+                document.getElementById("skip-cli-install").textContent = i18n.t("setup.cliModal.skip");
+                document.getElementById("confirm-cli-install").textContent = i18n.t("setup.cliModal.install");
                 const passwordInput = document.getElementById("password");
                 const confirmPasswordInput = document.getElementById("confirm-password");
                 const setupBtn = document.getElementById("setup-btn");

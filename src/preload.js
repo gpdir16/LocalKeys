@@ -53,6 +53,11 @@ const api = {
         onResponse: (callback) => ipcRenderer.on("approval:response", callback),
         sendData: (data) => ipcRenderer.send("approval:data", data),
     },
+
+    // 다국어 지원
+    i18n: {
+        getTranslations: () => ipcRenderer.invoke("i18n:getTranslations"),
+    },
 };
 
 // 렌더러 프로세스에 API 노출

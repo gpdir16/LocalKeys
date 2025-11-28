@@ -10,8 +10,8 @@
         <div class="container">
             <div class="lock-container">
                 <div class="logo">
-                    <h1>LocalKeys</h1>
-                    <p>Enter your master password to unlock</p>
+                    <h1 id="title">LocalKeys</h1>
+                    <p id="subtitle">Enter your master password to unlock</p>
                 </div>
 
                 <div id="message-container"></div>
@@ -25,8 +25,16 @@
             </div>
         </div>
 
+        <script src="../modules/i18n-helper.js"></script>
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("DOMContentLoaded", async function () {
+                // 다국어 초기화
+                await i18n.init();
+
+                // UI 번역 적용
+                document.getElementById("title").textContent = i18n.t("lock.title");
+                document.getElementById("subtitle").textContent = i18n.t("lock.subtitle");
+                document.getElementById("password").placeholder = i18n.t("lock.passwordPlaceholder");
                 const passwordInput = document.getElementById("password");
                 const unlockBtn = document.getElementById("unlock-btn");
                 const unlockForm = document.getElementById("unlock-form");

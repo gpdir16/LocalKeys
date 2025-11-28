@@ -11,7 +11,7 @@
             <div class="page-header logs-header">
                 <div class="page-title">
                     <button class="back-btn" id="back-btn">←</button>
-                    Access Logs
+                    <span id="title">Access Logs</span>
                 </div>
                 <div class="header-actions">
                     <button class="btn btn-danger" id="clear-logs-btn">Clear All Logs</button>
@@ -26,9 +26,16 @@
             </div>
         </div>
 
+        <script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("DOMContentLoaded", async function () {
+                // 다국어 초기화
+                await i18n.init();
+
+                // UI 번역 적용
+                document.getElementById("title").textContent = i18n.t("logs.title");
+                document.getElementById("clear-logs-btn").textContent = i18n.t("logs.clearAll");
                 const logsContainer = document.getElementById("logs-container");
                 const backBtn = document.getElementById("back-btn");
                 const clearLogsBtn = document.getElementById("clear-logs-btn");

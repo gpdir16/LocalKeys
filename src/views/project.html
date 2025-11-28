@@ -37,15 +37,15 @@
         <div id="add-secret-modal" class="modal-overlay hidden">
             <div class="modal">
                 <div class="modal-header">
-                    <h3 class="modal-title">Add New Secret</h3>
+                    <h3 class="modal-title" id="add-modal-title">Add New Secret</h3>
                 </div>
                 <div class="modal-body">
                     <div class="input-group">
-                        <label for="secret-key">Key</label>
+                        <label for="secret-key" id="label-secret-key">Key</label>
                         <input type="text" id="secret-key" placeholder="Enter secret key" autocomplete="off" />
                     </div>
                     <div class="input-group">
-                        <label for="secret-value">Value</label>
+                        <label for="secret-value" id="label-secret-value">Value</label>
                         <input type="text" id="secret-value" placeholder="Enter secret value" autocomplete="off" />
                     </div>
                 </div>
@@ -60,15 +60,15 @@
         <div id="edit-secret-modal" class="modal-overlay hidden">
             <div class="modal">
                 <div class="modal-header">
-                    <h3 class="modal-title">Edit Secret</h3>
+                    <h3 class="modal-title" id="edit-modal-title">Edit Secret</h3>
                 </div>
                 <div class="modal-body">
                     <div class="input-group">
-                        <label for="edit-secret-key">Key</label>
+                        <label for="edit-secret-key" id="label-edit-key">Key</label>
                         <input type="text" id="edit-secret-key" placeholder="Enter secret key" autocomplete="off" />
                     </div>
                     <div class="input-group">
-                        <label for="edit-secret-value">Value</label>
+                        <label for="edit-secret-value" id="label-edit-value">Value</label>
                         <input type="text" id="edit-secret-value" placeholder="Enter secret value" autocomplete="off" />
                     </div>
                 </div>
@@ -79,9 +79,29 @@
             </div>
         </div>
 
+        <script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("DOMContentLoaded", async function () {
+                // 다국어 초기화
+                await i18n.init();
+
+                // UI 번역 적용
+                document.getElementById("add-secret-btn").textContent = i18n.t("project.addSecret");
+                document.getElementById("export-btn").textContent = i18n.t("project.exportEnv");
+                document.getElementById("search-input").placeholder = i18n.t("project.searchPlaceholder");
+                document.getElementById("add-modal-title").textContent = i18n.t("project.addSecretModal.title");
+                document.getElementById("label-secret-key").textContent = i18n.t("project.addSecretModal.keyLabel");
+                document.getElementById("secret-key").placeholder = i18n.t("project.addSecretModal.keyPlaceholder");
+                document.getElementById("label-secret-value").textContent = i18n.t("project.addSecretModal.valueLabel");
+                document.getElementById("secret-value").placeholder = i18n.t("project.addSecretModal.valuePlaceholder");
+                document.getElementById("cancel-add-secret").textContent = i18n.t("common.cancel");
+                document.getElementById("confirm-add-secret").textContent = i18n.t("project.addSecretModal.add");
+                document.getElementById("edit-modal-title").textContent = i18n.t("project.editSecretModal.title");
+                document.getElementById("label-edit-key").textContent = i18n.t("project.editSecretModal.keyLabel");
+                document.getElementById("label-edit-value").textContent = i18n.t("project.editSecretModal.valueLabel");
+                document.getElementById("cancel-edit-secret").textContent = i18n.t("common.cancel");
+                document.getElementById("confirm-edit-secret").textContent = i18n.t("project.editSecretModal.save");
                 const projectNameEl = document.getElementById("project-name");
                 const secretsContainer = document.getElementById("secrets-container");
                 const searchInput = document.getElementById("search-input");
@@ -210,8 +230,7 @@
 
                     const description = document.createElement("div");
                     description.className = "empty-state-description";
-                    description.textContent =
-                        Object.keys(secrets).length === 0 ? "Add your first secret to this project." : "No secrets match your search criteria.";
+                    description.textContent = Object.keys(secrets).length === 0 ? "Add your first secret to this project." : "No secrets match your search criteria.";
 
                     emptyState.appendChild(icon);
                     emptyState.appendChild(title);

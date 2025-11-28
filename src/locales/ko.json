@@ -1,0 +1,164 @@
+{
+    "common": {
+        "cancel": "취소",
+        "confirm": "확인",
+        "save": "저장",
+        "delete": "삭제",
+        "edit": "편집",
+        "add": "추가",
+        "close": "닫기",
+        "back": "뒤로",
+        "search": "검색",
+        "loading": "로드중...",
+        "error": "오류",
+        "success": "성공"
+    },
+    "setup": {
+        "title": "LocalKeys",
+        "subtitle": "안전한 시크릿 관리",
+        "cardTitle": "마스터 비밀번호 설정",
+        "password": "마스터 비밀번호",
+        "passwordPlaceholder": "강력한 비밀번호를 입력하세요",
+        "confirmPassword": "비밀번호 확인",
+        "confirmPasswordPlaceholder": "비밀번호를 다시 입력하세요",
+        "createVault": "금고 생성",
+        "requirements": {
+            "length": "최소 12자 이상",
+            "uppercase": "대문자 포함",
+            "lowercase": "소문자 포함",
+            "number": "숫자 포함",
+            "special": "특수문자 포함"
+        },
+        "warning": {
+            "line1": "마스터 비밀번호는 모든 데이터를 암호화하는 데 사용됩니다.",
+            "line2": "분실 시 복구가 불가능하니 안전하게 보관해주세요."
+        },
+        "cliModal": {
+            "title": "CLI 도구 설치",
+            "description": "LocalKeys CLI 도구를 설치하시겠습니까? 터미널에서 LocalKeys를 사용할 수 있습니다.",
+            "features": "CLI 기능:",
+            "feature1": "터미널에서 시크릿 관리",
+            "feature2": "환경 변수와 함께 명령 실행",
+            "feature3": "자동화된 워크플로우",
+            "skip": "건너뛰기",
+            "install": "CLI 설치"
+        }
+    },
+    "lock": {
+        "title": "LocalKeys",
+        "subtitle": "금고를 잠금 해제하려면 마스터 비밀번호를 입력하세요.",
+        "passwordPlaceholder": "비밀번호를 입력하세요"
+    },
+    "dashboard": {
+        "title": "프로젝트",
+        "addProject": "프로젝트 추가",
+        "logs": "로그",
+        "lock": "잠금",
+        "installCli": "CLI 설치",
+        "searchPlaceholder": "프로젝트 검색...",
+        "addProjectModal": {
+            "title": "새 프로젝트 추가",
+            "label": "프로젝트 이름",
+            "placeholder": "프로젝트 이름 입력",
+            "add": "프로젝트 추가"
+        },
+        "emptyState": {
+            "icon": "📁",
+            "title": "프로젝트가 없습니다",
+            "descriptionEmpty": "첫 번째 프로젝트를 생성하여 시작하세요.",
+            "descriptionSearch": "검색 조건과 일치하는 프로젝트가 없습니다."
+        },
+        "deleteProject": {
+            "confirm": "프로젝트 \"{{name}}\"을(를) 삭제하시겠습니까? 이 프로젝트의 모든 시크릿이 영구적으로 삭제됩니다."
+        },
+        "notifications": {
+            "projectCreated": "프로젝트 \"{{name}}\"이(가) 생성되었습니다",
+            "projectDeleted": "프로젝트 \"{{name}}\"이(가) 삭제되었습니다",
+            "failedToLoad": "프로젝트를 불러오지 못했습니다",
+            "failedToCreate": "프로젝트 생성에 실패했습니다",
+            "failedToDelete": "프로젝트 삭제에 실패했습니다",
+            "enterName": "프로젝트 이름을 입력하세요",
+            "projectExists": "이미 같은 이름의 프로젝트가 존재합니다",
+            "cliInstalled": "CLI가 설치되었습니다",
+            "cliUninstalled": "CLI가 제거되었습니다",
+            "cliAlreadyInstalled": "CLI가 이미 설치되어 있습니다",
+            "cliNotInstalled": "CLI가 설치되어 있지 않습니다"
+        }
+    },
+    "project": {
+        "addSecret": "시크릿 추가",
+        "exportEnv": ".env 내보내기",
+        "searchPlaceholder": "시크릿 검색...",
+        "addSecretModal": {
+            "title": "새 시크릿 추가",
+            "keyLabel": "키",
+            "keyPlaceholder": "시크릿 키 입력",
+            "valueLabel": "값",
+            "valuePlaceholder": "시크릿 값 입력",
+            "add": "시크릿 추가"
+        },
+        "editSecretModal": {
+            "title": "시크릿 편집",
+            "keyLabel": "키",
+            "valueLabel": "값",
+            "save": "변경사항 저장"
+        },
+        "deleteSecret": "시크릿 삭제",
+        "emptyState": {
+            "icon": "🔑",
+            "title": "시크릿이 없습니다",
+            "descriptionEmpty": "이 프로젝트에 첫 번째 시크릿을 추가하세요.",
+            "descriptionSearch": "검색 조건과 일치하는 시크릿이 없습니다."
+        },
+        "deleteConfirm": "시크릿 \"{{key}}\"을(를) 삭제하시겠습니까?",
+        "notifications": {
+            "secretAdded": "시크릿 \"{{key}}\"이(가) 추가되었습니다",
+            "secretSaved": "시크릿 \"{{key}}\"이(가) 저장되었습니다",
+            "secretDeleted": "시크릿 \"{{key}}\"이(가) 삭제되었습니다",
+            "exported": "시크릿이 {{path}}(으)로 내보내졌습니다",
+            "failedToLoad": "시크릿을 불러오지 못했습니다",
+            "failedToAdd": "시크릿 추가에 실패했습니다",
+            "failedToSave": "시크릿 저장에 실패했습니다",
+            "failedToDelete": "시크릿 삭제에 실패했습니다",
+            "failedToExport": "시크릿 내보내기에 실패했습니다",
+            "enterKey": "시크릿 키를 입력하세요",
+            "keyExists": "이미 같은 키의 시크릿이 존재합니다",
+            "noProject": "프로젝트가 지정되지 않았습니다"
+        }
+    },
+    "logs": {
+        "title": "접근 로그",
+        "clearAll": "모든 로그 삭제",
+        "emptyState": {
+            "icon": "📋",
+            "title": "로그가 없습니다",
+            "description": "아직 기록된 로그가 없습니다."
+        },
+        "clearConfirm": "모든 로그를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+        "timeAgo": {
+            "justNow": "방금 전",
+            "minutesAgo": "{{count}}분 전",
+            "hoursAgo": "{{count}}시간 전",
+            "daysAgo": "{{count}}일 전"
+        },
+        "notifications": {
+            "cleared": "모든 로그가 삭제되었습니다",
+            "failedToClear": "로그 삭제에 실패했습니다",
+            "failedToLoad": "로그를 불러오지 못했습니다"
+        }
+    },
+    "approval": {
+        "title": "접근 요청",
+        "project": "프로젝트:",
+        "keys": "키:",
+        "action": "작업:",
+        "actionText": "읽기 권한 요청됨",
+        "approve": "승인",
+        "deny": "거부"
+    },
+    "update": {
+        "title": "새로운 업데이트가 있습니다",
+        "description": "v{{oldVersion}} ➠ v{{newVersion}}<br/>업데이트 버튼을 클릭하여 자세한 내용을 확인하세요.",
+        "update": "업데이트"
+    }
+}

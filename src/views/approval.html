@@ -11,7 +11,7 @@
             <div class="approval-card">
                 <div class="titlebar">
                     <div class="approval-icon">🔐</div>
-                    <h2 class="approval-title">Access Request</h2>
+                    <h2 class="approval-title" id="title">Access Request</h2>
                 </div>
 
                 <div class="timeout-bar">
@@ -20,16 +20,16 @@
 
                 <div class="approval-details">
                     <div class="detail-row">
-                        <div class="detail-label">Project:</div>
+                        <div class="detail-label" id="label-project">Project:</div>
                         <div class="detail-value" id="project-name">-</div>
                     </div>
                     <div class="detail-row">
-                        <div class="detail-label">Keys:</div>
+                        <div class="detail-label" id="label-keys">Keys:</div>
                         <div class="detail-value" id="secret-keys">-</div>
                     </div>
                     <div class="detail-row">
-                        <div class="detail-label">Action:</div>
-                        <div class="detail-value">Read access requested</div>
+                        <div class="detail-label" id="label-action">Action:</div>
+                        <div class="detail-value" id="action-text">Read access requested</div>
                     </div>
                 </div>
 
@@ -40,8 +40,20 @@
             </div>
         </div>
 
+        <script src="../modules/i18n-helper.js"></script>
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("DOMContentLoaded", async function () {
+                // 다국어 초기화
+                await i18n.init();
+
+                // UI 번역 적용
+                document.getElementById("title").textContent = i18n.t("approval.title");
+                document.getElementById("label-project").textContent = i18n.t("approval.project");
+                document.getElementById("label-keys").textContent = i18n.t("approval.keys");
+                document.getElementById("label-action").textContent = i18n.t("approval.action");
+                document.getElementById("action-text").textContent = i18n.t("approval.actionText");
+                document.getElementById("deny-btn").textContent = i18n.t("approval.deny");
+                document.getElementById("approve-btn").textContent = i18n.t("approval.approve");
                 const projectNameEl = document.getElementById("project-name");
                 const secretKeysEl = document.getElementById("secret-keys");
                 const approveBtn = document.getElementById("approve-btn");

@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const Vault = require("./modules/vault");
 const Logger = require("./modules/logger");
 const HttpServer = require("./modules/http-server");
+const I18n = require("./modules/i18n");
 
 // 전역 변수
 let mainWindow = null;
@@ -16,6 +17,7 @@ let httpServer = null;
 let isUnlocked = false;
 let tray = null;
 let isQuitting = false;
+let i18n = null;
 
 // LocalKeys 데이터 디렉토리 경로
 const LOCALKEYS_DIR = path.join(require("os").homedir(), ".localkeys");
@@ -68,9 +70,13 @@ function createTray() {
     }
 
     // 트레이 메뉴 생성
+    const showLabel = i18n ? (i18n.getLocale() === "ko" ? "LocalKeys 보기" : "Show LocalKeys") : "Show LocalKeys";
+    const lockLabel = i18n ? (i18n.getLocale() === "ko" ? "Vault 잠금" : "Lock Vault") : "Lock Vault";
+    const quitLabel = i18n ? (i18n.getLocale() === "ko" ? "종료" : "Quit") : "Quit";
+
     const contextMenu = Menu.buildFromTemplate([
         {
-            label: "Show LocalKeys",
+            label: showLabel,
             click: () => {
                 // macOS에서 Dock 아이콘 다시 보이기
                 if (process.platform === "darwin") {
@@ -86,7 +92,7 @@ function createTray() {
             },
         },
         {
-            label: "Lock Vault",
+            label: lockLabel,
             click: () => {
                 if (isUnlocked) {
                     lockVault();
@@ -95,7 +101,7 @@ function createTray() {
         },
         { type: "separator" },
         {
-            label: "Quit",
+            label: quitLabel,
             click: () => {
                 isQuitting = true;
                 app.quit();
@@ -180,6 +186,12 @@ function showUpdateDialog(newVersion) {
         icon: path.join(__dirname, "assets", "icon.png"),
     });
 
+    // 번역 가져오기
+    const title = i18n ? i18n.t("update.title") : "New update available";
+    const description = i18n ? i18n.t("update.description", { oldVersion: APP_VERSION, newVersion: newVersion }) : `v${APP_VERSION} ➠ v${newVersion}<br/>Click the update button to see more details.`;
+    const closeText = i18n ? i18n.t("common.close") : "Close";
+    const updateText = i18n ? i18n.t("update.update") : "Update";
+
     // 업데이트 알림창 HTML 생성
     const updateHTML = `
     <!DOCTYPE html>
@@ -252,14 +264,13 @@ function showUpdateDialog(newVersion) {
         </style>
     </head>
     <body>
-        <div class="title">New update available</div>
+        <div class="title">${title}</div>
         <div class="description">
-            v${APP_VERSION} ➠ v${newVersion}<br/>
-            Click the update button to see more details.
+            ${description}
         </div>
         <div class="actions">
-            <button class="btn btn-secondary" onclick="closeDialog()">Close</button>
-            <button class="btn btn-primary" onclick="openUpdatePage()">Update</button>
+            <button class="btn btn-secondary" onclick="closeDialog()">${closeText}</button>
+            <button class="btn btn-primary" onclick="openUpdatePage()">${updateText}</button>
         </div>
         <script>
             function openUpdatePage() {
@@ -298,6 +309,10 @@ function initializeApp() {
     if (!fs.existsSync(LOCALKEYS_DIR)) {
         fs.mkdirSync(LOCALKEYS_DIR, { recursive: true });
     }
+
+    // 다국어 초기화
+    i18n = new I18n();
+    i18n.initialize();
 
     // 로거 초기화
     logger = new Logger(path.join(LOCALKEYS_DIR, "logs.enc"));
@@ -1009,6 +1024,14 @@ function setupIpcHandlers() {
         } catch (error) {
             return { success: false, error: error.message };
         }
+    });
+
+    // 다국어 지원
+    ipcMain.handle("i18n:getTranslations", () => {
+        if (i18n) {
+            return i18n.getAllTranslations();
+        }
+        return { locale: "en", translations: {} };
     });
 }
 

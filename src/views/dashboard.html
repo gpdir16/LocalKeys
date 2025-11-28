@@ -9,7 +9,7 @@
     <body>
         <div class="container">
             <div class="page-header dashboard-header">
-                <h1 class="page-title">Projects</h1>
+                <h1 class="page-title" id="page-title">Projects</h1>
                 <div class="header-actions">
                     <button class="btn" id="add-project-btn">Add Project</button>
                     <button class="btn btn-secondary" id="logs-btn">Logs</button>
@@ -41,11 +41,11 @@
         <div id="add-project-modal" class="modal-overlay hidden">
             <div class="modal">
                 <div class="modal-header">
-                    <h3 class="modal-title">Add New Project</h3>
+                    <h3 class="modal-title" id="modal-title">Add New Project</h3>
                 </div>
                 <div class="modal-body">
                     <div class="input-group">
-                        <label for="project-name">Project Name</label>
+                        <label for="project-name" id="label-project-name">Project Name</label>
                         <input type="text" id="project-name" placeholder="Enter project name" autocomplete="off" />
                     </div>
                 </div>
@@ -56,810 +56,543 @@
             </div>
         </div>
 
-                <script src="../modules/notification.js"></script>
+        <script src="../modules/i18n-helper.js"></script>
+        <script src="../modules/notification.js"></script>
 
-                <script>
+        <script>
+            document.addEventListener("DOMContentLoaded", async function () {
+                // 다국어 초기화
+                await i18n.init();
 
-                    document.addEventListener("DOMContentLoaded", function () {
+                // UI 번역 적용
+                document.getElementById("page-title").textContent = i18n.t("dashboard.title");
+                document.getElementById("add-project-btn").textContent = i18n.t("dashboard.addProject");
+                document.getElementById("logs-btn").textContent = i18n.t("dashboard.logs");
+                document.getElementById("lock-btn").textContent = i18n.t("dashboard.lock");
+                document.getElementById("install-cli-btn").textContent = i18n.t("dashboard.installCli");
+                document.getElementById("search-input").placeholder = i18n.t("dashboard.searchPlaceholder");
+                document.getElementById("modal-title").textContent = i18n.t("dashboard.addProjectModal.title");
+                document.getElementById("label-project-name").textContent = i18n.t("dashboard.addProjectModal.label");
+                document.getElementById("project-name").placeholder = i18n.t("dashboard.addProjectModal.placeholder");
+                document.getElementById("cancel-add-project").textContent = i18n.t("common.cancel");
+                document.getElementById("confirm-add-project").textContent = i18n.t("dashboard.addProjectModal.add");
 
-                        const projectsContainer = document.getElementById("projects-container");
+                const projectsContainer = document.getElementById("projects-container");
 
-                        const searchInput = document.getElementById("search-input");
+                const searchInput = document.getElementById("search-input");
 
-                        const addProjectBtn = document.getElementById("add-project-btn");
+                const addProjectBtn = document.getElementById("add-project-btn");
 
-                        const logsBtn = document.getElementById("logs-btn");
+                const logsBtn = document.getElementById("logs-btn");
 
-                        const lockBtn = document.getElementById("lock-btn");
+                const lockBtn = document.getElementById("lock-btn");
 
-                        const installCliBtn = document.getElementById("install-cli-btn");
+                const installCliBtn = document.getElementById("install-cli-btn");
 
-                        const addProjectModal = document.getElementById("add-project-modal");
+                const addProjectModal = document.getElementById("add-project-modal");
 
-                        const projectNameInput = document.getElementById("project-name");
+                const projectNameInput = document.getElementById("project-name");
 
-                        const cancelAddProject = document.getElementById("cancel-add-project");
+                const cancelAddProject = document.getElementById("cancel-add-project");
 
-                                        const confirmAddProject = document.getElementById("confirm-add-project");
+                const confirmAddProject = document.getElementById("confirm-add-project");
 
-                                        const settingsDropdownBtn = document.getElementById("settings-dropdown-btn");
+                const settingsDropdownBtn = document.getElementById("settings-dropdown-btn");
 
-                        
+                let projects = [];
 
-                                        let projects = [];
+                let filteredProjects = [];
 
-                                        let filteredProjects = [];
+                // 프로젝트 로드
 
-                        
+                async function loadProjects() {
+                    try {
+                        const result = await window.localkeys.projects.get();
 
-                                        // 프로젝트 로드
+                        if (result.success) {
+                            projects = result.data;
 
-                                        async function loadProjects() {
+                            filteredProjects = projects;
 
-                                            try {
-
-                                                const result = await window.localkeys.projects.get();
-
-                                                if (result.success) {
-
-                                                    projects = result.data;
-
-                                                    filteredProjects = projects;
-
-                                                    renderProjects();
-
-                                                } else {
-
-                                                    notificationManager.error("Failed to load projects");
-
-                                                }
-
-                                            } catch (error) {
-
-                                                notificationManager.error(`Error loading projects: ${error.message}`);
-
-                                            }
-
-                                        }
-
-                        
-
-                                        function createProjectCard(project) {
-
-                                            const card = document.createElement("div");
-
-                                            card.className = "project-card";
-
-                                            card.onclick = () => openProject(project.name);
-
-                        
-
-                                            const nameDiv = document.createElement("div");
-
-                                            nameDiv.className = "project-name";
-
-                                            nameDiv.textContent = project.name;
-
-                        
-
-                                            const dateDiv = document.createElement("div");
-
-                                            dateDiv.className = "project-date";
-
-                                            dateDiv.textContent = `Updated ${formatDate(project.updatedAt)}`;
-
-                        
-
-                                            const statsDiv = document.createElement("div");
-
-                                            statsDiv.className = "project-stats";
-
-                        
-
-                                            const secretCountDiv = document.createElement("div");
-
-                                            secretCountDiv.className = "secret-count";
-
-                                            secretCountDiv.textContent = `${project.secretCount} secrets`;
-
-                        
-
-                                            const actionsDiv = document.createElement("div");
-
-                                            actionsDiv.className = "project-actions";
-
-                        
-
-                                            const dropdownDiv = document.createElement("div");
-
-                                            dropdownDiv.className = "dropdown";
-
-                        
-
-                                            const dropdownBtn = document.createElement("button");
-
-                                            dropdownBtn.className = "btn btn-secondary dropdown-toggle";
-
-                                            dropdownBtn.textContent = "⋯";
-
-                                            dropdownBtn.onclick = (e) => {
-
-                                                e.stopPropagation();
-
-                                                toggleDropdown(project.name);
-
-                                            };
-
-                        
-
-                                            const dropdownMenu = document.createElement("div");
-
-                                            dropdownMenu.className = "dropdown-menu hidden";
-
-                                            dropdownMenu.id = `dropdown-${project.name}`;
-
-                        
-
-                                            const deleteBtn = document.createElement("button");
-
-                                            deleteBtn.className = "dropdown-item";
-
-                                            deleteBtn.textContent = "Delete Project";
-
-                                            deleteBtn.onclick = (e) => {
-
-                                                e.stopPropagation();
-
-                                                deleteProject(project.name);
-
-                                            };
-
-                        
-
-                                            dropdownMenu.appendChild(deleteBtn);
-
-                                            dropdownDiv.appendChild(dropdownBtn);
-
-                                            dropdownDiv.appendChild(dropdownMenu);
-
-                                            actionsDiv.appendChild(dropdownDiv);
-
-                                            statsDiv.appendChild(secretCountDiv);
-
-                                            statsDiv.appendChild(actionsDiv);
-
-                                            card.appendChild(nameDiv);
-
-                                            card.appendChild(dateDiv);
-
-                                            card.appendChild(statsDiv);
-
-                        
-
-                                            return card;
-
-                                        }
-
-                        
-
-                                        function createEmptyStateElement() {
-
-                                            const emptyState = document.createElement("div");
-
-                                            emptyState.className = "empty-state";
-
-                        
-
-                                            const icon = document.createElement("div");
-
-                                            icon.className = "empty-state-icon";
-
-                                            icon.textContent = "📁";
-
-                        
-
-                                            const title = document.createElement("div");
-
-                                            title.className = "empty-state-title";
-
-                                            title.textContent = "No projects found";
-
-                        
-
-                                            const description = document.createElement("div");
-
-                                            description.className = "empty-state-description";
-
-                                            description.textContent =
-
-                                                projects.length === 0 ? "Create your first project to start managing your secrets securely." : "No projects match your search criteria.";
-
-                        
-
-                                            emptyState.appendChild(icon);
-
-                                            emptyState.appendChild(title);
-
-                                            emptyState.appendChild(description);
-
-                        
-
-                                            if (projects.length === 0) {
-
-                                                const createBtn = document.createElement("button");
-
-                                                createBtn.className = "btn";
-
-                                                createBtn.textContent = "Create Project";
-
-                                                createBtn.onclick = showAddProjectModal;
-
-                                                emptyState.appendChild(createBtn);
-
-                                            }
-
-                                            return emptyState;
-
-                                        }
-
-                        
-
-                                        // 프로젝트 렌더링
-
-                                        function renderProjects() {
-
-                                            projectsContainer.innerHTML = ""; // Clear existing content
-
-                        
-
-                                            if (filteredProjects.length === 0) {
-
-                                                projectsContainer.appendChild(createEmptyStateElement());
-
-                                                return;
-
-                                            }
-
-                        
-
-                                            const grid = document.createElement("div");
-
-                                            grid.className = "projects-grid";
-
-                                            filteredProjects.forEach((project) => {
-
-                                                grid.appendChild(createProjectCard(project));
-
-                                            });
-
-                                            projectsContainer.appendChild(grid);
-
-                                        }
-
-                        
-
-                                        // 프로젝트 열기
-
-                                        function openProject(projectName) {
-
-                                            window.location.href = `project.html?name=${encodeURIComponent(projectName)}`;
-
-                                        }
-
-                        
-
-                                        // 프로젝트 삭제
-
-                                        async function deleteProject(projectName) {
-
-                                            if (!confirm(`Are you sure you want to delete project "${projectName}"? This will also delete all secrets in this project.`)) {
-
-                                                return;
-
-                                            }
-
-                        
-
-                                            try {
-
-                                                const result = await window.localkeys.projects.delete(projectName);
-
-                        
-
-                                                if (result.success) {
-
-                                                    await loadProjects();
-
-                                                    notificationManager.success(`Project "${projectName}" deleted successfully`);
-
-                                                } else {
-
-                                                    notificationManager.error(`Failed to delete project: ${result.error}`);
-
-                                                }
-
-                                            } catch (error) {
-
-                                                notificationManager.error(`Error deleting project: ${error.message}`);
-
-                                            }
-
-                                        }
-
-                        
-
-                                        // 프로젝트 추가 모달 표시
-
-                                        function showAddProjectModal() {
-
-                                            addProjectModal.classList.remove("hidden");
-
-                                            projectNameInput.value = "";
-
-                        
-
-                                            // 다음 프레임에서 애니메이션 시작
-
-                                            requestAnimationFrame(() => {
-
-                                                addProjectModal.classList.add("show");
-
-                                            });
-
-                        
-
-                                            projectNameInput.focus();
-
-                                        }
-
-                        
-
-                                        // 프로젝트 추가 모달 숨기기
-
-                                        function hideAddProjectModal() {
-
-                                            addProjectModal.classList.remove("show");
-
-                                            addProjectModal.classList.add("closing");
-
-                        
-
-                                            // 애니메이션 완료 후 모달 완전히 숨기기
-
-                                            setTimeout(() => {
-
-                                                addProjectModal.classList.add("hidden");
-
-                                                addProjectModal.classList.remove("closing");
-
-                                            }, 250);
-
-                                        }
-
-                        
-
-                                        // 프로젝트 추가
-
-                                        async function addProject() {
-
-                                            const projectName = projectNameInput.value.trim();
-
-                        
-
-                                            if (!projectName) {
-
-                                                notificationManager.error("Please enter a project name");
-
-                                                return;
-
-                                            }
-
-                        
-
-                                            if (projects.some((p) => p.name === projectName)) {
-
-                                                notificationManager.error("A project with this name already exists");
-
-                                                return;
-
-                                            }
-
-                        
-
-                                            try {
-
-                                                const result = await window.localkeys.projects.create(projectName);
-
-                        
-
-                                                if (result.success) {
-
-                                                    hideAddProjectModal();
-
-                                                    await loadProjects();
-
-                                                    notificationManager.success(`Project "${projectName}" created successfully`);
-
-                                                } else {
-
-                                                    notificationManager.error(`Failed to create project: ${result.error}`);
-
-                                                }
-
-                                            } catch (error) {
-
-                                                notificationManager.error(`Error creating project: ${error.message}`);
-
-                                            }
-
-                                        }
-
-                        
-
-                                        // 검색
-
-                                        function searchProjects() {
-
-                                            const query = searchInput.value.toLowerCase().trim();
-
-                        
-
-                                            if (!query) {
-
-                                                filteredProjects = projects;
-
-                                            } else {
-
-                                                filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(query));
-
-                                            }
-
-                        
-
-                                            renderProjects();
-
-                                        }
-
-                        
-
-                                        function formatDate(dateString) {
-
-                                            const date = new Date(dateString);
-
-                                            const now = new Date();
-
-                                            const diffMs = now - date;
-
-                                            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-                        
-
-                                            if (diffDays === 0) {
-
-                                                return "today";
-
-                                            } else if (diffDays === 1) {
-
-                                                return "yesterday";
-
-                                            } else if (diffDays < 7) {
-
-                                                return `${diffDays} days ago`;
-
-                                            } else if (diffDays < 30) {
-
-                                                return `${Math.floor(diffDays / 7)} weeks ago`;
-
-                                            } else {
-
-                                                return date.toLocaleDateString();
-
-                                            }
-
-                                        }
-
-                        
-
-                                        // 이벤트 리스너
-
-                                        searchInput.addEventListener("input", searchProjects);
-
-                                        addProjectBtn.addEventListener("click", showAddProjectModal);
-
-                                        settingsDropdownBtn.addEventListener("click", () => toggleDropdown("settings"));
-
-                        
-
-                                        logsBtn.addEventListener("click", function () {
-
-                                            window.location.href = "logs.html";
-
-                                        });
-
-        
-
-                        lockBtn.addEventListener("click", async function () {
-
-                            try {
-
-                                await window.localkeys.vault.lock();
-
-                            } catch (error) {
-
-                                notificationManager.error(`Error locking vault: ${error.message}`);
-
-                            }
-
-                        });
-
-        
-
-                        cancelAddProject.addEventListener("click", hideAddProjectModal);
-
-                        confirmAddProject.addEventListener("click", addProject);
-
-        
-
-                        projectNameInput.addEventListener("keypress", function (e) {
-
-                            if (e.key === "Enter") {
-
-                                addProject();
-
-                            }
-
-                        });
-
-        
-
-                        // 모달 외부 클릭 감지를 위한 변수
-
-                        let mouseDownTarget = null;
-
-        
-
-                        // 마우스 다운 이벤트 추적
-
-                        document.addEventListener("mousedown", function (e) {
-
-                            mouseDownTarget = e.target;
-
-                        });
-
-        
-
-                        addProjectModal.addEventListener("click", function (e) {
-
-                            // 클릭 시작과 끝 모두 모달 오버레이인 경우에만 닫기
-
-                            if (mouseDownTarget === addProjectModal && e.target === addProjectModal) {
-
-                                hideAddProjectModal();
-
-                            }
-
-                        });
-
-        
-
-                        // 마우스 업 이벤트 추적 - 클릭 해제도 밖에서 해야 함
-
-                        document.addEventListener("mouseup", function (e) {
-
-                            // 클릭 시작이 모달 오버레이였지만 클릭 해제가 모달 외부인 경우 모달 닫기
-
-                            if (mouseDownTarget === addProjectModal && e.target !== addProjectModal) {
-
-                                mouseDownTarget = null; // 초기화
-
-                                return;
-
-                            }
-
-                        });
-
-        
-
-                        // 드롭다운 토글 함수
-
-                        function toggleDropdown(id) {
-
-                            const dropdown = document.getElementById(`dropdown-${id}`);
-
-                            const allDropdowns = document.querySelectorAll(".dropdown-menu");
-
-        
-
-                            // 다른 드롭다운 모두 닫기
-
-                            allDropdowns.forEach((d) => {
-
-                                if (d !== dropdown) {
-
-                                    d.classList.add("hidden");
-
-                                }
-
-                            });
-
-        
-
-                            // 현재 드롭다운 토글
-
-                            dropdown.classList.toggle("hidden");
-
+                            renderProjects();
+                        } else {
+                            notificationManager.error("Failed to load projects");
                         }
+                    } catch (error) {
+                        notificationManager.error(`Error loading projects: ${error.message}`);
+                    }
+                }
 
-        
+                function createProjectCard(project) {
+                    const card = document.createElement("div");
 
-                        // 외부 클릭 시 드롭다운 닫기
+                    card.className = "project-card";
 
-                        document.addEventListener("click", function (e) {
+                    card.onclick = () => openProject(project.name);
 
-                            if (!e.target.closest(".dropdown")) {
+                    const nameDiv = document.createElement("div");
 
-                                const allDropdowns = document.querySelectorAll(".dropdown-menu");
+                    nameDiv.className = "project-name";
 
-                                allDropdowns.forEach((d) => d.classList.add("hidden"));
+                    nameDiv.textContent = project.name;
 
-                            }
+                    const dateDiv = document.createElement("div");
 
-                        });
+                    dateDiv.className = "project-date";
 
-        
+                    dateDiv.textContent = `Updated ${formatDate(project.updatedAt)}`;
 
-                        // 자동 새로고침 설정 (10초마다)
+                    const statsDiv = document.createElement("div");
 
-                        const autoRefreshInterval = setInterval(async () => {
+                    statsDiv.className = "project-stats";
 
-                            if (document.visibilityState === "visible") {
+                    const secretCountDiv = document.createElement("div");
 
-                                await loadProjects();
+                    secretCountDiv.className = "secret-count";
 
-                            }
+                    secretCountDiv.textContent = `${project.secretCount} secrets`;
 
-                        }, 10000);
+                    const actionsDiv = document.createElement("div");
 
-        
+                    actionsDiv.className = "project-actions";
 
-                        // 페이지가 보이지 않을 때는 자동 새로고침 중지
+                    const dropdownDiv = document.createElement("div");
 
-                        document.addEventListener("visibilitychange", () => {
+                    dropdownDiv.className = "dropdown";
 
-                            if (document.visibilityState === "hidden") {
+                    const dropdownBtn = document.createElement("button");
 
-                                clearInterval(autoRefreshInterval);
+                    dropdownBtn.className = "btn btn-secondary dropdown-toggle";
 
-                            }
+                    dropdownBtn.textContent = "⋯";
 
-                        });
+                    dropdownBtn.onclick = (e) => {
+                        e.stopPropagation();
 
-        
+                        toggleDropdown(project.name);
+                    };
 
-                        // CLI 버튼 상태 관리
+                    const dropdownMenu = document.createElement("div");
 
-                        const setCliButtonState = (text, disabled, opacity, onclick) => {
+                    dropdownMenu.className = "dropdown-menu hidden";
 
-                            installCliBtn.textContent = text;
+                    dropdownMenu.id = `dropdown-${project.name}`;
 
-                            installCliBtn.disabled = disabled;
+                    const deleteBtn = document.createElement("button");
 
-                            installCliBtn.style.opacity = opacity;
+                    deleteBtn.className = "dropdown-item";
 
-                            installCliBtn.onclick = onclick;
+                    deleteBtn.textContent = "Delete Project";
 
-                        };
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
 
-        
+                        deleteProject(project.name);
+                    };
 
-                        // CLI 작업 처리 (설치/제거)
+                    dropdownMenu.appendChild(deleteBtn);
 
-                        async function handleCliAction(action) {
+                    dropdownDiv.appendChild(dropdownBtn);
 
-                            try {
+                    dropdownDiv.appendChild(dropdownMenu);
 
-                                const isInstalling = action === "install";
+                    actionsDiv.appendChild(dropdownDiv);
 
-                                const loadingText = isInstalling ? "Installing..." : "Uninstalling...";
+                    statsDiv.appendChild(secretCountDiv);
 
-                                const apiMethod = isInstalling ? window.localkeys.cli.install : window.localkeys.cli.uninstall;
+                    statsDiv.appendChild(actionsDiv);
 
-                                const successPrefix = isInstalling ? "installation" : "uninstallation";
+                    card.appendChild(nameDiv);
 
-        
+                    card.appendChild(dateDiv);
 
-                                setCliButtonState(loadingText, true, "0.6", null);
+                    card.appendChild(statsDiv);
 
-        
+                    return card;
+                }
 
-                                const result = await apiMethod();
+                function createEmptyStateElement() {
+                    const emptyState = document.createElement("div");
 
-        
+                    emptyState.className = "empty-state";
 
-                                if (result.success) {
+                    const icon = document.createElement("div");
 
-                                    notificationManager.success(result.message);
+                    icon.className = "empty-state-icon";
 
-                                    await checkCliStatus();
+                    icon.textContent = "📁";
 
-                                } else {
+                    const title = document.createElement("div");
 
-                                    notificationManager.error(result.error);
+                    title.className = "empty-state-title";
 
-                                    setCliButtonState(isInstalling ? "Install CLI" : "Uninstall CLI", false, "1", isInstalling ? installCli : uninstallCli);
+                    title.textContent = "No projects found";
 
-                                }
+                    const description = document.createElement("div");
 
-                            } catch (error) {
+                    description.className = "empty-state-description";
 
-                                const actionName = action === "install" ? "installation" : "uninstallation";
+                    description.textContent = projects.length === 0 ? "Create your first project to start managing your secrets securely." : "No projects match your search criteria.";
 
-                                notificationManager.error(`CLI ${actionName} failed: ${error.message}`);
+                    emptyState.appendChild(icon);
 
-                                setCliButtonState(action === "install" ? "Install CLI" : "Uninstall CLI", false, "1", action === "install" ? installCli : uninstallCli);
+                    emptyState.appendChild(title);
 
-                            }
+                    emptyState.appendChild(description);
 
-                        }
+                    if (projects.length === 0) {
+                        const createBtn = document.createElement("button");
 
-        
+                        createBtn.className = "btn";
 
-                        // CLI 설치 상태 확인
+                        createBtn.textContent = "Create Project";
 
-                        async function checkCliStatus() {
+                        createBtn.onclick = showAddProjectModal;
 
-                            try {
+                        emptyState.appendChild(createBtn);
+                    }
 
-                                const result = await window.localkeys.cli.check();
+                    return emptyState;
+                }
 
-                                if (result.installed) {
+                // 프로젝트 렌더링
 
-                                    setCliButtonState("Uninstall CLI", false, "1", () => handleCliAction("uninstall"));
+                function renderProjects() {
+                    projectsContainer.innerHTML = ""; // Clear existing content
 
-                                } else {
+                    if (filteredProjects.length === 0) {
+                        projectsContainer.appendChild(createEmptyStateElement());
 
-                                    setCliButtonState("Install CLI", false, "1", () => handleCliAction("install"));
+                        return;
+                    }
 
-                                }
+                    const grid = document.createElement("div");
 
-                            } catch (error) {
+                    grid.className = "projects-grid";
 
-                                setCliButtonState("Install CLI", false, "1", () => handleCliAction("install"));
-
-                            }
-
-                        }
-
-        
-
-                        // CLI 설치 함수
-
-                        const installCli = () => handleCliAction("install");
-
-        
-
-                        // CLI 제거 함수
-
-                        const uninstallCli = () => {
-
-                            if (confirm("Are you sure you want to uninstall the LocalKeys CLI?")) {
-
-                                handleCliAction("uninstall");
-
-                            }
-
-                        };
-
-        
-
-                        // 초기 로드
-
-                        loadProjects();
-
-                        checkCliStatus();
-
+                    filteredProjects.forEach((project) => {
+                        grid.appendChild(createProjectCard(project));
                     });
 
-                </script>
+                    projectsContainer.appendChild(grid);
+                }
+
+                // 프로젝트 열기
+
+                function openProject(projectName) {
+                    window.location.href = `project.html?name=${encodeURIComponent(projectName)}`;
+                }
+
+                // 프로젝트 삭제
+
+                async function deleteProject(projectName) {
+                    if (!confirm(`Are you sure you want to delete project "${projectName}"? This will also delete all secrets in this project.`)) {
+                        return;
+                    }
+
+                    try {
+                        const result = await window.localkeys.projects.delete(projectName);
+
+                        if (result.success) {
+                            await loadProjects();
+
+                            notificationManager.success(`Project "${projectName}" deleted successfully`);
+                        } else {
+                            notificationManager.error(`Failed to delete project: ${result.error}`);
+                        }
+                    } catch (error) {
+                        notificationManager.error(`Error deleting project: ${error.message}`);
+                    }
+                }
+
+                // 프로젝트 추가 모달 표시
+
+                function showAddProjectModal() {
+                    addProjectModal.classList.remove("hidden");
+
+                    projectNameInput.value = "";
+
+                    // 다음 프레임에서 애니메이션 시작
+
+                    requestAnimationFrame(() => {
+                        addProjectModal.classList.add("show");
+                    });
+
+                    projectNameInput.focus();
+                }
+
+                // 프로젝트 추가 모달 숨기기
+
+                function hideAddProjectModal() {
+                    addProjectModal.classList.remove("show");
+
+                    addProjectModal.classList.add("closing");
+
+                    // 애니메이션 완료 후 모달 완전히 숨기기
+
+                    setTimeout(() => {
+                        addProjectModal.classList.add("hidden");
+
+                        addProjectModal.classList.remove("closing");
+                    }, 250);
+                }
+
+                // 프로젝트 추가
+
+                async function addProject() {
+                    const projectName = projectNameInput.value.trim();
+
+                    if (!projectName) {
+                        notificationManager.error("Please enter a project name");
+
+                        return;
+                    }
+
+                    if (projects.some((p) => p.name === projectName)) {
+                        notificationManager.error("A project with this name already exists");
+
+                        return;
+                    }
+
+                    try {
+                        const result = await window.localkeys.projects.create(projectName);
+
+                        if (result.success) {
+                            hideAddProjectModal();
+
+                            await loadProjects();
+
+                            notificationManager.success(`Project "${projectName}" created successfully`);
+                        } else {
+                            notificationManager.error(`Failed to create project: ${result.error}`);
+                        }
+                    } catch (error) {
+                        notificationManager.error(`Error creating project: ${error.message}`);
+                    }
+                }
+
+                // 검색
+
+                function searchProjects() {
+                    const query = searchInput.value.toLowerCase().trim();
+
+                    if (!query) {
+                        filteredProjects = projects;
+                    } else {
+                        filteredProjects = projects.filter((project) => project.name.toLowerCase().includes(query));
+                    }
+
+                    renderProjects();
+                }
+
+                function formatDate(dateString) {
+                    const date = new Date(dateString);
+
+                    const now = new Date();
+
+                    const diffMs = now - date;
+
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                    if (diffDays === 0) {
+                        return "today";
+                    } else if (diffDays === 1) {
+                        return "yesterday";
+                    } else if (diffDays < 7) {
+                        return `${diffDays} days ago`;
+                    } else if (diffDays < 30) {
+                        return `${Math.floor(diffDays / 7)} weeks ago`;
+                    } else {
+                        return date.toLocaleDateString();
+                    }
+                }
+
+                // 이벤트 리스너
+
+                searchInput.addEventListener("input", searchProjects);
+
+                addProjectBtn.addEventListener("click", showAddProjectModal);
+
+                settingsDropdownBtn.addEventListener("click", () => toggleDropdown("settings"));
+
+                logsBtn.addEventListener("click", function () {
+                    window.location.href = "logs.html";
+                });
+
+                lockBtn.addEventListener("click", async function () {
+                    try {
+                        await window.localkeys.vault.lock();
+                    } catch (error) {
+                        notificationManager.error(`Error locking vault: ${error.message}`);
+                    }
+                });
+
+                cancelAddProject.addEventListener("click", hideAddProjectModal);
+
+                confirmAddProject.addEventListener("click", addProject);
+
+                projectNameInput.addEventListener("keypress", function (e) {
+                    if (e.key === "Enter") {
+                        addProject();
+                    }
+                });
+
+                // 모달 외부 클릭 감지를 위한 변수
+
+                let mouseDownTarget = null;
+
+                // 마우스 다운 이벤트 추적
+
+                document.addEventListener("mousedown", function (e) {
+                    mouseDownTarget = e.target;
+                });
+
+                addProjectModal.addEventListener("click", function (e) {
+                    // 클릭 시작과 끝 모두 모달 오버레이인 경우에만 닫기
+
+                    if (mouseDownTarget === addProjectModal && e.target === addProjectModal) {
+                        hideAddProjectModal();
+                    }
+                });
+
+                // 마우스 업 이벤트 추적 - 클릭 해제도 밖에서 해야 함
+
+                document.addEventListener("mouseup", function (e) {
+                    // 클릭 시작이 모달 오버레이였지만 클릭 해제가 모달 외부인 경우 모달 닫기
+
+                    if (mouseDownTarget === addProjectModal && e.target !== addProjectModal) {
+                        mouseDownTarget = null; // 초기화
+
+                        return;
+                    }
+                });
+
+                // 드롭다운 토글 함수
+
+                function toggleDropdown(id) {
+                    const dropdown = document.getElementById(`dropdown-${id}`);
+
+                    const allDropdowns = document.querySelectorAll(".dropdown-menu");
+
+                    // 다른 드롭다운 모두 닫기
+
+                    allDropdowns.forEach((d) => {
+                        if (d !== dropdown) {
+                            d.classList.add("hidden");
+                        }
+                    });
+
+                    // 현재 드롭다운 토글
+
+                    dropdown.classList.toggle("hidden");
+                }
+
+                // 외부 클릭 시 드롭다운 닫기
+
+                document.addEventListener("click", function (e) {
+                    if (!e.target.closest(".dropdown")) {
+                        const allDropdowns = document.querySelectorAll(".dropdown-menu");
+
+                        allDropdowns.forEach((d) => d.classList.add("hidden"));
+                    }
+                });
+
+                // 자동 새로고침 설정 (10초마다)
+
+                const autoRefreshInterval = setInterval(async () => {
+                    if (document.visibilityState === "visible") {
+                        await loadProjects();
+                    }
+                }, 10000);
+
+                // 페이지가 보이지 않을 때는 자동 새로고침 중지
+
+                document.addEventListener("visibilitychange", () => {
+                    if (document.visibilityState === "hidden") {
+                        clearInterval(autoRefreshInterval);
+                    }
+                });
+
+                // CLI 버튼 상태 관리
+
+                const setCliButtonState = (text, disabled, opacity, onclick) => {
+                    installCliBtn.textContent = text;
+
+                    installCliBtn.disabled = disabled;
+
+                    installCliBtn.style.opacity = opacity;
+
+                    installCliBtn.onclick = onclick;
+                };
+
+                // CLI 작업 처리 (설치/제거)
+
+                async function handleCliAction(action) {
+                    try {
+                        const isInstalling = action === "install";
+
+                        const loadingText = isInstalling ? "Installing..." : "Uninstalling...";
+
+                        const apiMethod = isInstalling ? window.localkeys.cli.install : window.localkeys.cli.uninstall;
+
+                        const successPrefix = isInstalling ? "installation" : "uninstallation";
+
+                        setCliButtonState(loadingText, true, "0.6", null);
+
+                        const result = await apiMethod();
+
+                        if (result.success) {
+                            notificationManager.success(result.message);
+
+                            await checkCliStatus();
+                        } else {
+                            notificationManager.error(result.error);
+
+                            setCliButtonState(isInstalling ? "Install CLI" : "Uninstall CLI", false, "1", isInstalling ? installCli : uninstallCli);
+                        }
+                    } catch (error) {
+                        const actionName = action === "install" ? "installation" : "uninstallation";
+
+                        notificationManager.error(`CLI ${actionName} failed: ${error.message}`);
+
+                        setCliButtonState(action === "install" ? "Install CLI" : "Uninstall CLI", false, "1", action === "install" ? installCli : uninstallCli);
+                    }
+                }
+
+                // CLI 설치 상태 확인
+
+                async function checkCliStatus() {
+                    try {
+                        const result = await window.localkeys.cli.check();
+
+                        if (result.installed) {
+                            setCliButtonState("Uninstall CLI", false, "1", () => handleCliAction("uninstall"));
+                        } else {
+                            setCliButtonState("Install CLI", false, "1", () => handleCliAction("install"));
+                        }
+                    } catch (error) {
+                        setCliButtonState("Install CLI", false, "1", () => handleCliAction("install"));
+                    }
+                }
+
+                // CLI 설치 함수
+
+                const installCli = () => handleCliAction("install");
+
+                // CLI 제거 함수
+
+                const uninstallCli = () => {
+                    if (confirm("Are you sure you want to uninstall the LocalKeys CLI?")) {
+                        handleCliAction("uninstall");
+                    }
+                };
+
+                // 초기 로드
+
+                loadProjects();
+
+                checkCliStatus();
+            });
+        </script>
     </body>
 </html>

@@ -1,0 +1,164 @@
+{
+    "common": {
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "close": "Close",
+        "back": "Back",
+        "search": "Search",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success"
+    },
+    "setup": {
+        "title": "LocalKeys",
+        "subtitle": "Secure Credential Management",
+        "cardTitle": "Master Password Setup",
+        "password": "Master Password",
+        "passwordPlaceholder": "Enter a strong password",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Confirm your password",
+        "createVault": "Create Vault",
+        "requirements": {
+            "length": "At least 12 characters",
+            "uppercase": "Contains uppercase letter",
+            "lowercase": "Contains lowercase letter",
+            "number": "Contains number",
+            "special": "Contains special character"
+        },
+        "warning": {
+            "line1": "Your master password is used to encrypt all your data.",
+            "line2": "It cannot be recovered if lost. Please store it safely."
+        },
+        "cliModal": {
+            "title": "Install CLI Tool",
+            "description": "Would you like to install the LocalKeys CLI tool? This allows you to use LocalKeys from the command line.",
+            "features": "CLI Features:",
+            "feature1": "Manage secrets from terminal",
+            "feature2": "Run commands with environment variables",
+            "feature3": "Automated workflows",
+            "skip": "Skip",
+            "install": "Install CLI"
+        }
+    },
+    "lock": {
+        "title": "LocalKeys",
+        "subtitle": "Enter your master password to unlock",
+        "passwordPlaceholder": "Enter your password"
+    },
+    "dashboard": {
+        "title": "Projects",
+        "addProject": "Add Project",
+        "logs": "Logs",
+        "lock": "Lock",
+        "installCli": "Install CLI",
+        "searchPlaceholder": "Search projects...",
+        "addProjectModal": {
+            "title": "Add New Project",
+            "label": "Project Name",
+            "placeholder": "Enter project name",
+            "add": "Add Project"
+        },
+        "emptyState": {
+            "icon": "📁",
+            "title": "No projects found",
+            "descriptionEmpty": "Create your first project to get started.",
+            "descriptionSearch": "No projects match your search criteria."
+        },
+        "deleteProject": {
+            "confirm": "Are you sure you want to delete project \"{{name}}\"? All secrets in this project will be permanently deleted."
+        },
+        "notifications": {
+            "projectCreated": "Project \"{{name}}\" created successfully",
+            "projectDeleted": "Project \"{{name}}\" deleted successfully",
+            "failedToLoad": "Failed to load projects",
+            "failedToCreate": "Failed to create project",
+            "failedToDelete": "Failed to delete project",
+            "enterName": "Please enter a project name",
+            "projectExists": "A project with this name already exists",
+            "cliInstalled": "CLI installed successfully",
+            "cliUninstalled": "CLI uninstalled successfully",
+            "cliAlreadyInstalled": "CLI is already installed",
+            "cliNotInstalled": "CLI is not installed"
+        }
+    },
+    "project": {
+        "addSecret": "Add Secret",
+        "exportEnv": "Export .env",
+        "searchPlaceholder": "Search secrets...",
+        "addSecretModal": {
+            "title": "Add New Secret",
+            "keyLabel": "Key",
+            "keyPlaceholder": "Enter secret key",
+            "valueLabel": "Value",
+            "valuePlaceholder": "Enter secret value",
+            "add": "Add Secret"
+        },
+        "editSecretModal": {
+            "title": "Edit Secret",
+            "keyLabel": "Key",
+            "valueLabel": "Value",
+            "save": "Save Changes"
+        },
+        "deleteSecret": "Delete Secret",
+        "emptyState": {
+            "icon": "🔑",
+            "title": "No secrets found",
+            "descriptionEmpty": "Add your first secret to this project.",
+            "descriptionSearch": "No secrets match your search criteria."
+        },
+        "deleteConfirm": "Are you sure you want to delete secret \"{{key}}\"?",
+        "notifications": {
+            "secretAdded": "Secret \"{{key}}\" added successfully",
+            "secretSaved": "Secret \"{{key}}\" saved successfully",
+            "secretDeleted": "Secret \"{{key}}\" deleted successfully",
+            "exported": "Secrets exported to {{path}}",
+            "failedToLoad": "Failed to load secrets",
+            "failedToAdd": "Failed to add secret",
+            "failedToSave": "Failed to save secret",
+            "failedToDelete": "Failed to delete secret",
+            "failedToExport": "Failed to export secrets",
+            "enterKey": "Please enter a secret key",
+            "keyExists": "A secret with this key already exists",
+            "noProject": "No project specified"
+        }
+    },
+    "logs": {
+        "title": "Access Logs",
+        "clearAll": "Clear All Logs",
+        "emptyState": {
+            "icon": "📋",
+            "title": "No logs found",
+            "description": "No logs have been recorded yet."
+        },
+        "clearConfirm": "Are you sure you want to clear all logs? This action cannot be undone.",
+        "timeAgo": {
+            "justNow": "Just now",
+            "minutesAgo": "{{count}} minute{{plural}} ago",
+            "hoursAgo": "{{count}} hour{{plural}} ago",
+            "daysAgo": "{{count}} day{{plural}} ago"
+        },
+        "notifications": {
+            "cleared": "All logs have been cleared",
+            "failedToClear": "Failed to clear logs",
+            "failedToLoad": "Failed to load logs"
+        }
+    },
+    "approval": {
+        "title": "Access Request",
+        "project": "Project:",
+        "keys": "Keys:",
+        "action": "Action:",
+        "actionText": "Read access requested",
+        "approve": "Approve",
+        "deny": "Deny"
+    },
+    "update": {
+        "title": "New update available",
+        "description": "v{{oldVersion}} ➠ v{{newVersion}}<br/>Click the update button to see more details.",
+        "update": "Update"
+    }
+}
