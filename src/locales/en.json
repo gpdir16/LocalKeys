@@ -13,37 +13,6 @@
         "error": "Error",
         "success": "Success"
     },
-    "setup": {
-        "title": "LocalKeys",
-        "subtitle": "Secure Credential Management",
-        "cardTitle": "Master Password Setup",
-        "password": "Master Password",
-        "passwordPlaceholder": "Enter a strong password",
-        "confirmPassword": "Confirm Password",
-        "confirmPasswordPlaceholder": "Confirm your password",
-        "createVault": "Create Vault",
-        "requirements": {
-            "length": "At least 12 characters",
-            "uppercase": "Contains uppercase letter",
-            "lowercase": "Contains lowercase letter",
-            "number": "Contains number",
-            "special": "Contains special character"
-        },
-        "warning": {
-            "line1": "Your master password is used to encrypt all your data.",
-            "line2": "It cannot be recovered if lost. Please store it safely."
-        },
-        "cliModal": {
-            "title": "Install CLI Tool",
-            "description": "Would you like to install the LocalKeys CLI tool? This allows you to use LocalKeys from the command line.",
-            "features": "CLI Features:",
-            "feature1": "Manage secrets from terminal",
-            "feature2": "Run commands with environment variables",
-            "feature3": "Automated workflows",
-            "skip": "Skip",
-            "install": "Install CLI"
-        }
-    },
     "lock": {
         "title": "LocalKeys",
         "subtitle": "Enter your master password to unlock",
@@ -55,6 +24,9 @@
         "logs": "Logs",
         "lock": "Lock",
         "installCli": "Install CLI",
+        "uninstallCli": "Uninstall CLI",
+        "installing": "Installing...",
+        "uninstalling": "Uninstalling...",
         "searchPlaceholder": "Search projects...",
         "addProjectModal": {
             "title": "Add New Project",
@@ -65,12 +37,23 @@
         "emptyState": {
             "icon": "📁",
             "title": "No projects found",
-            "descriptionEmpty": "Create your first project to get started.",
-            "descriptionSearch": "No projects match your search criteria."
+            "descriptionEmpty": "Create your first project to start managing your secrets securely.",
+            "descriptionSearch": "No projects match your search criteria.",
+            "createProject": "Create Project"
         },
         "deleteProject": {
-            "confirm": "Are you sure you want to delete project \"{{name}}\"? All secrets in this project will be permanently deleted."
+            "confirm": "Are you sure you want to delete project \"{{name}}\"? This will also delete all secrets in this project.",
+            "deleteBtn": "Delete Project"
         },
+        "time": {
+            "today": "today",
+            "yesterday": "yesterday",
+            "daysAgo": "{{count}} days ago",
+            "weeksAgo": "{{count}} weeks ago"
+        },
+        "secretCount": "{{count}} secrets",
+        "updated": "Updated {{time}}",
+        "confirmUninstallCli": "Are you sure you want to uninstall the LocalKeys CLI?",
         "notifications": {
             "projectCreated": "Project \"{{name}}\" created successfully",
             "projectDeleted": "Project \"{{name}}\" deleted successfully",
@@ -79,16 +62,15 @@
             "failedToDelete": "Failed to delete project",
             "enterName": "Please enter a project name",
             "projectExists": "A project with this name already exists",
-            "cliInstalled": "CLI installed successfully",
-            "cliUninstalled": "CLI uninstalled successfully",
-            "cliAlreadyInstalled": "CLI is already installed",
-            "cliNotInstalled": "CLI is not installed"
+            "cliInstallFailed": "CLI {{action}} failed: {{error}}",
+            "lockError": "Error locking vault: {{error}}"
         }
     },
     "project": {
         "addSecret": "Add Secret",
         "exportEnv": "Export .env",
         "searchPlaceholder": "Search secrets...",
+        "edit": "Edit",
         "addSecretModal": {
             "title": "Add New Secret",
             "keyLabel": "Key",
@@ -137,9 +119,12 @@
         "clearConfirm": "Are you sure you want to clear all logs? This action cannot be undone.",
         "timeAgo": {
             "justNow": "Just now",
-            "minutesAgo": "{{count}} minute{{plural}} ago",
-            "hoursAgo": "{{count}} hour{{plural}} ago",
-            "daysAgo": "{{count}} day{{plural}} ago"
+            "minuteAgo": "{{count}} minute ago",
+            "minutesAgo": "{{count}} minutes ago",
+            "hourAgo": "{{count}} hour ago",
+            "hoursAgo": "{{count}} hours ago",
+            "dayAgo": "{{count}} day ago",
+            "daysAgo": "{{count}} days ago"
         },
         "notifications": {
             "cleared": "All logs have been cleared",
@@ -160,5 +145,63 @@
         "title": "New update available",
         "description": "v{{oldVersion}} ➠ v{{newVersion}}<br/>Click the update button to see more details.",
         "update": "Update"
+    },
+    "license": {
+        "title": "LocalKeys",
+        "subtitle": "Enter your credentials to activate license",
+        "userIdPlaceholder": "User ID",
+        "passwordPlaceholder": "Password",
+        "activateBtn": "Activate License",
+        "activating": "Activating...",
+        "errors": {
+            "emptyFields": "Please enter both User ID and Password",
+            "checkingLicense": "Checking license...",
+            "activationFailed": "License activation failed",
+            "noLicense": "No license found for this account",
+            "invalidCredentials": "Invalid credentials",
+            "invalidSignature": "Invalid license signature",
+            "networkError": "Network error. Please check your connection.",
+            "timeout": "Connection timeout. Please try again.",
+            "genericError": "An error occurred. Please try again."
+        },
+        "success": "License activated successfully!"
+    },
+    "setup": {
+        "title": "LocalKeys",
+        "subtitle": "Secure Credential Management",
+        "cardTitle": "Master Password Setup",
+        "password": "Master Password",
+        "passwordPlaceholder": "Enter a strong password",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Confirm your password",
+        "createVault": "Create Vault",
+        "creatingVault": "Creating Vault...",
+        "requirements": {
+            "length": "At least 12 characters",
+            "uppercase": "Contains uppercase letter",
+            "lowercase": "Contains lowercase letter",
+            "number": "Contains number",
+            "special": "Contains special character"
+        },
+        "warning": {
+            "line1": "Your master password is used to encrypt all your data.",
+            "line2": "It cannot be recovered if lost. Please store it safely."
+        },
+        "errors": {
+            "requirementNotMet": "Please meet all password requirements"
+        },
+        "success": "Vault created successfully!",
+        "cliModal": {
+            "title": "Install CLI Tool",
+            "description": "Would you like to install the LocalKeys CLI tool? This allows you to use LocalKeys from the command line.",
+            "features": "CLI Features:",
+            "feature1": "Manage secrets from terminal",
+            "feature2": "Run commands with environment variables",
+            "feature3": "Automated workflows",
+            "skip": "Skip",
+            "install": "Install CLI",
+            "installing": "Installing...",
+            "installError": "CLI installation failed: {{error}}"
+        }
     }
 }

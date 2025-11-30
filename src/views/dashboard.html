@@ -116,10 +116,10 @@
 
                             renderProjects();
                         } else {
-                            notificationManager.error("Failed to load projects");
+                            notificationManager.error(i18n.t("dashboard.notifications.failedToLoad"));
                         }
                     } catch (error) {
-                        notificationManager.error(`Error loading projects: ${error.message}`);
+                        notificationManager.error(i18n.t("dashboard.notifications.failedToLoad"));
                     }
                 }
 
@@ -140,7 +140,7 @@
 
                     dateDiv.className = "project-date";
 
-                    dateDiv.textContent = `Updated ${formatDate(project.updatedAt)}`;
+                    dateDiv.textContent = i18n.t("dashboard.updated", { time: formatDate(project.updatedAt) });
 
                     const statsDiv = document.createElement("div");
 
@@ -150,7 +150,7 @@
 
                     secretCountDiv.className = "secret-count";
 
-                    secretCountDiv.textContent = `${project.secretCount} secrets`;
+                    secretCountDiv.textContent = i18n.t("dashboard.secretCount", { count: project.secretCount });
 
                     const actionsDiv = document.createElement("div");
 
@@ -182,7 +182,7 @@
 
                     deleteBtn.className = "dropdown-item";
 
-                    deleteBtn.textContent = "Delete Project";
+                    deleteBtn.textContent = i18n.t("dashboard.deleteProject.deleteBtn");
 
                     deleteBtn.onclick = (e) => {
                         e.stopPropagation();
@@ -226,13 +226,13 @@
 
                     title.className = "empty-state-title";
 
-                    title.textContent = "No projects found";
+                    title.textContent = i18n.t("dashboard.emptyState.title");
 
                     const description = document.createElement("div");
 
                     description.className = "empty-state-description";
 
-                    description.textContent = projects.length === 0 ? "Create your first project to start managing your secrets securely." : "No projects match your search criteria.";
+                    description.textContent = projects.length === 0 ? i18n.t("dashboard.emptyState.descriptionEmpty") : i18n.t("dashboard.emptyState.descriptionSearch");
 
                     emptyState.appendChild(icon);
 
@@ -245,7 +245,7 @@
 
                         createBtn.className = "btn";
 
-                        createBtn.textContent = "Create Project";
+                        createBtn.textContent = i18n.t("dashboard.emptyState.createProject");
 
                         createBtn.onclick = showAddProjectModal;
 
@@ -286,7 +286,7 @@
                 // 프로젝트 삭제
 
                 async function deleteProject(projectName) {
-                    if (!confirm(`Are you sure you want to delete project "${projectName}"? This will also delete all secrets in this project.`)) {
+                    if (!confirm(i18n.t("dashboard.deleteProject.confirm", { name: projectName }))) {
                         return;
                     }
 
@@ -296,12 +296,12 @@
                         if (result.success) {
                             await loadProjects();
 
-                            notificationManager.success(`Project "${projectName}" deleted successfully`);
+                            notificationManager.success(i18n.t("dashboard.notifications.projectDeleted", { name: projectName }));
                         } else {
-                            notificationManager.error(`Failed to delete project: ${result.error}`);
+                            notificationManager.error(i18n.t("dashboard.notifications.failedToDelete"));
                         }
                     } catch (error) {
-                        notificationManager.error(`Error deleting project: ${error.message}`);
+                        notificationManager.error(i18n.t("dashboard.notifications.failedToDelete"));
                     }
                 }
 
@@ -343,13 +343,13 @@
                     const projectName = projectNameInput.value.trim();
 
                     if (!projectName) {
-                        notificationManager.error("Please enter a project name");
+                        notificationManager.error(i18n.t("dashboard.notifications.enterName"));
 
                         return;
                     }
 
                     if (projects.some((p) => p.name === projectName)) {
-                        notificationManager.error("A project with this name already exists");
+                        notificationManager.error(i18n.t("dashboard.notifications.projectExists"));
 
                         return;
                     }
@@ -362,12 +362,12 @@
 
                             await loadProjects();
 
-                            notificationManager.success(`Project "${projectName}" created successfully`);
+                            notificationManager.success(i18n.t("dashboard.notifications.projectCreated", { name: projectName }));
                         } else {
-                            notificationManager.error(`Failed to create project: ${result.error}`);
+                            notificationManager.error(i18n.t("dashboard.notifications.failedToCreate"));
                         }
                     } catch (error) {
-                        notificationManager.error(`Error creating project: ${error.message}`);
+                        notificationManager.error(i18n.t("dashboard.notifications.failedToCreate"));
                     }
                 }
 
@@ -395,13 +395,13 @@
                     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
                     if (diffDays === 0) {
-                        return "today";
+                        return i18n.t("dashboard.time.today");
                     } else if (diffDays === 1) {
-                        return "yesterday";
+                        return i18n.t("dashboard.time.yesterday");
                     } else if (diffDays < 7) {
-                        return `${diffDays} days ago`;
+                        return i18n.t("dashboard.time.daysAgo", { count: diffDays });
                     } else if (diffDays < 30) {
-                        return `${Math.floor(diffDays / 7)} weeks ago`;
+                        return i18n.t("dashboard.time.weeksAgo", { count: Math.floor(diffDays / 7) });
                     } else {
                         return date.toLocaleDateString();
                     }
@@ -423,7 +423,7 @@
                     try {
                         await window.localkeys.vault.lock();
                     } catch (error) {
-                        notificationManager.error(`Error locking vault: ${error.message}`);
+                        notificationManager.error(i18n.t("dashboard.notifications.lockError", { error: error.message }));
                     }
                 });
 
@@ -531,7 +531,7 @@
                     try {
                         const isInstalling = action === "install";
 
-                        const loadingText = isInstalling ? "Installing..." : "Uninstalling...";
+                        const loadingText = isInstalling ? i18n.t("dashboard.installing") : i18n.t("dashboard.uninstalling");
 
                         const apiMethod = isInstalling ? window.localkeys.cli.install : window.localkeys.cli.uninstall;
 
@@ -548,14 +548,14 @@
                         } else {
                             notificationManager.error(result.error);
 
-                            setCliButtonState(isInstalling ? "Install CLI" : "Uninstall CLI", false, "1", isInstalling ? installCli : uninstallCli);
+                            setCliButtonState(isInstalling ? i18n.t("dashboard.installCli") : i18n.t("dashboard.uninstallCli"), false, "1", isInstalling ? installCli : uninstallCli);
                         }
                     } catch (error) {
                         const actionName = action === "install" ? "installation" : "uninstallation";
 
-                        notificationManager.error(`CLI ${actionName} failed: ${error.message}`);
+                        notificationManager.error(i18n.t("dashboard.notifications.cliInstallFailed", { action: actionName, error: error.message }));
 
-                        setCliButtonState(action === "install" ? "Install CLI" : "Uninstall CLI", false, "1", action === "install" ? installCli : uninstallCli);
+                        setCliButtonState(action === "install" ? i18n.t("dashboard.installCli") : i18n.t("dashboard.uninstallCli"), false, "1", action === "install" ? installCli : uninstallCli);
                     }
                 }
 
@@ -566,12 +566,12 @@
                         const result = await window.localkeys.cli.check();
 
                         if (result.installed) {
-                            setCliButtonState("Uninstall CLI", false, "1", () => handleCliAction("uninstall"));
+                            setCliButtonState(i18n.t("dashboard.uninstallCli"), false, "1", () => handleCliAction("uninstall"));
                         } else {
-                            setCliButtonState("Install CLI", false, "1", () => handleCliAction("install"));
+                            setCliButtonState(i18n.t("dashboard.installCli"), false, "1", () => handleCliAction("install"));
                         }
                     } catch (error) {
-                        setCliButtonState("Install CLI", false, "1", () => handleCliAction("install"));
+                        setCliButtonState(i18n.t("dashboard.installCli"), false, "1", () => handleCliAction("install"));
                     }
                 }
 
@@ -582,7 +582,7 @@
                 // CLI 제거 함수
 
                 const uninstallCli = () => {
-                    if (confirm("Are you sure you want to uninstall the LocalKeys CLI?")) {
+                    if (confirm(i18n.t("dashboard.confirmUninstallCli"))) {
                         handleCliAction("uninstall");
                     }
                 };

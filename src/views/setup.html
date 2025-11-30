@@ -233,7 +233,7 @@
                 // CLI 설치 처리
                 async function handleCliInstall() {
                     try {
-                        confirmCliInstall.textContent = "Installing...";
+                        confirmCliInstall.textContent = i18n.t("setup.cliModal.installing");
                         confirmCliInstall.disabled = true;
 
                         const result = await window.localkeys.cli.install();
@@ -242,13 +242,13 @@
                             hideCliInstallModal();
                             window.localkeys.navigate("dashboard");
                         } else {
-                            showMessage(`CLI installation failed: ${result.error}`, "error");
-                            confirmCliInstall.textContent = "Install CLI";
+                            showMessage(i18n.t("setup.cliModal.installError", { error: result.error }), "error");
+                            confirmCliInstall.textContent = i18n.t("setup.cliModal.install");
                             confirmCliInstall.disabled = false;
                         }
                     } catch (error) {
-                        showMessage(`CLI installation failed: ${error.message}`, "error");
-                        confirmCliInstall.textContent = "Install CLI";
+                        showMessage(i18n.t("setup.cliModal.installError", { error: error.message }), "error");
+                        confirmCliInstall.textContent = i18n.t("setup.cliModal.install");
                         confirmCliInstall.disabled = false;
                     }
                 }
@@ -283,7 +283,7 @@
                     e.preventDefault();
 
                     if (!validateForm()) {
-                        showMessage("Please meet all password requirements", "error");
+                        showMessage(i18n.t("setup.errors.requirementNotMet"), "error");
                         return;
                     }
 
@@ -291,13 +291,13 @@
 
                     // 버튼 비활성화 및 로딩 표시
                     setupBtn.disabled = true;
-                    setupBtn.textContent = "Creating Vault...";
+                    setupBtn.textContent = i18n.t("setup.creatingVault");
 
                     try {
                         const result = await window.localkeys.vault.setup(password);
 
                         if (result.success) {
-                            showMessage("Vault created successfully!", "success");
+                            showMessage(i18n.t("setup.success"), "success");
 
                             // CLI 설치 제안
                             setTimeout(async () => {
@@ -316,14 +316,14 @@
                                 }
                             }, 1000);
                         } else {
-                            showMessage(`Failed to create vault: ${result.error}`, "error");
+                            showMessage(result.error, "error");
                             setupBtn.disabled = false;
-                            setupBtn.textContent = "Create Vault";
+                            setupBtn.textContent = i18n.t("setup.createVault");
                         }
                     } catch (error) {
-                        showMessage(`Error: ${error.message}`, "error");
+                        showMessage(error.message, "error");
                         setupBtn.disabled = false;
-                        setupBtn.textContent = "Create Vault";
+                        setupBtn.textContent = i18n.t("setup.createVault");
                     }
                 });
             });

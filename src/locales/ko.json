@@ -13,37 +13,6 @@
         "error": "오류",
         "success": "성공"
     },
-    "setup": {
-        "title": "LocalKeys",
-        "subtitle": "안전한 시크릿 관리",
-        "cardTitle": "마스터 비밀번호 설정",
-        "password": "마스터 비밀번호",
-        "passwordPlaceholder": "강력한 비밀번호를 입력하세요",
-        "confirmPassword": "비밀번호 확인",
-        "confirmPasswordPlaceholder": "비밀번호를 다시 입력하세요",
-        "createVault": "금고 생성",
-        "requirements": {
-            "length": "최소 12자 이상",
-            "uppercase": "대문자 포함",
-            "lowercase": "소문자 포함",
-            "number": "숫자 포함",
-            "special": "특수문자 포함"
-        },
-        "warning": {
-            "line1": "마스터 비밀번호는 모든 데이터를 암호화하는 데 사용됩니다.",
-            "line2": "분실 시 복구가 불가능하니 안전하게 보관해주세요."
-        },
-        "cliModal": {
-            "title": "CLI 도구 설치",
-            "description": "LocalKeys CLI 도구를 설치하시겠습니까? 터미널에서 LocalKeys를 사용할 수 있습니다.",
-            "features": "CLI 기능:",
-            "feature1": "터미널에서 시크릿 관리",
-            "feature2": "환경 변수와 함께 명령 실행",
-            "feature3": "자동화된 워크플로우",
-            "skip": "건너뛰기",
-            "install": "CLI 설치"
-        }
-    },
     "lock": {
         "title": "LocalKeys",
         "subtitle": "금고를 잠금 해제하려면 마스터 비밀번호를 입력하세요.",
@@ -55,6 +24,9 @@
         "logs": "로그",
         "lock": "잠금",
         "installCli": "CLI 설치",
+        "uninstallCli": "CLI 제거",
+        "installing": "설치 중...",
+        "uninstalling": "제거 중...",
         "searchPlaceholder": "프로젝트 검색...",
         "addProjectModal": {
             "title": "새 프로젝트 추가",
@@ -65,12 +37,23 @@
         "emptyState": {
             "icon": "📁",
             "title": "프로젝트가 없습니다",
-            "descriptionEmpty": "첫 번째 프로젝트를 생성하여 시작하세요.",
-            "descriptionSearch": "검색 조건과 일치하는 프로젝트가 없습니다."
+            "descriptionEmpty": "첫 번째 프로젝트를 생성하여 안전하게 시크릿을 관리하세요.",
+            "descriptionSearch": "검색 조건과 일치하는 프로젝트가 없습니다.",
+            "createProject": "프로젝트 생성"
         },
         "deleteProject": {
-            "confirm": "프로젝트 \"{{name}}\"을(를) 삭제하시겠습니까? 이 프로젝트의 모든 시크릿이 영구적으로 삭제됩니다."
+            "confirm": "프로젝트 \"{{name}}\"을(를) 삭제하시겠습니까? 이 프로젝트의 모든 시크릿도 함께 삭제됩니다.",
+            "deleteBtn": "프로젝트 삭제"
         },
+        "time": {
+            "today": "오늘",
+            "yesterday": "어제",
+            "daysAgo": "{{count}}일 전",
+            "weeksAgo": "{{count}}주 전"
+        },
+        "secretCount": "{{count}}개의 시크릿",
+        "updated": "{{time}} 업데이트됨",
+        "confirmUninstallCli": "LocalKeys CLI를 제거하시겠습니까?",
         "notifications": {
             "projectCreated": "프로젝트 \"{{name}}\"이(가) 생성되었습니다",
             "projectDeleted": "프로젝트 \"{{name}}\"이(가) 삭제되었습니다",
@@ -79,16 +62,15 @@
             "failedToDelete": "프로젝트 삭제에 실패했습니다",
             "enterName": "프로젝트 이름을 입력하세요",
             "projectExists": "이미 같은 이름의 프로젝트가 존재합니다",
-            "cliInstalled": "CLI가 설치되었습니다",
-            "cliUninstalled": "CLI가 제거되었습니다",
-            "cliAlreadyInstalled": "CLI가 이미 설치되어 있습니다",
-            "cliNotInstalled": "CLI가 설치되어 있지 않습니다"
+            "cliInstallFailed": "CLI {{action}} 실패: {{error}}",
+            "lockError": "금고 잠금 오류: {{error}}"
         }
     },
     "project": {
         "addSecret": "시크릿 추가",
         "exportEnv": ".env 내보내기",
         "searchPlaceholder": "시크릿 검색...",
+        "edit": "편집",
         "addSecretModal": {
             "title": "새 시크릿 추가",
             "keyLabel": "키",
@@ -137,8 +119,11 @@
         "clearConfirm": "모든 로그를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
         "timeAgo": {
             "justNow": "방금 전",
+            "minuteAgo": "{{count}}분 전",
             "minutesAgo": "{{count}}분 전",
+            "hourAgo": "{{count}}시간 전",
             "hoursAgo": "{{count}}시간 전",
+            "dayAgo": "{{count}}일 전",
             "daysAgo": "{{count}}일 전"
         },
         "notifications": {
@@ -160,5 +145,63 @@
         "title": "새로운 업데이트가 있습니다",
         "description": "v{{oldVersion}} ➠ v{{newVersion}}<br/>업데이트 버튼을 클릭하여 자세한 내용을 확인하세요.",
         "update": "업데이트"
+    },
+    "license": {
+        "title": "LocalKeys",
+        "subtitle": "라이선스를 활성화하려면 계정 정보를 입력하세요",
+        "userIdPlaceholder": "사용자 ID",
+        "passwordPlaceholder": "비밀번호",
+        "activateBtn": "라이선스 활성화",
+        "activating": "활성화 중...",
+        "errors": {
+            "emptyFields": "사용자 ID와 비밀번호를 모두 입력하세요",
+            "checkingLicense": "라이선스 확인 중...",
+            "activationFailed": "라이선스 활성화 실패",
+            "noLicense": "이 계정에 대한 라이선스를 찾을 수 없습니다",
+            "invalidCredentials": "잘못된 인증 정보",
+            "invalidSignature": "잘못된 라이선스 서명",
+            "networkError": "네트워크 오류. 연결을 확인하세요.",
+            "timeout": "연결 시간 초과. 다시 시도하세요.",
+            "genericError": "오류가 발생했습니다. 다시 시도하세요."
+        },
+        "success": "라이선스가 성공적으로 활성화되었습니다!"
+    },
+    "setup": {
+        "title": "LocalKeys",
+        "subtitle": "안전한 시크릿 관리",
+        "cardTitle": "마스터 비밀번호 설정",
+        "password": "마스터 비밀번호",
+        "passwordPlaceholder": "강력한 비밀번호를 입력하세요",
+        "confirmPassword": "비밀번호 확인",
+        "confirmPasswordPlaceholder": "비밀번호를 다시 입력하세요",
+        "createVault": "금고 생성",
+        "creatingVault": "금고 생성 중...",
+        "requirements": {
+            "length": "최소 12자 이상",
+            "uppercase": "대문자 포함",
+            "lowercase": "소문자 포함",
+            "number": "숫자 포함",
+            "special": "특수문자 포함"
+        },
+        "warning": {
+            "line1": "마스터 비밀번호는 모든 데이터를 암호화하는 데 사용됩니다.",
+            "line2": "분실 시 복구가 불가능하니 안전하게 보관해주세요."
+        },
+        "errors": {
+            "requirementNotMet": "모든 비밀번호 요구사항을 충족해야 합니다"
+        },
+        "success": "금고가 성공적으로 생성되었습니다!",
+        "cliModal": {
+            "title": "CLI 도구 설치",
+            "description": "LocalKeys CLI 도구를 설치하시겠습니까? 터미널에서 LocalKeys를 사용할 수 있습니다.",
+            "features": "CLI 기능:",
+            "feature1": "터미널에서 시크릿 관리",
+            "feature2": "환경 변수와 함께 명령 실행",
+            "feature3": "자동화된 워크플로우",
+            "skip": "건너뛰기",
+            "install": "CLI 설치",
+            "installing": "설치 중...",
+            "installError": "CLI 설치 실패: {{error}}"
+        }
     }
 }

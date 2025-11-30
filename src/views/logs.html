@@ -57,10 +57,10 @@
                             hasMoreLogs = true;
                             renderLogs();
                         } else {
-                            notificationManager.error("Failed to load logs");
+                            notificationManager.error(i18n.t("logs.notifications.failedToLoad"));
                         }
                     } catch (error) {
-                        notificationManager.error(`Error loading logs: ${error.message}`);
+                        notificationManager.error(i18n.t("logs.notifications.failedToLoad"));
                     }
                 }
 
@@ -138,11 +138,11 @@
 
                         const title = document.createElement("div");
                         title.className = "empty-state-title";
-                        title.textContent = "No logs found";
+                        title.textContent = i18n.t("logs.emptyState.title");
 
                         const description = document.createElement("div");
                         description.className = "empty-state-description";
-                        description.textContent = "No logs have been recorded yet.";
+                        description.textContent = i18n.t("logs.emptyState.description");
 
                         emptyState.appendChild(icon);
                         emptyState.appendChild(title);
@@ -166,13 +166,13 @@
                     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
                     if (diffMinutes < 1) {
-                        return "Just now";
+                        return i18n.t("logs.timeAgo.justNow");
                     } else if (diffMinutes < 60) {
-                        return `${diffMinutes} minute${diffMinutes > 1 ? "s" : ""} ago`;
+                        return diffMinutes === 1 ? i18n.t("logs.timeAgo.minuteAgo", { count: diffMinutes }) : i18n.t("logs.timeAgo.minutesAgo", { count: diffMinutes });
                     } else if (diffHours < 24) {
-                        return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+                        return diffHours === 1 ? i18n.t("logs.timeAgo.hourAgo", { count: diffHours }) : i18n.t("logs.timeAgo.hoursAgo", { count: diffHours });
                     } else if (diffDays < 7) {
-                        return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+                        return diffDays === 1 ? i18n.t("logs.timeAgo.dayAgo", { count: diffDays }) : i18n.t("logs.timeAgo.daysAgo", { count: diffDays });
                     } else {
                         return date.toLocaleString();
                     }
@@ -191,18 +191,18 @@
 
                 // 로그 삭제 버튼 클릭
                 clearLogsBtn.addEventListener("click", async function () {
-                    if (confirm("Are you sure you want to clear all logs? This action cannot be undone.")) {
+                    if (confirm(i18n.t("logs.clearConfirm"))) {
                         try {
                             const result = await window.localkeys.logs.clear();
                             if (result.success) {
-                                notificationManager.success("All logs have been cleared");
+                                notificationManager.success(i18n.t("logs.notifications.cleared"));
                                 allLogs = [];
                                 renderLogs();
                             } else {
-                                notificationManager.error("Failed to clear logs");
+                                notificationManager.error(i18n.t("logs.notifications.failedToClear"));
                             }
                         } catch (error) {
-                            notificationManager.error(`Error clearing logs: ${error.message}`);
+                            notificationManager.error(i18n.t("logs.notifications.failedToClear"));
                         }
                     }
                 });

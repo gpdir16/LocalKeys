@@ -10,7 +10,7 @@
         <div class="container">
             <div class="lock-container">
                 <div class="logo">
-                    <h1>LocalKeys</h1>
+                    <h1 id="title">LocalKeys</h1>
                     <p id="subtitle">Enter your credentials to activate license</p>
                 </div>
 
@@ -35,6 +35,16 @@
         <script src="../modules/i18n-helper.js"></script>
         <script>
             document.addEventListener("DOMContentLoaded", async function () {
+                // 다국어 초기화
+                await i18n.init();
+
+                // UI 번역 적용
+                document.getElementById("title").textContent = i18n.t("license.title");
+                document.getElementById("subtitle").textContent = i18n.t("license.subtitle");
+                document.getElementById("userKey").placeholder = i18n.t("license.userIdPlaceholder");
+                document.getElementById("password").placeholder = i18n.t("license.passwordPlaceholder");
+                document.getElementById("activate-btn").textContent = i18n.t("license.activateBtn");
+
                 const userKeyInput = document.getElementById("userKey");
                 const passwordInput = document.getElementById("password");
                 const activateBtn = document.getElementById("activate-btn");
@@ -49,15 +59,15 @@
                     const password = passwordInput.value;
 
                     if (!userKey || !password) {
-                        statusMessage.textContent = "Please enter both User ID and Password";
+                        statusMessage.textContent = i18n.t("license.errors.emptyFields");
                         statusMessage.style.color = "#ff6b6b";
                         return;
                     }
 
                     // 버튼 비활성화 및 로딩 표시
                     activateBtn.disabled = true;
-                    activateBtn.textContent = "Activating...";
-                    statusMessage.textContent = "Checking license...";
+                    activateBtn.textContent = i18n.t("license.activating");
+                    statusMessage.textContent = i18n.t("license.errors.checkingLicense");
                     statusMessage.style.color = "#a0a0a0";
 
                     try {
@@ -65,7 +75,7 @@
 
                         if (result.success) {
                             // 라이선스 활성화 성공
-                            statusMessage.textContent = "License activated successfully!";
+                            statusMessage.textContent = i18n.t("license.success");
                             statusMessage.style.color = "#51cf66";
 
                             // 잠시 후 적절한 화면으로 이동
@@ -74,17 +84,17 @@
                             }, 500);
                         } else {
                             // 라이선스 활성화 실패
-                            let errorMessage = "License activation failed";
+                            let errorMessage = i18n.t("license.errors.activationFailed");
                             if (result.error === "no_license") {
-                                errorMessage = "No license found for this account";
+                                errorMessage = i18n.t("license.errors.noLicense");
                             } else if (result.error === "invalid_credentials") {
-                                errorMessage = "Invalid credentials";
+                                errorMessage = i18n.t("license.errors.invalidCredentials");
                             } else if (result.error === "invalid_signature") {
-                                errorMessage = "Invalid license signature";
+                                errorMessage = i18n.t("license.errors.invalidSignature");
                             } else if (result.error === "network_error") {
-                                errorMessage = "Network error. Please check your connection.";
+                                errorMessage = i18n.t("license.errors.networkError");
                             } else if (result.error === "timeout") {
-                                errorMessage = "Connection timeout. Please try again.";
+                                errorMessage = i18n.t("license.errors.timeout");
                             }
 
                             statusMessage.textContent = errorMessage;
@@ -92,17 +102,17 @@
 
                             // 버튼 복원
                             activateBtn.disabled = false;
-                            activateBtn.textContent = "Activate License";
+                            activateBtn.textContent = i18n.t("license.activateBtn");
                             passwordInput.value = "";
                             passwordInput.focus();
                         }
                     } catch (error) {
                         // 에러 발생
-                        statusMessage.textContent = "An error occurred. Please try again.";
+                        statusMessage.textContent = i18n.t("license.errors.genericError");
                         statusMessage.style.color = "#ff6b6b";
 
                         activateBtn.disabled = false;
-                        activateBtn.textContent = "Activate License";
+                        activateBtn.textContent = i18n.t("license.activateBtn");
                     }
                 });
 

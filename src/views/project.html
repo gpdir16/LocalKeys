@@ -142,10 +142,10 @@
                             filteredSecrets = secrets;
                             renderSecrets();
                         } else {
-                            notificationManager.error("Failed to load secrets");
+                            notificationManager.error(i18n.t("project.notifications.failedToLoad"));
                         }
                     } catch (error) {
-                        notificationManager.error(`Error loading secrets: ${error.message}`);
+                        notificationManager.error(i18n.t("project.notifications.failedToLoad"));
                     }
                 }
 
@@ -170,7 +170,7 @@
 
                     const editBtn = document.createElement("button");
                     editBtn.className = "btn btn-secondary";
-                    editBtn.textContent = "Edit";
+                    editBtn.textContent = i18n.t("project.edit");
                     editBtn.onclick = () => editSecret(key);
 
                     const dropdownDiv = document.createElement("div");
@@ -190,7 +190,7 @@
 
                     const deleteBtn = document.createElement("button");
                     deleteBtn.className = "dropdown-item dropdown-item-danger";
-                    deleteBtn.textContent = "Delete Secret";
+                    deleteBtn.textContent = i18n.t("project.deleteSecret");
                     deleteBtn.onclick = (e) => {
                         e.stopPropagation();
                         deleteSecret(key);
@@ -226,11 +226,11 @@
 
                     const title = document.createElement("div");
                     title.className = "empty-state-title";
-                    title.textContent = "No secrets found";
+                    title.textContent = i18n.t("project.emptyState.title");
 
                     const description = document.createElement("div");
                     description.className = "empty-state-description";
-                    description.textContent = Object.keys(secrets).length === 0 ? "Add your first secret to this project." : "No secrets match your search criteria.";
+                    description.textContent = Object.keys(secrets).length === 0 ? i18n.t("project.emptyState.descriptionEmpty") : i18n.t("project.emptyState.descriptionSearch");
 
                     emptyState.appendChild(icon);
                     emptyState.appendChild(title);
@@ -239,7 +239,7 @@
                     if (Object.keys(secrets).length === 0) {
                         const addBtn = document.createElement("button");
                         addBtn.className = "btn";
-                        addBtn.textContent = "Add Secret";
+                        addBtn.textContent = i18n.t("project.addSecret");
                         addBtn.onclick = showAddSecretModal;
                         emptyState.appendChild(addBtn);
                     }
@@ -276,7 +276,7 @@
 
                 // 시크릿 삭제
                 async function deleteSecret(key) {
-                    if (!confirm(`Are you sure you want to delete secret "${key}"?`)) {
+                    if (!confirm(i18n.t("project.deleteConfirm", { key: key }))) {
                         return;
                     }
 
@@ -285,12 +285,12 @@
 
                         if (result.success) {
                             await loadSecrets();
-                            notificationManager.success(`Secret "${key}" deleted successfully`);
+                            notificationManager.success(i18n.t("project.notifications.secretDeleted", { key: key }));
                         } else {
-                            notificationManager.error(`Failed to delete secret: ${result.error}`);
+                            notificationManager.error(i18n.t("project.notifications.failedToDelete"));
                         }
                     } catch (error) {
-                        notificationManager.error(`Error deleting secret: ${error.message}`);
+                        notificationManager.error(i18n.t("project.notifications.failedToDelete"));
                     }
                 }
 
@@ -355,12 +355,12 @@
                     const value = secretValueInput.value;
 
                     if (!key) {
-                        notificationManager.error("Please enter a secret key");
+                        notificationManager.error(i18n.t("project.notifications.enterKey"));
                         return;
                     }
 
                     if (secrets.hasOwnProperty(key)) {
-                        notificationManager.error("A secret with this key already exists");
+                        notificationManager.error(i18n.t("project.notifications.keyExists"));
                         return;
                     }
 
@@ -370,12 +370,12 @@
                         if (result.success) {
                             hideAddSecretModal();
                             await loadSecrets();
-                            notificationManager.success(`Secret "${key}" added successfully`);
+                            notificationManager.success(i18n.t("project.notifications.secretAdded", { key: key }));
                         } else {
-                            notificationManager.error(`Failed to add secret: ${result.error}`);
+                            notificationManager.error(i18n.t("project.notifications.failedToAdd"));
                         }
                     } catch (error) {
-                        notificationManager.error(`Error adding secret: ${error.message}`);
+                        notificationManager.error(i18n.t("project.notifications.failedToAdd"));
                     }
                 }
 
@@ -385,13 +385,13 @@
                     const value = editSecretValueInput.value;
 
                     if (!key) {
-                        notificationManager.error("Please enter a secret key");
+                        notificationManager.error(i18n.t("project.notifications.enterKey"));
                         return;
                     }
 
                     // 키가 변경된 경우
                     if (key !== editingKey && secrets.hasOwnProperty(key)) {
-                        notificationManager.error("A secret with this key already exists");
+                        notificationManager.error(i18n.t("project.notifications.keyExists"));
                         return;
                     }
 
@@ -406,10 +406,10 @@
                         if (result.success) {
                             hideEditSecretModal();
                             await loadSecrets();
-                            notificationManager.success(`Secret "${key}" saved successfully`);
+                            notificationManager.success(i18n.t("project.notifications.secretSaved", { key: key }));
                         }
                     } catch (error) {
-                        notificationManager.error(`Error saving secret: ${error.message}`);
+                        notificationManager.error(i18n.t("project.notifications.failedToSave"));
                     }
                 }
 
@@ -419,10 +419,10 @@
                         const result = await window.localkeys.secrets.export(projectName);
 
                         if (result.success) {
-                            notificationManager.success(`Secrets exported to ${result.path}`);
+                            notificationManager.success(i18n.t("project.notifications.exported", { path: result.path }));
                         }
                     } catch (error) {
-                        notificationManager.error(`Error exporting secrets: ${error.message}`);
+                        notificationManager.error(i18n.t("project.notifications.failedToExport"));
                     }
                 }
 
@@ -556,7 +556,7 @@
                     projectNameEl.textContent = projectName;
                     loadSecrets();
                 } else {
-                    notificationManager.error("No project specified");
+                    notificationManager.error(i18n.t("project.notifications.noProject"));
                     setTimeout(() => {
                         window.location.href = "dashboard.html";
                     }, 2000);
