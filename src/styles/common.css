@@ -44,6 +44,7 @@ select,
     flex-direction: column;
     height: 100vh;
     padding: 20px;
+    overflow: hidden;
 }
 
 /* 헤더 */
@@ -922,22 +923,34 @@ select,
     flex: 1;
 }
 
-/* 다크모드 스크롤바 */
-.logs-container::-webkit-scrollbar {
+/* 스크롤바 공통 */
+.scrollable-container::-webkit-scrollbar,
+.logs-container::-webkit-scrollbar,
+#projects-container::-webkit-scrollbar,
+.secrets-container::-webkit-scrollbar {
     width: 8px;
 }
 
-.logs-container::-webkit-scrollbar-track {
+.scrollable-container::-webkit-scrollbar-track,
+.logs-container::-webkit-scrollbar-track,
+#projects-container::-webkit-scrollbar-track,
+.secrets-container::-webkit-scrollbar-track {
     background: var(--bg-tertiary);
     border-radius: 4px;
 }
 
-.logs-container::-webkit-scrollbar-thumb {
+.scrollable-container::-webkit-scrollbar-thumb,
+.logs-container::-webkit-scrollbar-thumb,
+#projects-container::-webkit-scrollbar-thumb,
+.secrets-container::-webkit-scrollbar-thumb {
     background: var(--text-secondary);
     border-radius: 4px;
 }
 
-.logs-container::-webkit-scrollbar-thumb:hover {
+.scrollable-container::-webkit-scrollbar-thumb:hover,
+.logs-container::-webkit-scrollbar-thumb:hover,
+#projects-container::-webkit-scrollbar-thumb:hover,
+.secrets-container::-webkit-scrollbar-thumb:hover {
     background: var(--text-primary);
 }
 
@@ -1050,9 +1063,14 @@ select,
 }
 
 .secrets-container {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 15px;
     margin-bottom: 15px;
+    overflow-y: auto;
+    flex: 1;
+    margin-top: 10px;
+    padding-right: 5px;
 }
 
 .secret-header {
