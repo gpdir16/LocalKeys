@@ -3,14 +3,12 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 
-// LocalKeys 코어 모듈
 const Vault = require("./modules/vault");
 const Logger = require("./modules/logger");
 const HttpServer = require("./modules/http-server");
 const I18n = require("./modules/i18n");
 const License = require("./modules/license");
 
-// 전역 변수
 let mainWindow = null;
 let vault = null;
 let logger = null;
@@ -21,14 +19,9 @@ let isQuitting = false;
 let i18n = null;
 let license = null;
 
-// LocalKeys 데이터 디렉토리 경로
 const LOCALKEYS_DIR = path.join(require("os").homedir(), ".localkeys");
-
-// 앱 버전 정보
 const APP_VERSION = "1.0.0";
-// 앱 버전 정보
 
-// 트레이 아이콘 생성
 function createTray() {
     // 트레이 아이콘이 이미 있으면 제거
     if (tray) {

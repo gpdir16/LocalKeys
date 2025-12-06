@@ -1,43 +1,31 @@
 const http = require("http");
 const crypto = require("crypto");
 
-/**
- * HTTP 서버 모듈
- * CLI와 Electron 앱 간의 HTTP 통신 처리
- */
 class HttpServer {
     constructor(vault, logger) {
         this.vault = vault;
         this.logger = logger;
         this.server = null;
-        this.port = 0; // 랜덤 포트 할당
+        this.port = 0;
         this.host = "localhost";
         this.isUnlocked = false;
         this.authToken = this.generateAuthToken();
-        this.approvalCallback = null; // 승인 다이얼로그 콜백
+        this.approvalCallback = null;
     }
 
-    /**
-     * 인증 토큰 생성
-     */
     generateAuthToken() {
         return crypto.randomBytes(32).toString("hex");
     }
 
-    /**
-     * 서버 시작
-     */
     async start() {
         return new Promise((resolve, reject) => {
             this.server = http.createServer((req, res) => {
                 this.handleRequest(req, res);
             });
 
-            // 랜덤 포트에서 서버 시작
             this.server.listen(0, this.host, () => {
                 this.port = this.server.address().port;
 
-                // 포트 정보를 파일에 저장 (CLI가 읽을 수 있도록)
                 const fs = require("fs");
                 const path = require("path");
                 const infoPath = path.join(require("os").homedir(), ".localkeys", "server-info.json");
@@ -52,7 +40,6 @@ class HttpServer {
                     })
                 );
 
-                // 파일 권한을 600으로 설정 (소유자만 읽기/쓰기)
                 try {
                     fs.chmodSync(infoPath, 0o600);
                 } catch (error) {
@@ -72,14 +59,10 @@ class HttpServer {
         });
     }
 
-    /**
-     * 서버 중지
-     */
     async stop() {
         if (this.server) {
             return new Promise((resolve) => {
                 this.server.close(() => {
-                    // 서버 정보 파일 삭제
                     const fs = require("fs");
                     const path = require("path");
                     const infoPath = path.join(require("os").homedir(), ".localkeys", "server-info.json");
@@ -94,9 +77,6 @@ class HttpServer {
         }
     }
 
-    /**
-     * 인증 미들웨어
-     */
     authenticateRequest(req, res) {
         const authHeader = req.headers.authorization;
 
@@ -116,46 +96,35 @@ class HttpServer {
         return true;
     }
 
-    /**
-     * CORS 헤더 설정 (localhost만 허용)
-     */
     setCorsHeaders(res) {
         res.setHeader("Access-Control-Allow-Origin", "http://localhost");
         res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
         res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     }
 
-    /**
-     * 요청 처리
-     */
     async handleRequest(req, res) {
         try {
             this.setCorsHeaders(res);
 
-            // OPTIONS 요청 처리 (CORS preflight)
             if (req.method === "OPTIONS") {
                 res.writeHead(200);
                 res.end();
                 return;
             }
 
-            // POST 요청만 허용
             if (req.method !== "POST") {
                 res.writeHead(405, { "Content-Type": "application/json" });
                 res.end(JSON.stringify({ success: false, error: "Method not allowed" }));
                 return;
             }
 
-            // 인증 확인
             if (!this.authenticateRequest(req, res)) {
                 return;
             }
 
-            // 요청 바디 파싱
             const body = await this.parseRequestBody(req);
             const { action, data } = body;
 
-            // 요청 처리
             const result = await this.handleAction(action, data);
 
             res.writeHead(200, { "Content-Type": "application/json" });
@@ -171,9 +140,6 @@ class HttpServer {
         }
     }
 
-    /**
-     * 요청 바디 파싱
-     */
     parseRequestBody(req) {
         return new Promise((resolve, reject) => {
             let body = "";
@@ -194,9 +160,6 @@ class HttpServer {
         });
     }
 
-    /**
-     * 액션 처리
-     */
     async handleAction(action, data) {
         try {
             let result;
@@ -211,7 +174,6 @@ class HttpServer {
                     break;
 
                 case "listSecretKeys":
-                    // 프로젝트의 시크릿 키 목록만 반환 (값은 반환하지 않음)
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
@@ -222,11 +184,9 @@ class HttpServer {
                     break;
 
                 case "getBatchSecrets":
-                    // 여러 시크릿을 한번에 승인 요청
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        // 승인 다이얼로그 표시 (여러 키를 함께 표시)
                         const approvalResult = await this.requestBatchApproval(data.projectName, data.keys);
 
                         if (approvalResult.approved) {
@@ -234,9 +194,7 @@ class HttpServer {
                             for (const key of data.keys) {
                                 try {
                                     secrets[key] = this.vault.getSecret(data.projectName, key);
-                                } catch (error) {
-                                    // 존재하지 않는 키는 무시
-                                }
+                                } catch (error) {}
                             }
                             result = { success: true, data: secrets };
                         } else {
@@ -250,7 +208,6 @@ class HttpServer {
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        // 승인 다이얼로그 표시
                         const approvalResult = await this.requestBatchApproval(data.projectName, [data.key]);
 
                         if (approvalResult.approved) {
@@ -292,27 +249,17 @@ class HttpServer {
         }
     }
 
-    /**
-     * 잠금 해제 상태 설정
-     */
     setUnlocked(unlocked) {
         this.isUnlocked = unlocked;
         this.logger.logLock(`Vault ${unlocked ? "unlocked" : "locked"}`);
     }
 
-    /**
-     * 승인 콜백 설정
-     */
     setApprovalCallback(callback) {
         this.approvalCallback = callback;
     }
 
-    /**
-     * 배치 승인 요청 처리
-     */
     async requestBatchApproval(projectName, keys) {
         if (!this.approvalCallback) {
-            // 승인 콜백이 없으면 기본적으로 거부
             return { approved: false, reason: "No approval handler available" };
         }
 
