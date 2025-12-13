@@ -580,10 +580,10 @@ function setupIpcHandlers() {
     });
 
     // 시크릿 저장
-    ipcMain.handle("secret:set", async (event, projectName, key, value) => {
+    ipcMain.handle("secret:set", async (event, projectName, key, value, expiresAt = null) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            vault.setSecret(projectName, key, value);
+            vault.setSecret(projectName, key, value, expiresAt);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -645,7 +645,7 @@ function setupIpcHandlers() {
         if (!result.canceled) {
             const secrets = vault.getSecrets(projectName);
             const envContent = Object.entries(secrets)
-                .map(([key, value]) => `${key}=${value}`)
+                .map(([key, secret]) => `${key}=${secret.value}`)
                 .join("\n");
 
             fs.writeFileSync(result.filePath, envContent);

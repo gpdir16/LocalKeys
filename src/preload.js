@@ -22,7 +22,7 @@ const api = {
     secrets: {
         get: (projectName, key) => ipcRenderer.invoke("secret:get", projectName, key),
         getAll: (projectName) => ipcRenderer.invoke("secrets:get", projectName),
-        set: (projectName, key, value) => ipcRenderer.invoke("secret:set", projectName, key, value),
+        set: (projectName, key, value, expiresAt = null) => ipcRenderer.invoke("secret:set", projectName, key, value, expiresAt),
         delete: (projectName, key) => ipcRenderer.invoke("secret:delete", projectName, key),
         export: (projectName) => ipcRenderer.invoke("secrets:export", projectName),
         import: (projectName) => ipcRenderer.invoke("secrets:import", projectName),

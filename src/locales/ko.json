@@ -78,13 +78,22 @@
             "keyPlaceholder": "시크릿 키 입력",
             "valueLabel": "값",
             "valuePlaceholder": "시크릿 값 입력",
+            "expiresLabel": "만료일 (선택사항)",
             "add": "시크릿 추가"
         },
         "editSecretModal": {
             "title": "시크릿 편집",
             "keyLabel": "키",
             "valueLabel": "값",
+            "expiresLabel": "만료일 (선택사항)",
             "save": "변경사항 저장"
+        },
+        "expiration": {
+            "expiresOn": "{{date}}에 만료",
+            "expiredOn": "{{date}}에 만료됨",
+            "expiresInDays": "{{count}}일 후 만료 ({{date}})",
+            "expiresInDaysPlural": "{{count}}일 후 만료 ({{date}})",
+            "expiresInHours": "{{count}}시간 후 만료 ({{date}})"
         },
         "deleteSecret": "시크릿 삭제",
         "emptyState": {

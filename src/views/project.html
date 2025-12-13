@@ -49,6 +49,10 @@
                         <label for="secret-value" id="label-secret-value">Value</label>
                         <input type="text" id="secret-value" placeholder="Enter secret value" autocomplete="off" />
                     </div>
+                    <div class="input-group">
+                        <label for="secret-expires" id="label-secret-expires">Expiration Date (Optional)</label>
+                        <input type="date" id="secret-expires" />
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" id="cancel-add-secret">Cancel</button>
@@ -71,6 +75,10 @@
                     <div class="input-group">
                         <label for="edit-secret-value" id="label-edit-value">Value</label>
                         <input type="text" id="edit-secret-value" placeholder="Enter secret value" autocomplete="off" />
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-secret-expires" id="label-edit-expires">Expiration Date (Optional)</label>
+                        <input type="date" id="edit-secret-expires" />
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -97,11 +105,13 @@
                 document.getElementById("secret-key").placeholder = i18n.t("project.addSecretModal.keyPlaceholder");
                 document.getElementById("label-secret-value").textContent = i18n.t("project.addSecretModal.valueLabel");
                 document.getElementById("secret-value").placeholder = i18n.t("project.addSecretModal.valuePlaceholder");
+                document.getElementById("label-secret-expires").textContent = i18n.t("project.addSecretModal.expiresLabel", "Expiration Date (Optional)");
                 document.getElementById("cancel-add-secret").textContent = i18n.t("common.cancel");
                 document.getElementById("confirm-add-secret").textContent = i18n.t("project.addSecretModal.add");
                 document.getElementById("edit-modal-title").textContent = i18n.t("project.editSecretModal.title");
                 document.getElementById("label-edit-key").textContent = i18n.t("project.editSecretModal.keyLabel");
                 document.getElementById("label-edit-value").textContent = i18n.t("project.editSecretModal.valueLabel");
+                document.getElementById("label-edit-expires").textContent = i18n.t("project.editSecretModal.expiresLabel", "Expiration Date (Optional)");
                 document.getElementById("cancel-edit-secret").textContent = i18n.t("common.cancel");
                 document.getElementById("confirm-edit-secret").textContent = i18n.t("project.editSecretModal.save");
                 const projectNameEl = document.getElementById("project-name");
@@ -117,8 +127,10 @@
                 const editSecretModal = document.getElementById("edit-secret-modal");
                 const secretKeyInput = document.getElementById("secret-key");
                 const secretValueInput = document.getElementById("secret-value");
+                const secretExpiresInput = document.getElementById("secret-expires");
                 const editSecretKeyInput = document.getElementById("edit-secret-key");
                 const editSecretValueInput = document.getElementById("edit-secret-value");
+                const editSecretExpiresInput = document.getElementById("edit-secret-expires");
                 const cancelAddSecret = document.getElementById("cancel-add-secret");
                 const confirmAddSecret = document.getElementById("confirm-add-secret");
                 const cancelEditSecret = document.getElementById("cancel-edit-secret");
@@ -152,9 +164,40 @@
                     }
                 }
 
-                function createSecretRow(key, value) {
+                // UTC 날짜를 로컬 시간대로 변환
+                function toLocalDate(utcDateString) {
+                    if (!utcDateString) return null;
+                    const utcDate = new Date(utcDateString);
+                    // UTC 시간을 로컬 시간대로 변환
+                    const localDate = new Date(utcDate.getTime() + utcDate.getTimezoneOffset() * 60000);
+                    return localDate;
+                }
+
+                // 만료 여부 확인
+                function isExpired(expiresAt) {
+                    if (!expiresAt) return false;
+                    const now = new Date();
+                    const expDate = toLocalDate(expiresAt);
+                    return expDate < now;
+                }
+
+                // 만료 임박 여부 확인 (7일 이내)
+                function isExpiringSoon(expiresAt) {
+                    if (!expiresAt) return false;
+                    const now = new Date();
+                    const expDate = toLocalDate(expiresAt);
+                    const hoursUntilExpiry = Math.ceil((expDate - now) / (1000 * 60 * 60));
+                    return hoursUntilExpiry >= 0 && hoursUntilExpiry <= 7 * 24;
+                }
+
+                function createSecretRow(key, secret) {
+                    const value = secret.value;
+                    const expiresAt = secret.expiresAt;
+                    const expired = isExpired(expiresAt);
+                    const expiringSoon = isExpiringSoon(expiresAt);
+
                     const item = document.createElement("div");
-                    item.className = "secret-item";
+                    item.className = "secret-item" + (expired ? " expired" : "") + (expiringSoon && !expired ? " expiring-soon" : "");
 
                     const header = document.createElement("div");
                     header.className = "secret-header";
@@ -215,6 +258,39 @@
 
                     item.appendChild(header);
                     item.appendChild(valueDiv);
+
+                    // 만료일 표시
+                    if (expiresAt) {
+                        const expiresDiv = document.createElement("div");
+                        expiresDiv.className = "secret-expires" + (expired ? " expired" : "") + (expiringSoon && !expired ? " expiring-soon" : "");
+
+                        const expDate = toLocalDate(expiresAt);
+                        const formattedDate = expDate.toLocaleDateString();
+                        const now = new Date();
+                        const hoursLeft = Math.ceil((expDate - now) / (1000 * 60 * 60));
+                        const daysLeft = Math.ceil(hoursLeft / 24);
+
+                        if (expired) {
+                            expiresDiv.textContent = i18n.t("project.expiration.expiredOn", { date: formattedDate }, `Expired on ${formattedDate}`);
+                        } else if (expiringSoon) {
+                            // 3일~7일 남았을 때: 일수로 표시
+                            if (daysLeft >= 3) {
+                                if (daysLeft === 1) {
+                                    expiresDiv.textContent = i18n.t("project.expiration.expiresInDays", { count: daysLeft, date: formattedDate }, `${daysLeft} day left (${formattedDate})`);
+                                } else {
+                                    expiresDiv.textContent = i18n.t("project.expiration.expiresInDaysPlural", { count: daysLeft, date: formattedDate }, `${daysLeft} days left (${formattedDate})`);
+                                }
+                            }
+                            // 2일~1일 남았을 때: 시간으로 표시
+                            else {
+                                expiresDiv.textContent = i18n.t("project.expiration.expiresInHours", { count: hoursLeft, date: formattedDate }, `${hoursLeft} hours left (${formattedDate})`);
+                            }
+                        } else {
+                            expiresDiv.textContent = i18n.t("project.expiration.expiresOn", { date: formattedDate }, `Expires on ${formattedDate}`);
+                        }
+
+                        item.appendChild(expiresDiv);
+                    }
 
                     return item;
                 }
@@ -302,6 +378,7 @@
                     addSecretModal.classList.remove("hidden");
                     secretKeyInput.value = "";
                     secretValueInput.value = "";
+                    secretExpiresInput.value = "";
 
                     // 다음 프레임에서 애니메이션 시작
                     requestAnimationFrame(() => {
@@ -324,10 +401,11 @@
                 }
 
                 // 시크릿 편집 모달 표시
-                function showEditSecretModal(key, value) {
+                function showEditSecretModal(key, secret) {
                     editSecretModal.classList.remove("hidden");
                     editSecretKeyInput.value = key;
-                    editSecretValueInput.value = value;
+                    editSecretValueInput.value = secret.value;
+                    editSecretExpiresInput.value = secret.expiresAt || "";
                     editingKey = key;
 
                     // 다음 프레임에서 애니메이션 시작
@@ -356,6 +434,7 @@
                 async function addSecret() {
                     const key = secretKeyInput.value.trim();
                     const value = secretValueInput.value;
+                    const expiresAt = secretExpiresInput.value || null;
 
                     if (!key) {
                         notificationManager.error(i18n.t("project.notifications.enterKey"));
@@ -368,7 +447,7 @@
                     }
 
                     try {
-                        const result = await window.localkeys.secrets.set(projectName, key, value);
+                        const result = await window.localkeys.secrets.set(projectName, key, value, expiresAt);
 
                         if (result.success) {
                             hideAddSecretModal();
@@ -386,6 +465,7 @@
                 async function saveSecret() {
                     const key = editSecretKeyInput.value.trim();
                     const value = editSecretValueInput.value;
+                    const expiresAt = editSecretExpiresInput.value || null;
 
                     if (!key) {
                         notificationManager.error(i18n.t("project.notifications.enterKey"));
@@ -404,7 +484,7 @@
                             await window.localkeys.secrets.delete(projectName, editingKey);
                         }
 
-                        const result = await window.localkeys.secrets.set(projectName, key, value);
+                        const result = await window.localkeys.secrets.set(projectName, key, value, expiresAt);
 
                         if (result.success) {
                             hideEditSecretModal();

@@ -78,13 +78,22 @@
             "keyPlaceholder": "Enter secret key",
             "valueLabel": "Value",
             "valuePlaceholder": "Enter secret value",
+            "expiresLabel": "Expiration Date (Optional)",
             "add": "Add Secret"
         },
         "editSecretModal": {
             "title": "Edit Secret",
             "keyLabel": "Key",
             "valueLabel": "Value",
+            "expiresLabel": "Expiration Date (Optional)",
             "save": "Save Changes"
+        },
+        "expiration": {
+            "expiresOn": "Expires on {{date}}",
+            "expiredOn": "Expired on {{date}}",
+            "expiresInDays": "Expires in {{count}} day ({{date}})",
+            "expiresInDaysPlural": "Expires in {{count}} days ({{date}})",
+            "expiresInHours": "Expires in {{count}} hours ({{date}})"
         },
         "deleteSecret": "Delete Secret",
         "emptyState": {

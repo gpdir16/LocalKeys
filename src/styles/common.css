@@ -1106,6 +1106,36 @@ select,
     user-select: none;
 }
 
+/* 시크릿 만료일 표시 */
+.secret-expires {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: var(--bg-tertiary);
+    display: inline-block;
+}
+
+.secret-expires.expiring-soon {
+    color: var(--warning);
+    background-color: rgba(255, 152, 0, 0.1);
+}
+
+.secret-expires.expired {
+    color: var(--error);
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+/* 만료된 시크릿 카드 스타일 */
+.secret-item.expired {
+    border-color: var(--error);
+    opacity: 0.7;
+}
+
+.secret-item.expiring-soon {
+    border-color: var(--warning);
+}
+
 .secret-actions {
     display: flex;
     gap: 10px;

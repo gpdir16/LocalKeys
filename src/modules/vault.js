@@ -148,7 +148,17 @@ class Vault {
             throw new Error(`Project '${projectName}' does not exist`);
         }
 
-        return { ...this.data.projects[projectName].secrets };
+        const secrets = this.data.projects[projectName].secrets;
+        const result = {};
+        for (const [key, secret] of Object.entries(secrets)) {
+            if (typeof secret === "string") {
+                // 기존 형태 (하위 호환성)
+                result[key] = { value: secret, expiresAt: null };
+            } else {
+                result[key] = { ...secret };
+            }
+        }
+        return result;
     }
 
     getSecret(projectName, key) {
@@ -163,17 +173,25 @@ class Vault {
             throw new Error(`Secret '${key}' does not exist in project '${projectName}'`);
         }
 
+        // 기존 문자열 형태의 시크릿도 새 구조로 반환
+        if (typeof secret === "string") {
+            return { value: secret, expiresAt: null };
+        }
         return secret;
     }
 
-    setSecret(projectName, key, value) {
+    setSecret(projectName, key, value, expiresAt = null) {
         this._ensureUnlocked();
 
         if (!this.data.projects[projectName]) {
             throw new Error(`Project '${projectName}' does not exist`);
         }
 
-        this.data.projects[projectName].secrets[key] = value;
+        // 새로운 구조: { value, expiresAt }
+        this.data.projects[projectName].secrets[key] = {
+            value: value,
+            expiresAt: expiresAt // null이면 만료일 없음, "YYYY-MM-DD" 형태
+        };
         this.data.projects[projectName].updatedAt = new Date().toISOString();
         this.data.updatedAt = new Date().toISOString();
         this._scheduleAutoSave();
@@ -190,8 +208,14 @@ class Vault {
         let updated = false;
 
         for (const [key, value] of Object.entries(secrets)) {
-            if (project.secrets[key] !== value) {
-                project.secrets[key] = value;
+            // import 시에는 만료일 없이 가져옴
+            const newSecret = { value: value, expiresAt: null };
+            const existing = project.secrets[key];
+
+            // 기존 시크릿과 값이 다르면 업데이트
+            const existingValue = typeof existing === "string" ? existing : existing?.value;
+            if (existingValue !== value) {
+                project.secrets[key] = newSecret;
                 updated = true;
             }
         }
