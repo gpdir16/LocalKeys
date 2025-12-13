@@ -1,5 +1,10 @@
 const http = require("http");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+
+const SERVER_INFO_PATH = path.join(os.homedir(), ".localkeys", "server-info.json");
 
 class HttpServer {
     constructor(vault, logger) {
@@ -26,12 +31,12 @@ class HttpServer {
             this.server.listen(0, this.host, () => {
                 this.port = this.server.address().port;
 
-                const fs = require("fs");
-                const path = require("path");
-                const infoPath = path.join(require("os").homedir(), ".localkeys", "server-info.json");
+                try {
+                    fs.mkdirSync(path.dirname(SERVER_INFO_PATH), { recursive: true });
+                } catch {}
 
                 fs.writeFileSync(
-                    infoPath,
+                    SERVER_INFO_PATH,
                     JSON.stringify({
                         host: this.host,
                         port: this.port,
@@ -41,7 +46,7 @@ class HttpServer {
                 );
 
                 try {
-                    fs.chmodSync(infoPath, 0o600);
+                    fs.chmodSync(SERVER_INFO_PATH, 0o600);
                 } catch (error) {
                     console.error("Failed to set server-info.json permissions:", error.message);
                 }
@@ -63,12 +68,8 @@ class HttpServer {
         if (this.server) {
             return new Promise((resolve) => {
                 this.server.close(() => {
-                    const fs = require("fs");
-                    const path = require("path");
-                    const infoPath = path.join(require("os").homedir(), ".localkeys", "server-info.json");
-
-                    if (fs.existsSync(infoPath)) {
-                        fs.unlinkSync(infoPath);
+                    if (fs.existsSync(SERVER_INFO_PATH)) {
+                        fs.unlinkSync(SERVER_INFO_PATH);
                     }
 
                     resolve();

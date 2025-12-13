@@ -1,7 +1,9 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeImage } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const crypto = require("crypto");
+const os = require("os");
+const https = require("https");
+const { URL } = require("url");
 
 const Vault = require("./modules/vault");
 const Logger = require("./modules/logger");
@@ -19,7 +21,10 @@ let isQuitting = false;
 let i18n = null;
 let license = null;
 
-const LOCALKEYS_DIR = path.join(require("os").homedir(), ".localkeys");
+let appInitialized = false;
+let ipcHandlersInitialized = false;
+
+const LOCALKEYS_DIR = path.join(os.homedir(), ".localkeys");
 const APP_VERSION = "1.1.1";
 
 function createTray() {
@@ -29,8 +34,6 @@ function createTray() {
     }
 
     // macOS 트레이 아이콘 생성 - 템플릿 이미지로 설정
-    const { nativeImage } = require("electron");
-    const path = require("path");
 
     // 에셋 아이콘 파일 사용
     const iconPath = path.join(__dirname, "assets", "icon.png");
@@ -111,9 +114,6 @@ function createTray() {
 // 버전 체커 함수
 async function checkVersion() {
     try {
-        const https = require("https");
-        const { URL } = require("url");
-
         return new Promise((resolve) => {
             const url = new URL("https://localkeys.privatestater.com/api/version");
 
@@ -164,8 +164,6 @@ async function checkVersion() {
 
 // 업데이트 알림창 표시
 function showUpdateDialog(newVersion) {
-    const { BrowserWindow } = require("electron");
-
     let updateWindow = new BrowserWindow({
         width: 450,
         height: 240,
@@ -288,7 +286,7 @@ function showUpdateDialog(newVersion) {
 
     // 새 창에서 링크 열기 처리
     updateWindow.webContents.setWindowOpenHandler(({ url }) => {
-        require("electron").shell.openExternal(url);
+        shell.openExternal(url);
         return { action: "deny" };
     });
 
@@ -300,6 +298,9 @@ function showUpdateDialog(newVersion) {
 
 // 앱 초기화
 function initializeApp() {
+    if (appInitialized) return;
+    appInitialized = true;
+
     // 데이터 디렉토리 생성
     if (!fs.existsSync(LOCALKEYS_DIR)) {
         fs.mkdirSync(LOCALKEYS_DIR, { recursive: true });
@@ -339,9 +340,6 @@ function initializeApp() {
 
     // CLI 자동 설치 시도 (백그라운드에서 조용히)
     try {
-        const { spawn } = require("child_process");
-        const path = require("path");
-        const os = require("os");
         const cliPath = path.join(__dirname, "..", "cli", "localkeys.js");
 
         // CLI 파일이 존재하면 자동으로 설치 시도
@@ -357,7 +355,6 @@ function initializeApp() {
 
             // 독립 CLI 자동 설치 시도 (silent)
             try {
-                const cliPath = path.join(__dirname, "..", "cli", "localkeys.js");
                 const createStandaloneCli = (cliJsPath, electronPath) => {
                     if (os.platform() === "win32") {
                         return `@echo off
@@ -491,6 +488,9 @@ function createWindow() {
 
 // IPC 핸들러 설정
 function setupIpcHandlers() {
+    if (ipcHandlersInitialized) return;
+    ipcHandlersInitialized = true;
+
     // Vault 설정
     ipcMain.handle("vault:setup", async (event, password) => {
         try {
@@ -749,10 +749,6 @@ function setupIpcHandlers() {
 
     // CLI 설치
     ipcMain.handle("cli:install", async () => {
-        const fs = require("fs");
-        const path = require("path");
-        const os = require("os");
-
         try {
             const cliPath = path.join(__dirname, "..", "cli", "localkeys.js");
             if (!fs.existsSync(cliPath)) {
@@ -907,10 +903,6 @@ function setupIpcHandlers() {
     // CLI 설치 상태 확인
     ipcMain.handle("cli:check", async () => {
         try {
-            const fs = require("fs");
-            const path = require("path");
-            const os = require("os");
-
             // PATH 환경변수에서 CLI 파일 직접 확인 + 기본 설치 경로도 확인
             const checkCliInPath = () => {
                 try {
@@ -954,10 +946,6 @@ function setupIpcHandlers() {
     // CLI 제거
     ipcMain.handle("cli:uninstall", async () => {
         try {
-            const fs = require("fs");
-            const path = require("path");
-            const os = require("os");
-
             // PATH와 기본 설치 경로에서 CLI 파일 찾아서 제거
             const findAndRemoveCli = () => {
                 try {
