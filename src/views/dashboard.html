@@ -20,6 +20,7 @@
                         </button>
                         <div class="dropdown-menu hidden" id="dropdown-settings">
                             <button class="dropdown-item" id="install-cli-btn">Install CLI</button>
+                            <button class="dropdown-item" id="settings-btn">Settings</button>
                         </div>
                     </div>
                 </div>
@@ -72,6 +73,7 @@
                 document.getElementById("logs-btn").textContent = i18n.t("dashboard.logs");
                 document.getElementById("lock-btn").textContent = i18n.t("dashboard.lock");
                 document.getElementById("install-cli-btn").textContent = i18n.t("dashboard.installCli");
+                document.getElementById("settings-btn").textContent = i18n.t("dashboard.settings");
                 document.getElementById("search-input").placeholder = i18n.t("dashboard.searchPlaceholder");
                 document.getElementById("modal-title").textContent = i18n.t("dashboard.addProjectModal.title");
                 document.getElementById("label-project-name").textContent = i18n.t("dashboard.addProjectModal.label");
@@ -100,6 +102,8 @@
                 const confirmAddProject = document.getElementById("confirm-add-project");
 
                 const settingsDropdownBtn = document.getElementById("settings-dropdown-btn");
+
+                const settingsBtn = document.getElementById("settings-btn");
 
                 let projects = [];
 
@@ -411,6 +415,10 @@
 
                 logsBtn.addEventListener("click", function () {
                     window.location.href = "logs.html";
+                });
+
+                settingsBtn.addEventListener("click", function () {
+                    window.location.href = "settings.html";
                 });
 
                 lockBtn.addEventListener("click", async function () {

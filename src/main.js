@@ -25,6 +25,36 @@ let appInitialized = false;
 let ipcHandlersInitialized = false;
 
 const LOCALKEYS_DIR = path.join(os.homedir(), ".localkeys");
+const SETTINGS_FILE = path.join(LOCALKEYS_DIR, "settings.json");
+
+// 기본 설정값
+const DEFAULT_SETTINGS = {
+    checkForUpdates: true,
+};
+
+// 설정 로드
+function loadSettings() {
+    try {
+        if (fs.existsSync(SETTINGS_FILE)) {
+            const data = fs.readFileSync(SETTINGS_FILE, "utf8");
+            return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+        }
+    } catch (error) {
+        console.error("설정 로드 실패:", error);
+    }
+    return { ...DEFAULT_SETTINGS };
+}
+
+// 설정 저장
+function saveSettings(settings) {
+    try {
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+        return { success: true };
+    } catch (error) {
+        console.error("설정 저장 실패:", error);
+        return { success: false, error: error.message };
+    }
+}
 
 function getAppVersion() {
     // Electron 메타데이터 가져오기
@@ -341,15 +371,18 @@ function initializeApp() {
     // 트레이 아이콘 생성
     createTray();
 
-    // 버전 체크 (백그라운드에서)
-    checkVersion().then((newVersion) => {
-        if (newVersion && mainWindow) {
-            // 새 버전이 있으면 업데이트 알림창 표시
-            setTimeout(() => {
-                showUpdateDialog(newVersion);
-            }, 2000); // 앱이 완전히 로드된 후 표시
-        }
-    });
+    // 버전 체크 (백그라운드에서) - 설정 확인
+    const settings = loadSettings();
+    if (settings.checkForUpdates) {
+        checkVersion().then((newVersion) => {
+            if (newVersion && mainWindow) {
+                // 새 버전이 있으면 업데이트 알림창 표시
+                setTimeout(() => {
+                    showUpdateDialog(newVersion);
+                }, 2000); // 앱이 완전히 로드된 후 표시
+            }
+        });
+    }
 
     // CLI 자동 설치 시도 (백그라운드에서 조용히)
     try {
@@ -1153,6 +1186,17 @@ function setupIpcHandlers() {
         shell.openExternal("https://id.privatestater.com/buy?product=localkeys");
 
         return { success: true };
+    });
+
+    // 설정 관리
+    ipcMain.handle("settings:get", () => {
+        return loadSettings();
+    });
+
+    ipcMain.handle("settings:set", (event, newSettings) => {
+        const currentSettings = loadSettings();
+        const mergedSettings = { ...currentSettings, ...newSettings };
+        return saveSettings(mergedSettings);
     });
 }
 

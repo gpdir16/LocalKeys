@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>LocalKeys</title>
+        <link rel="stylesheet" href="../styles/common.css" />
+    </head>
+    <body>
+        <div class="container">
+            <div class="page-header settings-header">
+                <div class="page-title">
+                    <button class="back-btn" id="back-btn">
+                        <span class="lk-icon lk-icon-arrow-left" aria-hidden="true"></span>
+                    </button>
+                    <span id="title">Settings</span>
+                </div>
+            </div>
+
+            <!-- 설정 목록 -->
+            <div class="settings-container" id="settings-container">
+                <div class="settings-section">
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label" id="label-check-updates">Check for updates</span>
+                            <span class="settings-item-description" id="desc-check-updates">Automatically check for new versions on startup</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="check-updates-toggle" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="../modules/i18n-helper.js"></script>
+        <script src="../modules/notification.js"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", async function () {
+                // 다국어 초기화
+                await i18n.init();
+
+                // UI 번역 적용
+                document.getElementById("title").textContent = i18n.t("settings.title");
+                document.getElementById("label-check-updates").textContent = i18n.t("settings.checkForUpdates");
+                document.getElementById("desc-check-updates").textContent = i18n.t("settings.checkForUpdatesDesc");
+
+                const backBtn = document.getElementById("back-btn");
+                const checkUpdatesToggle = document.getElementById("check-updates-toggle");
+
+                // 설정 로드
+                async function loadSettings() {
+                    try {
+                        const settings = await window.localkeys.settings.get();
+                        checkUpdatesToggle.checked = settings.checkForUpdates;
+                    } catch (error) {
+                        notificationManager.error(i18n.t("settings.notifications.failedToLoad"));
+                    }
+                }
+
+                // 설정 저장
+                async function saveSettings() {
+                    try {
+                        const settings = {
+                            checkForUpdates: checkUpdatesToggle.checked,
+                        };
+
+                        const result = await window.localkeys.settings.set(settings);
+
+                        if (result.success) {
+                            notificationManager.success(i18n.t("settings.notifications.saved"));
+                        } else {
+                            notificationManager.error(i18n.t("settings.notifications.saveFailed"));
+                        }
+                    } catch (error) {
+                        notificationManager.error(i18n.t("settings.notifications.saveFailed"));
+                    }
+                }
+
+                // 이벤트 리스너
+                backBtn.addEventListener("click", function () {
+                    window.location.href = "dashboard.html";
+                });
+
+                checkUpdatesToggle.addEventListener("change", saveSettings);
+
+                // 초기 로드
+                loadSettings();
+            });
+        </script>
+    </body>
+</html>

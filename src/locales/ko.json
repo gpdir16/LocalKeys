@@ -23,6 +23,7 @@
         "addProject": "프로젝트 추가",
         "logs": "로그",
         "lock": "잠금",
+        "settings": "설정",
         "installCli": "CLI 설치",
         "uninstallCli": "CLI 제거",
         "installing": "설치 중...",
@@ -174,6 +175,16 @@
             "genericError": "오류가 발생했습니다. 다시 시도하세요."
         },
         "success": "라이선스가 성공적으로 활성화되었습니다!"
+    },
+    "settings": {
+        "title": "설정",
+        "checkForUpdates": "업데이트 확인",
+        "checkForUpdatesDesc": "시작 시 새 버전을 자동으로 확인합니다",
+        "notifications": {
+            "saved": "설정이 저장되었습니다",
+            "saveFailed": "설정 저장에 실패했습니다",
+            "failedToLoad": "설정을 불러오지 못했습니다"
+        }
     },
     "setup": {
         "title": "LocalKeys",

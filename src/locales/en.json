@@ -23,6 +23,7 @@
         "addProject": "Add Project",
         "logs": "Logs",
         "lock": "Lock",
+        "settings": "Settings",
         "installCli": "Install CLI",
         "uninstallCli": "Uninstall CLI",
         "installing": "Installing...",
@@ -174,6 +175,16 @@
             "genericError": "An error occurred. Please try again."
         },
         "success": "License activated successfully!"
+    },
+    "settings": {
+        "title": "Settings",
+        "checkForUpdates": "Check for updates",
+        "checkForUpdatesDesc": "Automatically check for new versions on startup",
+        "notifications": {
+            "saved": "Settings saved",
+            "saveFailed": "Failed to save settings",
+            "failedToLoad": "Failed to load settings"
+        }
     },
     "setup": {
         "title": "LocalKeys",

@@ -68,6 +68,12 @@ const api = {
         reload: () => ipcRenderer.invoke("license:reload"),
         openBuyPage: () => ipcRenderer.invoke("license:openBuyPage"),
     },
+
+    // 설정 관리
+    settings: {
+        get: () => ipcRenderer.invoke("settings:get"),
+        set: (settings) => ipcRenderer.invoke("settings:set", settings),
+    },
 };
 
 // 렌더러 프로세스에 API 노출
