@@ -1,6 +1,6 @@
 {
     "name": "localkeys",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "main": "src/main.js",
     "bin": {
         "localkeys": "./cli/localkeys.js"
@@ -27,7 +27,7 @@
         ],
         "mac": {
             "category": "public.app-category.developer-tools",
-            "icon": "src/assets/icon.png"
+            "icon": "src/assets/macicon.png"
         },
         "win": {
             "target": "nsis",
