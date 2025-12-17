@@ -90,6 +90,26 @@
             </div>
         </div>
 
+        <!-- 시크릿 히스토리 모달 -->
+        <div id="history-modal" class="modal-overlay hidden">
+            <div class="modal modal-large">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="history-modal-title">Version History</h3>
+                    <div class="secret-key-title" id="history-secret-key"></div>
+                </div>
+                <div class="modal-body">
+                    <div id="history-container" class="history-container">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="close-history">Close</button>
+                </div>
+            </div>
+        </div>
+
         <script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
         <script>
@@ -107,15 +127,17 @@
                 document.getElementById("secret-key").placeholder = i18n.t("project.addSecretModal.keyPlaceholder");
                 document.getElementById("label-secret-value").textContent = i18n.t("project.addSecretModal.valueLabel");
                 document.getElementById("secret-value").placeholder = i18n.t("project.addSecretModal.valuePlaceholder");
-                document.getElementById("label-secret-expires").textContent = i18n.t("project.addSecretModal.expiresLabel", "Expiration Date (Optional)");
+                document.getElementById("label-secret-expires").textContent = i18n.t("project.addSecretModal.expiresLabel");
                 document.getElementById("cancel-add-secret").textContent = i18n.t("common.cancel");
                 document.getElementById("confirm-add-secret").textContent = i18n.t("project.addSecretModal.add");
                 document.getElementById("edit-modal-title").textContent = i18n.t("project.editSecretModal.title");
                 document.getElementById("label-edit-key").textContent = i18n.t("project.editSecretModal.keyLabel");
                 document.getElementById("label-edit-value").textContent = i18n.t("project.editSecretModal.valueLabel");
-                document.getElementById("label-edit-expires").textContent = i18n.t("project.editSecretModal.expiresLabel", "Expiration Date (Optional)");
+                document.getElementById("label-edit-expires").textContent = i18n.t("project.editSecretModal.expiresLabel");
                 document.getElementById("cancel-edit-secret").textContent = i18n.t("common.cancel");
                 document.getElementById("confirm-edit-secret").textContent = i18n.t("project.editSecretModal.save");
+                document.getElementById("history-modal-title").textContent = i18n.t("project.history.title");
+                document.getElementById("close-history").textContent = i18n.t("common.close");
                 const projectNameEl = document.getElementById("project-name");
                 const secretsContainer = document.getElementById("secrets-container");
                 const searchInput = document.getElementById("search-input");
@@ -242,6 +264,14 @@
                     dropdownMenu.className = "dropdown-menu hidden";
                     dropdownMenu.id = `dropdown-${key}`;
 
+                    const historyBtn = document.createElement("button");
+                    historyBtn.className = "dropdown-item";
+                    historyBtn.textContent = i18n.t("project.viewHistory");
+                    historyBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        viewHistory(key);
+                    };
+
                     const deleteBtn = document.createElement("button");
                     deleteBtn.className = "dropdown-item dropdown-item-danger";
                     deleteBtn.textContent = i18n.t("project.deleteSecret");
@@ -250,6 +280,7 @@
                         deleteSecret(key);
                     };
 
+                    dropdownMenu.appendChild(historyBtn);
                     dropdownMenu.appendChild(deleteBtn);
                     dropdownDiv.appendChild(dropdownBtn);
                     dropdownDiv.appendChild(dropdownMenu);
@@ -517,6 +548,8 @@
 
                         if (result.success) {
                             notificationManager.success(i18n.t("project.notifications.exported", { path: result.path }));
+                        } else if (!result.cancelled) {
+                            notificationManager.error(i18n.t("project.notifications.failedToExport"));
                         }
                     } catch (error) {
                         notificationManager.error(i18n.t("project.notifications.failedToExport"));
@@ -531,7 +564,7 @@
                         if (result.success) {
                             await loadSecrets();
                             notificationManager.success(i18n.t("project.notifications.imported", { count: result.count }));
-                        } else if (result.error && result.error !== "Import cancelled") {
+                        } else if (!result.cancelled) {
                             notificationManager.error(i18n.t("project.notifications.failedToImport"));
                         }
                     } catch (error) {
@@ -641,6 +674,146 @@
                     // 현재 드롭다운 토글
                     dropdown.classList.toggle("hidden");
                 }
+
+                // 시크릿 히스토리 보기
+                async function viewHistory(secretKey) {
+                    const historyModal = document.getElementById("history-modal");
+                    const historyKeyEl = document.getElementById("history-secret-key");
+                    const historyContainer = document.getElementById("history-container");
+
+                    // 모달 표시
+                    historyKeyEl.textContent = secretKey;
+                    historyModal.classList.remove("hidden");
+                    historyModal.classList.add("show");
+                    historyContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+                    // 히스토리 가져오기
+                    const result = await window.localkeys.secrets.getHistory(projectName, secretKey);
+
+                    if (result.success) {
+                        const historyData = result.data;
+
+                        // 히스토리 목록 생성
+                        historyContainer.innerHTML = "";
+
+                        // 현재 버전 표시
+                        if (historyData.current) {
+                            const currentItem = createHistoryItem(secretKey, historyData.current, -1, true);
+                            historyContainer.appendChild(currentItem);
+                        }
+
+                        // 이전 버전들 표시
+                        if (historyData.history && historyData.history.length > 0) {
+                            historyData.history.forEach((version, index) => {
+                                const item = createHistoryItem(secretKey, version, index, false);
+                                historyContainer.appendChild(item);
+                            });
+                        } else {
+                            const noHistoryMsg = document.createElement("div");
+                            noHistoryMsg.className = "empty-state";
+                            noHistoryMsg.textContent = i18n.t("project.history.noHistory");
+                            historyContainer.appendChild(noHistoryMsg);
+                        }
+                    } else {
+                        historyContainer.innerHTML = `<div class="error-state">${i18n.t("project.history.failedToLoad")}: ${result.error}</div>`;
+                    }
+                }
+
+                // 히스토리 아이템 생성
+                function createHistoryItem(key, version, versionIndex, isCurrent) {
+                    const item = document.createElement("div");
+                    item.className = "history-item" + (isCurrent ? " current-version" : "");
+
+                    // 날짜 헤더
+                    const labelHeader = document.createElement("div");
+                    labelHeader.className = "secret-header";
+
+                    const labelDiv = document.createElement("div");
+                    labelDiv.className = "secret-key";
+                    if (isCurrent) {
+                        labelDiv.textContent = i18n.t("project.history.currentVersion");
+                    } else {
+                        const date = new Date(version.changedAt);
+                        labelDiv.textContent = date.toLocaleString();
+                    }
+
+                    labelHeader.appendChild(labelDiv);
+
+                    // 값과 액션 행
+                    const valueHeader = document.createElement("div");
+                    valueHeader.className = "secret-header";
+
+                    const valueDiv = document.createElement("div");
+                    valueDiv.className = "secret-value masked secret-78";
+                    valueDiv.textContent = version.value;
+
+                    const actionsDiv = document.createElement("div");
+                    actionsDiv.className = "secret-actions";
+
+                    const toggleBtn = document.createElement("button");
+                    toggleBtn.className = "toggle-visibility";
+                    const visibilityIcon = document.createElement("span");
+                    visibilityIcon.className = "lk-icon lk-icon-eye";
+                    visibilityIcon.setAttribute("aria-hidden", "true");
+                    toggleBtn.appendChild(visibilityIcon);
+                    toggleBtn.onclick = () => {
+                        valueDiv.classList.toggle("masked");
+                        visibilityIcon.className = valueDiv.classList.contains("masked") ? "lk-icon lk-icon-eye" : "lk-icon lk-icon-eye-off";
+                    };
+
+                    actionsDiv.appendChild(toggleBtn);
+
+                    if (!isCurrent) {
+                        const restoreBtn = document.createElement("button");
+                        restoreBtn.className = "btn btn-sm";
+                        restoreBtn.textContent = i18n.t("project.history.restore");
+                        restoreBtn.onclick = async () => {
+                            if (confirm(i18n.t("project.history.restoreConfirm"))) {
+                                const result = await window.localkeys.secrets.restoreVersion(projectName, key, versionIndex);
+                                if (result.success) {
+                                    notificationManager.success(i18n.t("project.history.restored"));
+                                    const historyModal = document.getElementById("history-modal");
+                                    historyModal.classList.remove("show");
+                                    setTimeout(() => {
+                                        historyModal.classList.add("hidden");
+                                    }, 200);
+                                    await loadSecrets();
+                                } else {
+                                    notificationManager.error(i18n.t("project.history.failedToRestore") + `: ${result.error}`);
+                                }
+                            }
+                        };
+                        actionsDiv.appendChild(restoreBtn);
+                    }
+
+                    valueHeader.appendChild(valueDiv);
+                    valueHeader.appendChild(actionsDiv);
+
+                    item.appendChild(labelHeader);
+                    item.appendChild(valueHeader);
+
+                    return item;
+                }
+
+                // 히스토리 모달 닫기
+                document.getElementById("close-history")?.addEventListener("click", () => {
+                    const historyModal = document.getElementById("history-modal");
+                    historyModal.classList.remove("show");
+                    setTimeout(() => {
+                        historyModal.classList.add("hidden");
+                    }, 200);
+                });
+
+                // 히스토리 모달 오버레이 클릭 시 닫기
+                document.getElementById("history-modal")?.addEventListener("click", (e) => {
+                    if (e.target.id === "history-modal") {
+                        const historyModal = document.getElementById("history-modal");
+                        historyModal.classList.remove("show");
+                        setTimeout(() => {
+                            historyModal.classList.add("hidden");
+                        }, 200);
+                    }
+                });
 
                 // 외부 클릭 시 드롭다운 닫기
                 document.addEventListener("click", function (e) {

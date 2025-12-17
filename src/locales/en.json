@@ -95,6 +95,20 @@
             "expiresInHours": "Expires in {{count}} hours ({{date}})"
         },
         "deleteSecret": "Delete Secret",
+        "viewHistory": "View History",
+        "history": {
+            "title": "Version History",
+            "currentVersion": "Current Version",
+            "versionNumber": "Version {{number}}",
+            "show": "Show",
+            "hide": "Hide",
+            "restore": "Restore",
+            "noHistory": "No previous versions",
+            "restoreConfirm": "Restore this version? The current value will be saved in history.",
+            "restored": "Version restored successfully",
+            "failedToLoad": "Failed to load version history",
+            "failedToRestore": "Failed to restore version"
+        },
         "emptyState": {
             "title": "No secrets found",
             "descriptionEmpty": "Add your first secret to this project.",
@@ -121,9 +135,19 @@
     "logs": {
         "title": "Access Logs",
         "clearAll": "Clear All Logs",
+        "export": "Export",
+        "searchPlaceholder": "Search logs...",
+        "categories": {
+            "all": "All",
+            "access": "Access",
+            "app": "App",
+            "lock": "Lock"
+        },
         "emptyState": {
             "title": "No logs found",
-            "description": "No logs have been recorded yet."
+            "description": "No logs have been recorded yet.",
+            "noMatchesTitle": "No matching logs",
+            "noMatchesDescription": "Try changing your filters or search query."
         },
         "clearConfirm": "Are you sure you want to clear all logs? This action cannot be undone.",
         "timeAgo": {
@@ -138,7 +162,9 @@
         "notifications": {
             "cleared": "All logs have been cleared",
             "failedToClear": "Failed to clear logs",
-            "failedToLoad": "Failed to load logs"
+            "failedToLoad": "Failed to load logs",
+            "exported": "Logs exported to {{path}}",
+            "failedToExport": "Failed to export logs"
         }
     },
     "approval": {
@@ -178,8 +204,36 @@
         },
         "success": "License activated successfully!"
     },
+    "cli": {
+        "install": {
+            "success": "CLI installed successfully.",
+            "successAt": "CLI installed successfully at {{path}}.",
+            "successPathSetupFailed": "CLI installed successfully, but terminal setup failed. Please add ~/.local/bin to your PATH manually.",
+            "successAtPathSetupFailed": "CLI installed successfully at {{path}}, but terminal setup failed. Please add ~/.local/bin to your PATH manually."
+        },
+        "uninstall": {
+            "success": "CLI uninstalled successfully.",
+            "notFound": "CLI not found. Already uninstalled or not installed."
+        },
+        "errors": {
+            "fileNotFound": "CLI file not found",
+            "noSuitablePath": "CLI installation failed: Cannot find suitable path"
+        }
+    },
+    "tray": {
+        "show": "Show LocalKeys",
+        "lock": "Lock Vault",
+        "quit": "Quit"
+    },
     "settings": {
         "title": "Settings",
+        "language": "Language",
+        "languageDesc": "Choose the display language",
+        "languageOptions": {
+            "system": "System",
+            "en": "English",
+            "ko": "Korean"
+        },
         "checkForUpdates": "Check for updates",
         "checkForUpdatesDesc": "Automatically check for new versions on startup",
         "notifications": {

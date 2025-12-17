@@ -5,6 +5,7 @@ class I18nHelper {
     constructor() {
         this.translations = {};
         this.locale = "en";
+        this._isBoundToLocaleChanges = false;
     }
 
     // 번역 초기화
@@ -13,11 +14,41 @@ class I18nHelper {
             const data = await window.localkeys.i18n.getTranslations();
             this.translations = data.translations || {};
             this.locale = data.locale || "en";
+            try {
+                if (document?.documentElement) {
+                    document.documentElement.lang = this.locale;
+                }
+            } catch {}
+
+            this._bindToLocaleChanges();
             return true;
         } catch (error) {
             console.error("Failed to load translations:", error);
             return false;
         }
+    }
+
+    _bindToLocaleChanges() {
+        if (this._isBoundToLocaleChanges) return;
+        if (!window?.localkeys?.i18n?.onLocaleChanged) return;
+
+        this._isBoundToLocaleChanges = true;
+        window.localkeys.i18n.onLocaleChanged((data) => {
+            if (!data || typeof data !== "object") {
+                window.location.reload();
+                return;
+            }
+
+            this.translations = data.translations || {};
+            this.locale = data.locale || this.locale;
+            try {
+                if (document?.documentElement) {
+                    document.documentElement.lang = this.locale;
+                }
+            } catch {}
+
+            window.location.reload();
+        });
     }
 
     // 번역 가져오기

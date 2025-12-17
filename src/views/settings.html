@@ -22,6 +22,17 @@
                 <div class="settings-section">
                     <div class="settings-item">
                         <div class="settings-item-info">
+                            <span class="settings-item-label" id="label-language">Language</span>
+                            <span class="settings-item-description" id="desc-language">Choose the display language</span>
+                        </div>
+                        <select id="language-select" class="filter-select">
+                            <option value="system" id="lang-opt-system">System</option>
+                            <option value="en" id="lang-opt-en">English</option>
+                            <option value="ko" id="lang-opt-ko">Korean</option>
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
                             <span class="settings-item-label" id="label-check-updates">Check for updates</span>
                             <span class="settings-item-description" id="desc-check-updates">Automatically check for new versions on startup</span>
                         </div>
@@ -43,17 +54,24 @@
 
                 // UI 번역 적용
                 document.getElementById("title").textContent = i18n.t("settings.title");
+                document.getElementById("label-language").textContent = i18n.t("settings.language");
+                document.getElementById("desc-language").textContent = i18n.t("settings.languageDesc");
+                document.getElementById("lang-opt-system").textContent = i18n.t("settings.languageOptions.system");
+                document.getElementById("lang-opt-en").textContent = i18n.t("settings.languageOptions.en");
+                document.getElementById("lang-opt-ko").textContent = i18n.t("settings.languageOptions.ko");
                 document.getElementById("label-check-updates").textContent = i18n.t("settings.checkForUpdates");
                 document.getElementById("desc-check-updates").textContent = i18n.t("settings.checkForUpdatesDesc");
 
                 const backBtn = document.getElementById("back-btn");
                 const checkUpdatesToggle = document.getElementById("check-updates-toggle");
+                const languageSelect = document.getElementById("language-select");
 
                 // 설정 로드
                 async function loadSettings() {
                     try {
                         const settings = await window.localkeys.settings.get();
                         checkUpdatesToggle.checked = settings.checkForUpdates;
+                        languageSelect.value = settings.locale || "system";
                     } catch (error) {
                         notificationManager.error(i18n.t("settings.notifications.failedToLoad"));
                     }
@@ -64,6 +82,7 @@
                     try {
                         const settings = {
                             checkForUpdates: checkUpdatesToggle.checked,
+                            locale: languageSelect.value,
                         };
 
                         const result = await window.localkeys.settings.set(settings);
@@ -84,6 +103,7 @@
                 });
 
                 checkUpdatesToggle.addEventListener("change", saveSettings);
+                languageSelect.addEventListener("change", saveSettings);
 
                 // 초기 로드
                 loadSettings();

@@ -964,6 +964,7 @@ select,
 .search-bar {
     position: relative;
     margin-bottom: 15px;
+    width: 100%;
 }
 
 .search-input {
@@ -1036,14 +1037,16 @@ select,
 .scrollable-container::-webkit-scrollbar,
 .logs-container::-webkit-scrollbar,
 #projects-container::-webkit-scrollbar,
-.secrets-container::-webkit-scrollbar {
+.secrets-container::-webkit-scrollbar,
+.history-container::-webkit-scrollbar {
     width: 8px;
 }
 
 .scrollable-container::-webkit-scrollbar-track,
 .logs-container::-webkit-scrollbar-track,
 #projects-container::-webkit-scrollbar-track,
-.secrets-container::-webkit-scrollbar-track {
+.secrets-container::-webkit-scrollbar-track,
+.history-container::-webkit-scrollbar-track {
     background: var(--bg-tertiary);
     border-radius: 4px;
 }
@@ -1051,7 +1054,8 @@ select,
 .scrollable-container::-webkit-scrollbar-thumb,
 .logs-container::-webkit-scrollbar-thumb,
 #projects-container::-webkit-scrollbar-thumb,
-.secrets-container::-webkit-scrollbar-thumb {
+.secrets-container::-webkit-scrollbar-thumb,
+.history-container::-webkit-scrollbar-thumb {
     background: var(--text-secondary);
     border-radius: 4px;
 }
@@ -1059,7 +1063,8 @@ select,
 .scrollable-container::-webkit-scrollbar-thumb:hover,
 .logs-container::-webkit-scrollbar-thumb:hover,
 #projects-container::-webkit-scrollbar-thumb:hover,
-.secrets-container::-webkit-scrollbar-thumb:hover {
+.secrets-container::-webkit-scrollbar-thumb:hover,
+.history-container::-webkit-scrollbar-thumb:hover {
     background: var(--text-primary);
 }
 
@@ -1182,7 +1187,6 @@ select,
     margin-bottom: 15px;
     overflow-y: auto;
     flex: 1;
-    margin-top: 10px;
     padding-right: 5px;
 }
 
@@ -1205,12 +1209,15 @@ select,
     font-size: 14px;
     color: var(--text-secondary);
     background-color: var(--bg-tertiary);
-    padding: 10px;
+    padding: 8px;
     word-break: break-all;
-    margin-bottom: 10px;
     position: relative;
     border-radius: 8px;
     user-select: text;
+}
+
+.secret-78 {
+    width: 78%;
 }
 
 .secret-value.masked {
@@ -1224,9 +1231,10 @@ select,
     font-size: 12px;
     color: var(--text-secondary);
     padding: 4px 8px;
-    border-radius: 4px;
+    border-radius: 8px;
     background-color: var(--bg-tertiary);
     display: inline-block;
+    margin-top: 10px;
 }
 
 .secret-expires.expiring-soon {
@@ -1498,4 +1506,125 @@ select,
 .toggle-switch input:checked + .toggle-slider:before {
     transform: translateX(20px);
     background-color: white;
+}
+
+/* 히스토리 모달 */
+.modal-large {
+    width: 600px;
+    max-width: 90vw;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: hidden;
+}
+
+.modal-large .modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+}
+
+.modal-large .modal-header {
+    margin-bottom: 0;
+}
+
+.secret-key-title {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-family: monospace;
+}
+
+.history-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.history-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 16px 0 16px;
+}
+
+.history-item.current-version {
+    border-color: var(--accent);
+    background: rgba(74, 158, 255, 0.1);
+}
+
+.history-item.current-version .secret-key {
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+    height: auto;
+    min-height: 32px;
+}
+
+.history-container .empty-state,
+.history-container .error-state,
+.logs-container .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.history-container .error-state {
+    color: var(--error);
+}
+
+/* 로그 인터페이스 개선 */
+.logs-filters {
+    display: flex;
+    gap: 14px;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    min-width: 150px;
+    height: 42px;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.log-type {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.log-type.access {
+    background: rgba(74, 158, 255, 0.2);
+    color: var(--accent);
+}
+
+.log-type.app {
+    background: rgba(158, 158, 158, 0.2);
+    color: #9e9e9e;
+}
+
+.log-type.lock {
+    background: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
 }

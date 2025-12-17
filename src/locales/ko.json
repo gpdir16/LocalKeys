@@ -95,6 +95,20 @@
             "expiresInHours": "{{count}}시간 후 만료 ({{date}})"
         },
         "deleteSecret": "시크릿 삭제",
+        "viewHistory": "히스토리 보기",
+        "history": {
+            "title": "변경 이력",
+            "currentVersion": "현재 버전",
+            "versionNumber": "버전 {{number}}",
+            "show": "보기",
+            "hide": "숨기기",
+            "restore": "복원",
+            "noHistory": "이전 버전이 없습니다",
+            "restoreConfirm": "이 버전으로 복원하시겠습니까? 현재 값은 히스토리에 저장됩니다.",
+            "restored": "버전이 복원되었습니다",
+            "failedToLoad": "변경 이력을 불러오지 못했습니다",
+            "failedToRestore": "버전 복원에 실패했습니다"
+        },
         "emptyState": {
             "title": "시크릿이 없습니다",
             "descriptionEmpty": "이 프로젝트에 첫 번째 시크릿을 추가하세요.",
@@ -121,9 +135,19 @@
     "logs": {
         "title": "접근 로그",
         "clearAll": "모든 로그 삭제",
+        "export": "내보내기",
+        "searchPlaceholder": "로그 검색...",
+        "categories": {
+            "all": "전체",
+            "access": "접근",
+            "app": "앱",
+            "lock": "잠금"
+        },
         "emptyState": {
             "title": "로그가 없습니다",
-            "description": "아직 기록된 로그가 없습니다."
+            "description": "아직 기록된 로그가 없습니다.",
+            "noMatchesTitle": "일치하는 로그가 없습니다",
+            "noMatchesDescription": "필터 또는 검색어를 변경해보세요."
         },
         "clearConfirm": "모든 로그를 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
         "timeAgo": {
@@ -138,7 +162,9 @@
         "notifications": {
             "cleared": "모든 로그가 삭제되었습니다",
             "failedToClear": "로그 삭제에 실패했습니다",
-            "failedToLoad": "로그를 불러오지 못했습니다"
+            "failedToLoad": "로그를 불러오지 못했습니다",
+            "exported": "로그를 {{path}}로 내보냈습니다",
+            "failedToExport": "로그 내보내기에 실패했습니다"
         }
     },
     "approval": {
@@ -178,8 +204,36 @@
         },
         "success": "라이선스가 성공적으로 활성화되었습니다!"
     },
+    "cli": {
+        "install": {
+            "success": "CLI가 성공적으로 설치되었습니다.",
+            "successAt": "CLI가 {{path}}에 성공적으로 설치되었습니다.",
+            "successPathSetupFailed": "CLI는 설치되었지만 터미널 설정에 실패했습니다. ~/.local/bin을 PATH에 수동으로 추가해주세요.",
+            "successAtPathSetupFailed": "CLI가 {{path}}에 설치되었지만 터미널 설정에 실패했습니다. ~/.local/bin을 PATH에 수동으로 추가해주세요."
+        },
+        "uninstall": {
+            "success": "CLI가 성공적으로 제거되었습니다.",
+            "notFound": "CLI를 찾을 수 없습니다. 이미 제거되었거나 설치되어 있지 않습니다."
+        },
+        "errors": {
+            "fileNotFound": "CLI 파일을 찾을 수 없습니다",
+            "noSuitablePath": "CLI 설치 실패: 적절한 경로를 찾을 수 없습니다"
+        }
+    },
+    "tray": {
+        "show": "LocalKeys 보기",
+        "lock": "Vault 잠금",
+        "quit": "종료"
+    },
     "settings": {
         "title": "설정",
+        "language": "언어",
+        "languageDesc": "표시 언어를 선택하세요",
+        "languageOptions": {
+            "system": "시스템",
+            "en": "English",
+            "ko": "한국어"
+        },
         "checkForUpdates": "업데이트 확인",
         "checkForUpdatesDesc": "시작 시 새 버전을 자동으로 확인합니다",
         "notifications": {

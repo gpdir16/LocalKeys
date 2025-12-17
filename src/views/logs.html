@@ -16,7 +16,22 @@
                     <span id="title">Access Logs</span>
                 </div>
                 <div class="header-actions">
+                    <button class="btn btn-secondary" id="export-logs-btn">Export</button>
                     <button class="btn btn-danger" id="clear-logs-btn">Clear All Logs</button>
+                </div>
+            </div>
+
+            <!-- 필터 및 검색 -->
+            <div class="logs-filters">
+                <select id="category-filter" class="filter-select">
+                    <option value="all">All</option>
+                    <option value="access">Access</option>
+                    <option value="app">App</option>
+                    <option value="lock">Lock</option>
+                </select>
+                <div class="search-bar">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search logs..." />
+                    <span class="search-icon lk-icon lk-icon-search" aria-hidden="true"></span>
                 </div>
             </div>
 
@@ -38,15 +53,31 @@
                 // UI 번역 적용
                 document.getElementById("title").textContent = i18n.t("logs.title");
                 document.getElementById("clear-logs-btn").textContent = i18n.t("logs.clearAll");
+                document.getElementById("export-logs-btn").textContent = i18n.t("logs.export");
+                document.getElementById("search-input").placeholder = i18n.t("logs.searchPlaceholder");
                 const logsContainer = document.getElementById("logs-container");
                 const backBtn = document.getElementById("back-btn");
                 const clearLogsBtn = document.getElementById("clear-logs-btn");
+                const exportLogsBtn = document.getElementById("export-logs-btn");
+                const categoryFilter = document.getElementById("category-filter");
+                const searchInput = document.getElementById("search-input");
+
+                // 카테고리 옵션 번역
+                try {
+                    categoryFilter.querySelector('option[value="all"]').textContent = i18n.t("logs.categories.all");
+                    categoryFilter.querySelector('option[value="access"]').textContent = i18n.t("logs.categories.access");
+                    categoryFilter.querySelector('option[value="app"]').textContent = i18n.t("logs.categories.app");
+                    categoryFilter.querySelector('option[value="lock"]').textContent = i18n.t("logs.categories.lock");
+                } catch {}
 
                 let allLogs = [];
+                let filteredLogs = [];
                 let displayedLogsCount = 0;
                 const logsPerLoad = 50;
                 let isLoading = false;
                 let hasMoreLogs = true;
+                let currentCategory = "all";
+                let currentSearch = "";
 
                 // 로그 로드
                 async function loadLogs() {
@@ -57,13 +88,32 @@
                             allLogs = result.data.reverse(); // 최신 로그부터 표시
                             displayedLogsCount = 0;
                             hasMoreLogs = true;
-                            renderLogs();
+                            applyFilters();
                         } else {
                             notificationManager.error(i18n.t("logs.notifications.failedToLoad"));
                         }
                     } catch (error) {
                         notificationManager.error(i18n.t("logs.notifications.failedToLoad"));
                     }
+                }
+
+                // 필터 적용
+                function applyFilters() {
+                    filteredLogs = allLogs.filter((log) => {
+                        // 카테고리 필터
+                        if (currentCategory !== "all" && log.category !== currentCategory) {
+                            return false;
+                        }
+
+                        // 검색 필터
+                        if (currentSearch && !log.message.toLowerCase().includes(currentSearch.toLowerCase())) {
+                            return false;
+                        }
+
+                        return true;
+                    });
+
+                    renderLogs();
                 }
 
                 // 추가 로그 로드 (무한 스크롤)
@@ -74,9 +124,9 @@
 
                     setTimeout(() => {
                         const startIndex = displayedLogsCount;
-                        const endIndex = Math.min(startIndex + logsPerLoad, allLogs.length);
+                        const endIndex = Math.min(startIndex + logsPerLoad, filteredLogs.length);
 
-                        if (startIndex >= allLogs.length) {
+                        if (startIndex >= filteredLogs.length) {
                             hasMoreLogs = false;
                             isLoading = false;
                             return;
@@ -87,13 +137,13 @@
                         }
 
                         const fragment = document.createDocumentFragment();
-                        allLogs.slice(startIndex, endIndex).forEach((log) => {
+                        filteredLogs.slice(startIndex, endIndex).forEach((log) => {
                             fragment.appendChild(createLogElement(log));
                         });
                         logsContainer.appendChild(fragment);
 
                         displayedLogsCount = endIndex;
-                        hasMoreLogs = endIndex < allLogs.length;
+                        hasMoreLogs = endIndex < filteredLogs.length;
                         isLoading = false;
                     }, 100);
                 }
@@ -111,7 +161,9 @@
 
                     const typeDiv = document.createElement("div");
                     typeDiv.className = `log-type ${log.category}`;
-                    typeDiv.textContent = log.category;
+                    const categoryLabelKey = `logs.categories.${log.category}`;
+                    const categoryLabel = i18n.t(categoryLabelKey);
+                    typeDiv.textContent = categoryLabel === categoryLabelKey ? log.category : categoryLabel;
 
                     logHeader.appendChild(timestampDiv);
                     logHeader.appendChild(typeDiv);
@@ -130,7 +182,7 @@
                 function renderLogs() {
                     logsContainer.innerHTML = ""; // 초기화
 
-                    if (allLogs.length === 0) {
+                    if (filteredLogs.length === 0) {
                         const emptyState = document.createElement("div");
                         emptyState.className = "empty-state";
 
@@ -140,11 +192,19 @@
 
                         const title = document.createElement("div");
                         title.className = "empty-state-title";
-                        title.textContent = i18n.t("logs.emptyState.title");
+                        if (allLogs.length === 0) {
+                            title.textContent = i18n.t("logs.emptyState.title");
+                        } else {
+                            title.textContent = i18n.t("logs.emptyState.noMatchesTitle");
+                        }
 
                         const description = document.createElement("div");
                         description.className = "empty-state-description";
-                        description.textContent = i18n.t("logs.emptyState.description");
+                        if (allLogs.length === 0) {
+                            description.textContent = i18n.t("logs.emptyState.description");
+                        } else {
+                            description.textContent = i18n.t("logs.emptyState.noMatchesDescription");
+                        }
 
                         emptyState.appendChild(icon);
                         emptyState.appendChild(title);
@@ -155,6 +215,7 @@
                     }
 
                     displayedLogsCount = 0;
+                    hasMoreLogs = true;
                     loadMoreLogs(); // 첫 50개 로드
                 }
 
@@ -199,6 +260,7 @@
                             if (result.success) {
                                 notificationManager.success(i18n.t("logs.notifications.cleared"));
                                 allLogs = [];
+                                filteredLogs = [];
                                 renderLogs();
                             } else {
                                 notificationManager.error(i18n.t("logs.notifications.failedToClear"));
@@ -207,6 +269,32 @@
                             notificationManager.error(i18n.t("logs.notifications.failedToClear"));
                         }
                     }
+                });
+
+                // 로그 내보내기 버튼 클릭
+                exportLogsBtn.addEventListener("click", async function () {
+                    try {
+                        const result = await window.localkeys.logs.export();
+                        if (result.success) {
+                            notificationManager.success(i18n.t("logs.notifications.exported", { path: result.path }));
+                        } else if (!result.cancelled) {
+                            notificationManager.error(i18n.t("logs.notifications.failedToExport"));
+                        }
+                    } catch (error) {
+                        notificationManager.error(i18n.t("logs.notifications.failedToExport"));
+                    }
+                });
+
+                // 카테고리 필터 변경
+                categoryFilter.addEventListener("change", function () {
+                    currentCategory = categoryFilter.value;
+                    applyFilters();
+                });
+
+                // 검색 입력
+                searchInput.addEventListener("input", function () {
+                    currentSearch = searchInput.value;
+                    applyFilters();
                 });
 
                 // 자동 새로고침 설정 (15초마다)

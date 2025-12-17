@@ -6,19 +6,26 @@ class I18n {
     constructor() {
         this.currentLocale = "en";
         this.translations = {};
+        this.fallbackTranslations = {};
         this.fallbackLocale = "en";
+        this.supportedLocales = ["en", "ko"];
     }
 
-    initialize() {
-        const systemLocale = app.getLocale();
-        const languageCode = systemLocale.split("-")[0];
-        const supportedLocales = ["en", "ko"];
+    resolveLocale(preferredLocale) {
+        const normalized = typeof preferredLocale === "string" ? preferredLocale.trim().toLowerCase() : "";
 
-        if (supportedLocales.includes(languageCode)) {
-            this.currentLocale = languageCode;
-        } else {
-            this.currentLocale = this.fallbackLocale;
+        if (normalized && normalized !== "system") {
+            if (this.supportedLocales.includes(normalized)) return normalized;
+            return this.fallbackLocale;
         }
+
+        const systemLocale = app.getLocale();
+        const languageCode = (systemLocale || "").split("-")[0].toLowerCase();
+        return this.supportedLocales.includes(languageCode) ? languageCode : this.fallbackLocale;
+    }
+
+    initialize(preferredLocale = null) {
+        this.currentLocale = this.resolveLocale(preferredLocale);
 
         this.loadTranslations();
 
@@ -43,6 +50,7 @@ class I18n {
             console.error(`Failed to load locale ${this.currentLocale}:`, error);
         }
 
+        this.fallbackTranslations = {};
         if (this.currentLocale !== this.fallbackLocale) {
             try {
                 if (fs.existsSync(fallbackLocalePath)) {
@@ -100,7 +108,7 @@ class I18n {
     }
 
     setLocale(locale) {
-        this.currentLocale = locale;
+        this.currentLocale = this.resolveLocale(locale);
         this.loadTranslations();
     }
 

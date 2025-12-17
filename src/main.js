@@ -31,6 +31,7 @@ const SETTINGS_FILE = path.join(LOCALKEYS_DIR, "settings.json");
 // 기본 설정값
 const DEFAULT_SETTINGS = {
     checkForUpdates: true,
+    locale: "system",
 };
 
 function openExternalSafely(rawUrl) {
@@ -123,9 +124,9 @@ function createTray() {
     }
 
     // 트레이 메뉴 생성
-    const showLabel = i18n ? (i18n.getLocale() === "ko" ? "LocalKeys 보기" : "Show LocalKeys") : "Show LocalKeys";
-    const lockLabel = i18n ? (i18n.getLocale() === "ko" ? "Vault 잠금" : "Lock Vault") : "Lock Vault";
-    const quitLabel = i18n ? (i18n.getLocale() === "ko" ? "종료" : "Quit") : "Quit";
+    const showLabel = i18n ? i18n.t("tray.show") : "Show LocalKeys";
+    const lockLabel = i18n ? i18n.t("tray.lock") : "Lock Vault";
+    const quitLabel = i18n ? i18n.t("tray.quit") : "Quit";
 
     const contextMenu = Menu.buildFromTemplate([
         {
@@ -245,7 +246,7 @@ function showUpdateDialog(newVersion) {
     // 업데이트 알림창 HTML 생성
     const updateHTML = `
     <!DOCTYPE html>
-    <html lang="en">
+    <html lang="${i18n ? i18n.getLocale() : "en"}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -374,9 +375,11 @@ function initializeApp() {
         }
     } catch {}
 
+    const settings = loadSettings();
+
     // 다국어 초기화
     i18n = new I18n();
-    i18n.initialize();
+    i18n.initialize(settings.locale);
 
     // 로거 초기화
     logger = new Logger(path.join(LOCALKEYS_DIR, "logs.enc"));
@@ -397,7 +400,6 @@ function initializeApp() {
     createTray();
 
     // 버전 체크 (백그라운드에서) - 설정 확인
-    const settings = loadSettings();
     if (settings.checkForUpdates) {
         checkVersion().then((newVersion) => {
             if (newVersion && mainWindow) {
@@ -699,6 +701,30 @@ function setupIpcHandlers() {
         }
     });
 
+    // 시크릿 히스토리 조회
+    ipcMain.handle("secret:getHistory", async (event, projectName, key) => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+
+        try {
+            const history = vault.getSecretHistory(projectName, key);
+            return { success: true, data: history };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 시크릿 버전 복원
+    ipcMain.handle("secret:restoreVersion", async (event, projectName, key, versionIndex) => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+
+        try {
+            vault.restoreSecretVersion(projectName, key, versionIndex);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
     // 로그 가져오기
     ipcMain.handle("logs:get", () => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
@@ -711,6 +737,41 @@ function setupIpcHandlers() {
         try {
             logger.clearLogs();
             return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 로그 JSON 내보내기
+    ipcMain.handle("logs:export", async () => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+
+        try {
+            const result = await dialog.showSaveDialog(mainWindow, {
+                defaultPath: `localkeys-logs-${new Date().toISOString().split("T")[0]}.json`,
+                filters: [{ name: "JSON Files", extensions: ["json"] }],
+            });
+
+            if (!result.canceled && result.filePath) {
+                const logs = logger.getLogs();
+                const exportData = {
+                    exportedAt: new Date().toISOString(),
+                    totalLogs: logs.length,
+                    logs: logs,
+                };
+
+                fs.writeFileSync(result.filePath, JSON.stringify(exportData, null, 2));
+                try {
+                    if (os.platform() !== "win32") {
+                        fs.chmodSync(result.filePath, 0o600);
+                    }
+                } catch {}
+
+                logger.logApp(`Logs exported to ${result.filePath}`);
+                return { success: true, path: result.filePath };
+            }
+
+            return { success: false, cancelled: true };
         } catch (error) {
             return { success: false, error: error.message };
         }
@@ -749,11 +810,12 @@ function setupIpcHandlers() {
                     fs.chmodSync(result.filePath, 0o600);
                 }
             } catch {}
+
             logger.logApp(`Secrets exported: ${projectName} -> ${result.filePath}`);
             return { success: true, path: result.filePath };
         }
 
-        return { success: false, error: "Export cancelled" };
+        return { success: false, cancelled: true };
     });
 
     // .env 파일 불러오기
@@ -827,7 +889,7 @@ function setupIpcHandlers() {
             }
         }
 
-        return { success: false, error: "Import cancelled" };
+        return { success: false, cancelled: true };
     });
 
     // 화면 전환
@@ -872,7 +934,7 @@ function setupIpcHandlers() {
         try {
             const cliPath = path.join(__dirname, "..", "cli", "localkeys.js");
             if (!fs.existsSync(cliPath)) {
-                return { success: false, error: "CLI file not found" };
+                return { success: false, error: i18n ? i18n.t("cli.errors.fileNotFound") : "CLI file not found" };
             }
 
             // Unix 권한 설정
@@ -979,7 +1041,7 @@ function setupIpcHandlers() {
                             if (configFileUpdated) {
                                 return {
                                     success: true,
-                                    message: `CLI installed successfully.`,
+                                    message: i18n ? i18n.t("cli.install.success") : "CLI installed successfully.",
                                 };
                             } else {
                                 // 셸 설정 파일이 없는 경우 새로 생성
@@ -990,12 +1052,14 @@ function setupIpcHandlers() {
                                     fs.writeFileSync(configPath, pathLine.trim() + "\n");
                                     return {
                                         success: true,
-                                        message: `CLI installed successfully.`,
+                                        message: i18n ? i18n.t("cli.install.success") : "CLI installed successfully.",
                                     };
                                 } catch (error) {
                                     return {
                                         success: true,
-                                        message: `CLI installed successfully. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`,
+                                        message: i18n
+                                            ? i18n.t("cli.install.successPathSetupFailed")
+                                            : "CLI installed successfully. But terminal setup failed. Please add ~/.local/bin to your PATH manually.",
                                     };
                                 }
                             }
@@ -1003,18 +1067,23 @@ function setupIpcHandlers() {
                             // PATH 추가 실패해도 CLI 설치는 성공
                             return {
                                 success: true,
-                                message: `CLI installed successfully${pathInfo}. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`,
+                                message: i18n
+                                    ? i18n.t("cli.install.successAtPathSetupFailed", { path: targetPath })
+                                    : `CLI installed successfully${pathInfo}. But terminal setup failed. Please add ~/.local/bin to your PATH manually.`,
                             };
                         }
                     }
 
-                    return { success: true, message: `CLI installed successfully${pathInfo}` };
+                    return {
+                        success: true,
+                        message: i18n ? i18n.t("cli.install.successAt", { path: targetPath }) : `CLI installed successfully${pathInfo}`,
+                    };
                 } catch {
                     continue;
                 }
             }
 
-            return { success: false, error: "CLI installation failed: Cannot find suitable path" };
+            return { success: false, error: i18n ? i18n.t("cli.errors.noSuitablePath") : "CLI installation failed: Cannot find suitable path" };
         } catch (error) {
             return { success: false, error: error.message };
         }
@@ -1181,16 +1250,14 @@ function setupIpcHandlers() {
             const result = findAndRemoveCli();
             const pathResult = removeFromPath();
 
-            let message = "";
-            if (result.removed && pathResult.pathRemoved) {
-                message = `CLI uninstalled successfully.`;
-            } else if (result.removed) {
-                message = `CLI uninstalled successfully.`;
-            } else if (pathResult.pathRemoved) {
-                message = `CLI uninstalled successfully.`;
-            } else {
-                message = "CLI not found. Already uninstalled or not installed.";
-            }
+            const removedAnything = result.removed || pathResult.pathRemoved;
+            const message = removedAnything
+                ? i18n
+                    ? i18n.t("cli.uninstall.success")
+                    : "CLI uninstalled successfully."
+                : i18n
+                ? i18n.t("cli.uninstall.notFound")
+                : "CLI not found. Already uninstalled or not installed.";
 
             return { success: true, message };
         } catch (error) {
@@ -1270,7 +1337,22 @@ function setupIpcHandlers() {
     ipcMain.handle("settings:set", (event, newSettings) => {
         const currentSettings = loadSettings();
         const mergedSettings = { ...currentSettings, ...newSettings };
-        return saveSettings(mergedSettings);
+        const saveResult = saveSettings(mergedSettings);
+
+        const localeChanged = typeof mergedSettings.locale === "string" && mergedSettings.locale !== currentSettings.locale;
+        if (saveResult.success && localeChanged && i18n) {
+            i18n.setLocale(mergedSettings.locale);
+            createTray();
+
+            const payload = i18n.getAllTranslations();
+            for (const win of BrowserWindow.getAllWindows()) {
+                try {
+                    win.webContents.send("i18n:localeChanged", payload);
+                } catch {}
+            }
+        }
+
+        return saveResult;
     });
 }
 

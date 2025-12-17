@@ -12,6 +12,7 @@ class Vault {
         this.data = null;
         this.key = null;
         this.saveTimeout = null;
+        this.maxHistoryVersions = 50; // 각 시크릿당 최대 히스토리 버전 수
     }
 
     exists() {
@@ -156,7 +157,12 @@ class Vault {
                 // 기존 형태 (하위 호환성)
                 result[key] = { value: secret, expiresAt: null };
             } else {
-                result[key] = { ...secret };
+                result[key] = {
+                    value: secret.value,
+                    expiresAt: secret.expiresAt ?? null,
+                    createdAt: secret.createdAt ?? null,
+                    updatedAt: secret.updatedAt ?? null,
+                };
             }
         }
         return result;
@@ -178,7 +184,12 @@ class Vault {
         if (typeof secret === "string") {
             return { value: secret, expiresAt: null };
         }
-        return secret;
+        return {
+            value: secret.value,
+            expiresAt: secret.expiresAt ?? null,
+            createdAt: secret.createdAt ?? null,
+            updatedAt: secret.updatedAt ?? null,
+        };
     }
 
     setSecret(projectName, key, value, expiresAt = null) {
@@ -188,13 +199,54 @@ class Vault {
             throw new Error(`Project '${projectName}' does not exist`);
         }
 
-        // 새로운 구조: { value, expiresAt }
-        this.data.projects[projectName].secrets[key] = {
-            value: value,
-            expiresAt: expiresAt, // null이면 만료일 없음, "YYYY-MM-DD" 형태
-        };
-        this.data.projects[projectName].updatedAt = new Date().toISOString();
-        this.data.updatedAt = new Date().toISOString();
+        const now = new Date().toISOString();
+        const existingSecret = this.data.projects[projectName].secrets[key];
+
+        if (existingSecret === undefined) {
+            // 새로운 시크릿 생성
+            this.data.projects[projectName].secrets[key] = {
+                value: value,
+                expiresAt: expiresAt,
+                createdAt: now,
+                updatedAt: now,
+                history: [], // 빈 히스토리로 시작
+            };
+        } else {
+            // 기존 시크릿 업데이트
+            const oldValue = typeof existingSecret === "string" ? existingSecret : existingSecret.value;
+            const oldExpiresAt = typeof existingSecret === "object" ? existingSecret.expiresAt : null;
+            const oldCreatedAt = typeof existingSecret === "object" ? existingSecret.createdAt : null;
+            const oldHistory = typeof existingSecret === "object" && Array.isArray(existingSecret.history) ? existingSecret.history : [];
+
+            // 값이 실제로 변경된 경우에만 히스토리에 추가
+            if (oldValue !== value || oldExpiresAt !== expiresAt) {
+                // 이전 값을 히스토리에 추가
+                const historyEntry = {
+                    value: oldValue,
+                    expiresAt: oldExpiresAt,
+                    changedAt: existingSecret.updatedAt || now,
+                };
+
+                const newHistory = [historyEntry, ...oldHistory];
+
+                // 최대 히스토리 개수 제한
+                if (newHistory.length > this.maxHistoryVersions) {
+                    newHistory.splice(this.maxHistoryVersions);
+                }
+
+                // 시크릿 업데이트
+                this.data.projects[projectName].secrets[key] = {
+                    value: value,
+                    expiresAt: expiresAt,
+                    createdAt: oldCreatedAt || now,
+                    updatedAt: now,
+                    history: newHistory,
+                };
+            }
+        }
+
+        this.data.projects[projectName].updatedAt = now;
+        this.data.updatedAt = now;
         this._scheduleAutoSave();
     }
 
@@ -206,25 +258,16 @@ class Vault {
         }
 
         const project = this.data.projects[projectName];
-        let updated = false;
-
         for (const [key, value] of Object.entries(secrets)) {
             // import 시에는 만료일 없이 가져옴
-            const newSecret = { value: value, expiresAt: null };
             const existing = project.secrets[key];
 
             // 기존 시크릿과 값이 다르면 업데이트
             const existingValue = typeof existing === "string" ? existing : existing?.value;
-            if (existingValue !== value) {
-                project.secrets[key] = newSecret;
-                updated = true;
+            const existingExpiresAt = typeof existing === "object" ? (existing?.expiresAt ?? null) : null;
+            if (existingValue !== value || existingExpiresAt !== null) {
+                this.setSecret(projectName, key, value, null);
             }
-        }
-
-        if (updated) {
-            project.updatedAt = new Date().toISOString();
-            this.data.updatedAt = new Date().toISOString();
-            this._scheduleAutoSave();
         }
     }
 
@@ -243,6 +286,64 @@ class Vault {
         this.data.projects[projectName].updatedAt = new Date().toISOString();
         this.data.updatedAt = new Date().toISOString();
         this._scheduleAutoSave();
+    }
+
+    // 시크릿 히스토리 조회
+    getSecretHistory(projectName, key) {
+        this._ensureUnlocked();
+
+        if (!this.data.projects[projectName]) {
+            throw new Error(`Project '${projectName}' does not exist`);
+        }
+
+        const secret = this.data.projects[projectName].secrets[key];
+        if (secret === undefined) {
+            throw new Error(`Secret '${key}' does not exist in project '${projectName}'`);
+        }
+
+        // 현재 버전 + 히스토리 반환
+        const currentVersion = {
+            value: typeof secret === "string" ? secret : secret.value,
+            expiresAt: typeof secret === "object" ? secret.expiresAt : null,
+            changedAt: typeof secret === "object" ? secret.updatedAt : null,
+            isCurrent: true,
+        };
+
+        const history = typeof secret === "object" && Array.isArray(secret.history) ? secret.history : [];
+
+        return {
+            current: currentVersion,
+            history: history.map((entry) => ({
+                ...entry,
+                isCurrent: false,
+            })),
+            totalVersions: history.length + 1,
+        };
+    }
+
+    // 이전 버전으로 복원
+    restoreSecretVersion(projectName, key, versionIndex) {
+        this._ensureUnlocked();
+
+        if (!this.data.projects[projectName]) {
+            throw new Error(`Project '${projectName}' does not exist`);
+        }
+
+        const secret = this.data.projects[projectName].secrets[key];
+        if (secret === undefined) {
+            throw new Error(`Secret '${key}' does not exist in project '${projectName}'`);
+        }
+
+        const history = typeof secret === "object" && Array.isArray(secret.history) ? secret.history : [];
+
+        if (versionIndex < 0 || versionIndex >= history.length) {
+            throw new Error(`Invalid version index: ${versionIndex}`);
+        }
+
+        const versionToRestore = history[versionIndex];
+
+        // 현재 값을 히스토리에 저장하고, 선택한 버전을 현재 값으로 설정
+        this.setSecret(projectName, key, versionToRestore.value, versionToRestore.expiresAt);
     }
 
     _ensureUnlocked() {

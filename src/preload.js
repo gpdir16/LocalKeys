@@ -26,12 +26,15 @@ const api = {
         delete: (projectName, key) => ipcRenderer.invoke("secret:delete", projectName, key),
         export: (projectName) => ipcRenderer.invoke("secrets:export", projectName),
         import: (projectName) => ipcRenderer.invoke("secrets:import", projectName),
+        getHistory: (projectName, key) => ipcRenderer.invoke("secret:getHistory", projectName, key),
+        restoreVersion: (projectName, key, versionIndex) => ipcRenderer.invoke("secret:restoreVersion", projectName, key, versionIndex),
     },
 
     // 로그 관리
     logs: {
         get: () => ipcRenderer.invoke("logs:get"),
         clear: () => ipcRenderer.invoke("logs:clear"),
+        export: () => ipcRenderer.invoke("logs:export"),
     },
 
     // 화면 전환
@@ -58,6 +61,10 @@ const api = {
     // 다국어 지원
     i18n: {
         getTranslations: () => ipcRenderer.invoke("i18n:getTranslations"),
+        onLocaleChanged: (callback) => {
+            if (typeof callback !== "function") return;
+            ipcRenderer.once("i18n:localeChanged", (event, data) => callback(data));
+        },
     },
 
     // 라이선스 관리
