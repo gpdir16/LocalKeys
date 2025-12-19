@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeImage } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeImage, powerMonitor } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -25,6 +25,10 @@ let license = null;
 let appInitialized = false;
 let ipcHandlersInitialized = false;
 
+// 자동 잠금 타이머
+let autoLockTimer = null;
+let autoLockCheckInterval = null;
+
 const LOCALKEYS_DIR = path.join(os.homedir(), ".localkeys");
 const SETTINGS_FILE = path.join(LOCALKEYS_DIR, "settings.json");
 
@@ -32,6 +36,11 @@ const SETTINGS_FILE = path.join(LOCALKEYS_DIR, "settings.json");
 const DEFAULT_SETTINGS = {
     checkForUpdates: true,
     locale: "system",
+    autoLock: {
+        enabled: true,
+        timeout: 30, // 분 단위
+    },
+    screenCaptureProtection: true,
 };
 
 function openExternalSafely(rawUrl) {
@@ -67,6 +76,66 @@ function saveSettings(settings) {
         console.error("설정 저장 실패:", error);
         return { success: false, error: error.message };
     }
+}
+
+// 자동 잠금 시작
+function startAutoLock() {
+    stopAutoLock(); // 기존 타이머 정리
+
+    const settings = loadSettings();
+    if (!settings.autoLock?.enabled || !isUnlocked) {
+        return;
+    }
+
+    const timeoutMinutes = settings.autoLock.timeout || 30;
+    const timeoutSeconds = timeoutMinutes * 60;
+
+    // 10초마다 시스템 유휴 시간 확인
+    autoLockCheckInterval = setInterval(() => {
+        const idleTime = powerMonitor.getSystemIdleTime();
+
+        if (idleTime >= timeoutSeconds) {
+            lockVault();
+        }
+    }, 10000); // 10초마다 확인
+}
+
+// 자동 잠금 중지
+function stopAutoLock() {
+    if (autoLockCheckInterval) {
+        clearInterval(autoLockCheckInterval);
+        autoLockCheckInterval = null;
+    }
+}
+
+// 화면 캡처 방지 적용
+function applyScreenCaptureProtection() {
+    const settings = loadSettings();
+    const enabled = settings.screenCaptureProtection !== false; // 기본값 true
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.setContentProtection(enabled);
+        console.log(`화면 캡처 방지: ${enabled ? "활성화" : "비활성화"}`);
+    }
+}
+
+// 볼트 잠금
+function lockVault() {
+    if (!isUnlocked) return;
+
+    isUnlocked = false;
+    stopAutoLock();
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("vault:locked");
+    }
+
+    if (httpServer) {
+        httpServer.stop();
+        httpServer = null;
+    }
+
+    console.log("볼트가 잠겼습니다.");
 }
 
 function getAppVersion() {
@@ -513,6 +582,9 @@ function createWindow() {
         icon: path.join(__dirname, "assets", "icon.png"),
     });
 
+    // 화면 캡처 방지 적용
+    applyScreenCaptureProtection();
+
     // 외부 URL이 앱 창에서 열리지 않도록 방지
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
         openExternalSafely(url);
@@ -617,6 +689,9 @@ function setupIpcHandlers() {
             if (httpServer) {
                 httpServer.setUnlocked(isUnlocked);
             }
+
+            // 자동 잠금 시작
+            startAutoLock();
 
             return { success: true };
         } catch (error) {
@@ -1339,16 +1414,31 @@ function setupIpcHandlers() {
         const mergedSettings = { ...currentSettings, ...newSettings };
         const saveResult = saveSettings(mergedSettings);
 
-        const localeChanged = typeof mergedSettings.locale === "string" && mergedSettings.locale !== currentSettings.locale;
-        if (saveResult.success && localeChanged && i18n) {
-            i18n.setLocale(mergedSettings.locale);
-            createTray();
+        if (saveResult.success) {
+            // 언어 변경 처리
+            const localeChanged = typeof mergedSettings.locale === "string" && mergedSettings.locale !== currentSettings.locale;
+            if (localeChanged && i18n) {
+                i18n.setLocale(mergedSettings.locale);
+                createTray();
 
-            const payload = i18n.getAllTranslations();
-            for (const win of BrowserWindow.getAllWindows()) {
-                try {
-                    win.webContents.send("i18n:localeChanged", payload);
-                } catch {}
+                const payload = i18n.getAllTranslations();
+                for (const win of BrowserWindow.getAllWindows()) {
+                    try {
+                        win.webContents.send("i18n:localeChanged", payload);
+                    } catch {}
+                }
+            }
+
+            // 자동 잠금 설정 변경 처리
+            const autoLockChanged = mergedSettings.autoLock?.enabled !== currentSettings.autoLock?.enabled || mergedSettings.autoLock?.timeout !== currentSettings.autoLock?.timeout;
+            if (autoLockChanged && isUnlocked) {
+                startAutoLock(); // 변경된 설정으로 자동 잠금 재시작
+            }
+
+            // 화면 캡처 방지 설정 변경 처리
+            const screenCaptureChanged = mergedSettings.screenCaptureProtection !== currentSettings.screenCaptureProtection;
+            if (screenCaptureChanged) {
+                applyScreenCaptureProtection();
             }
         }
 

@@ -1460,6 +1460,23 @@ select,
     color: var(--text-secondary);
 }
 
+.settings-input {
+    width: 100px;
+    height: 44px;
+    padding: 0 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.settings-input:focus {
+    border-color: var(--primary);
+}
+
 /* 토글 스위치 */
 .toggle-switch {
     position: relative;

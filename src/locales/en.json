@@ -236,6 +236,11 @@
         },
         "checkForUpdates": "Check for updates",
         "checkForUpdatesDesc": "Automatically check for new versions on startup",
+        "autoLock": "Auto Lock",
+        "autoLockDesc": "Automatically lock vault after system idle time",
+        "autoLockTimeout": "Auto Lock Timeout (minutes)",
+        "screenCaptureProtection": "Screen Capture Protection",
+        "screenCaptureProtectionDesc": "Prevent screenshots and screen recording",
         "notifications": {
             "saved": "Settings saved",
             "saveFailed": "Failed to save settings",

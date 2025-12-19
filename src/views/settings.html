@@ -41,6 +41,36 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+
+                    <!-- 자동 잠금 -->
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label" id="label-auto-lock">Auto Lock</span>
+                            <span class="settings-item-description" id="desc-auto-lock">Automatically lock vault after system idle time</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="auto-lock-toggle" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-item" id="auto-lock-timeout-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label" id="label-auto-lock-timeout">Auto Lock Timeout (minutes)</span>
+                        </div>
+                        <input type="number" id="auto-lock-timeout-input" class="settings-input" min="1" max="1440" value="30" />
+                    </div>
+
+                    <!-- 화면 캡처 방지 -->
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label" id="label-screen-capture">Screen Capture Protection</span>
+                            <span class="settings-item-description" id="desc-screen-capture">Prevent screenshots and screen recording</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="screen-capture-toggle" />
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -62,9 +92,27 @@
                 document.getElementById("label-check-updates").textContent = i18n.t("settings.checkForUpdates");
                 document.getElementById("desc-check-updates").textContent = i18n.t("settings.checkForUpdatesDesc");
 
+                // 보안 설정 번역
+                document.getElementById("label-auto-lock").textContent = i18n.t("settings.autoLock");
+                document.getElementById("desc-auto-lock").textContent = i18n.t("settings.autoLockDesc");
+                document.getElementById("label-auto-lock-timeout").textContent = i18n.t("settings.autoLockTimeout");
+                document.getElementById("label-screen-capture").textContent = i18n.t("settings.screenCaptureProtection");
+                document.getElementById("desc-screen-capture").textContent = i18n.t("settings.screenCaptureProtectionDesc");
+
                 const backBtn = document.getElementById("back-btn");
                 const checkUpdatesToggle = document.getElementById("check-updates-toggle");
                 const languageSelect = document.getElementById("language-select");
+
+                // 보안 설정 요소
+                const autoLockToggle = document.getElementById("auto-lock-toggle");
+                const autoLockTimeoutInput = document.getElementById("auto-lock-timeout-input");
+                const autoLockTimeoutItem = document.getElementById("auto-lock-timeout-item");
+                const screenCaptureToggle = document.getElementById("screen-capture-toggle");
+
+                // 타임아웃 입력 필드 표시/숨김
+                function updateTimeoutVisibility() {
+                    autoLockTimeoutItem.style.display = autoLockToggle.checked ? "flex" : "none";
+                }
 
                 // 설정 로드
                 async function loadSettings() {
@@ -72,6 +120,13 @@
                         const settings = await window.localkeys.settings.get();
                         checkUpdatesToggle.checked = settings.checkForUpdates;
                         languageSelect.value = settings.locale || "system";
+
+                        // 보안 설정 로드
+                        autoLockToggle.checked = settings.autoLock?.enabled !== false; // 기본값 true
+                        autoLockTimeoutInput.value = settings.autoLock?.timeout || 30;
+                        screenCaptureToggle.checked = settings.screenCaptureProtection !== false; // 기본값 true
+
+                        updateTimeoutVisibility();
                     } catch (error) {
                         notificationManager.error(i18n.t("settings.notifications.failedToLoad"));
                     }
@@ -83,6 +138,11 @@
                         const settings = {
                             checkForUpdates: checkUpdatesToggle.checked,
                             locale: languageSelect.value,
+                            autoLock: {
+                                enabled: autoLockToggle.checked,
+                                timeout: parseInt(autoLockTimeoutInput.value) || 30,
+                            },
+                            screenCaptureProtection: screenCaptureToggle.checked,
                         };
 
                         const result = await window.localkeys.settings.set(settings);
@@ -104,6 +164,14 @@
 
                 checkUpdatesToggle.addEventListener("change", saveSettings);
                 languageSelect.addEventListener("change", saveSettings);
+
+                // 보안 설정 이벤트 리스너
+                autoLockToggle.addEventListener("change", function () {
+                    updateTimeoutVisibility();
+                    saveSettings();
+                });
+                autoLockTimeoutInput.addEventListener("change", saveSettings);
+                screenCaptureToggle.addEventListener("change", saveSettings);
 
                 // 초기 로드
                 loadSettings();

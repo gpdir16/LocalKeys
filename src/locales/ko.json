@@ -236,6 +236,11 @@
         },
         "checkForUpdates": "업데이트 확인",
         "checkForUpdatesDesc": "시작 시 새 버전을 자동으로 확인합니다",
+        "autoLock": "자동 잠금",
+        "autoLockDesc": "시스템 유휴 시간 후 자동으로 잠금",
+        "autoLockTimeout": "자동 잠금 시간 (분)",
+        "screenCaptureProtection": "화면 캡처 방지",
+        "screenCaptureProtectionDesc": "스크린샷 및 화면 녹화를 방지합니다",
         "notifications": {
             "saved": "설정이 저장되었습니다",
             "saveFailed": "설정 저장에 실패했습니다",
