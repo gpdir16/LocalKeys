@@ -109,16 +109,27 @@
 
                 let filteredProjects = [];
 
-                let favorites = { projects: [], secrets: {} };
+                let favorites = { projects: [], secrets: Object.create(null) };
 
                 let statistics = null;
 
                 let showStatistics = true;
 
+                let settingsWarningShown = false;
+
                 // 통계 로드
                 async function loadStatistics() {
                     try {
                         const settings = await window.localkeys.settings.get();
+                        if (!settingsWarningShown) {
+                            if (settings.__loadStatus === "reset") {
+                                settingsWarningShown = true;
+                                notificationManager.error(i18n.t("settings.notifications.resetDueToError"));
+                            } else if (settings.__loadStatus === "repaired") {
+                                settingsWarningShown = true;
+                                notificationManager.success(i18n.t("settings.notifications.repaired"));
+                            }
+                        }
                         showStatistics = settings.showStatistics !== false;
 
                         if (!showStatistics) {
@@ -264,14 +275,12 @@
                     dropdownBtn.onclick = (e) => {
                         e.stopPropagation();
 
-                        toggleDropdown(project.name);
+                        toggleDropdown(dropdownMenu);
                     };
 
                     const dropdownMenu = document.createElement("div");
 
                     dropdownMenu.className = "dropdown-menu hidden";
-
-                    dropdownMenu.id = `dropdown-${project.name}`;
 
                     const deleteBtn = document.createElement("button");
 
@@ -554,7 +563,7 @@
 
                 addProjectBtn.addEventListener("click", showAddProjectModal);
 
-                settingsDropdownBtn.addEventListener("click", () => toggleDropdown("settings"));
+                settingsDropdownBtn.addEventListener("click", () => toggleDropdown(document.getElementById("dropdown-settings")));
 
                 logsBtn.addEventListener("click", function () {
                     window.location.href = "logs.html";
@@ -614,8 +623,8 @@
 
                 // 드롭다운 토글 함수
 
-                function toggleDropdown(id) {
-                    const dropdown = document.getElementById(`dropdown-${id}`);
+                function toggleDropdown(dropdown) {
+                    if (!dropdown) return;
 
                     const allDropdowns = document.querySelectorAll(".dropdown-menu");
 

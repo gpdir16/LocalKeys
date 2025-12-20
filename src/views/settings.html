@@ -131,6 +131,11 @@
                 async function loadSettings() {
                     try {
                         const settings = await window.localkeys.settings.get();
+                        if (settings.__loadStatus === "reset") {
+                            notificationManager.error(i18n.t("settings.notifications.resetDueToError"));
+                        } else if (settings.__loadStatus === "repaired") {
+                            notificationManager.success(i18n.t("settings.notifications.repaired"));
+                        }
                         checkUpdatesToggle.checked = settings.checkForUpdates;
                         showStatisticsToggle.checked = settings.showStatistics !== false; // 기본값 true
                         languageSelect.value = settings.locale || "system";

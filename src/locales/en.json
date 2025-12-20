@@ -257,7 +257,9 @@
         "notifications": {
             "saved": "Settings saved",
             "saveFailed": "Failed to save settings",
-            "failedToLoad": "Failed to load settings"
+            "failedToLoad": "Failed to load settings",
+            "repaired": "Some settings were invalid and were reset to defaults",
+            "resetDueToError": "Settings could not be loaded and were reset to defaults"
         }
     },
     "setup": {

@@ -35,20 +35,24 @@ class HttpServer {
                     fs.mkdirSync(path.dirname(SERVER_INFO_PATH), { recursive: true });
                 } catch {}
 
-                fs.writeFileSync(
-                    SERVER_INFO_PATH,
-                    JSON.stringify({
-                        host: this.host,
-                        port: this.port,
-                        authToken: this.authToken,
-                        pid: process.pid,
-                    })
-                );
-
                 try {
-                    fs.chmodSync(SERVER_INFO_PATH, 0o600);
+                    fs.writeFileSync(
+                        SERVER_INFO_PATH,
+                        JSON.stringify({
+                            host: this.host,
+                            port: this.port,
+                            authToken: this.authToken,
+                            pid: process.pid,
+                        })
+                    );
+
+                    try {
+                        fs.chmodSync(SERVER_INFO_PATH, 0o600);
+                    } catch (error) {
+                        console.error("Failed to set server-info.json permissions:", error.message);
+                    }
                 } catch (error) {
-                    console.error("Failed to set server-info.json permissions:", error.message);
+                    console.error("Failed to write server-info.json:", error.message);
                 }
 
                 resolve({
@@ -68,9 +72,17 @@ class HttpServer {
         if (this.server) {
             return new Promise((resolve) => {
                 this.server.close(() => {
-                    if (fs.existsSync(SERVER_INFO_PATH)) {
-                        fs.unlinkSync(SERVER_INFO_PATH);
-                    }
+                    try {
+                        if (fs.existsSync(SERVER_INFO_PATH)) {
+                            fs.unlinkSync(SERVER_INFO_PATH);
+                        }
+                    } catch {}
+
+                    // 리소스 정리
+                    this.server = null;
+                    this.authToken = null;
+                    this.port = 0;
+                    this.isUnlocked = false;
 
                     resolve();
                 });
@@ -126,7 +138,8 @@ class HttpServer {
             }
 
             const body = await this.parseRequestBody(req);
-            const { action, data } = body;
+            const action = body && typeof body === "object" ? body.action : undefined;
+            const data = body && typeof body === "object" ? body.data : undefined;
 
             const result = await this.handleAction(action, data);
 
@@ -175,6 +188,7 @@ class HttpServer {
     async handleAction(action, data) {
         try {
             let result;
+            const safeData = data && typeof data === "object" && !Array.isArray(data) ? data : {};
 
             switch (action) {
                 case "listProjects":
@@ -189,12 +203,12 @@ class HttpServer {
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        const secrets = this.vault.getSecrets(data.projectName);
+                        const secrets = this.vault.getSecrets(safeData.projectName);
                         const keys = Object.keys(secrets);
                         if (keys.length === 0) {
                             result = { success: true, data: [] };
                         } else {
-                            const approvalResult = await this.requestBatchApproval(data.projectName, keys, "read");
+                            const approvalResult = await this.requestBatchApproval(safeData.projectName, keys, "read");
                             if (approvalResult.approved) {
                                 result = { success: true, data: keys };
                             } else {
@@ -209,13 +223,13 @@ class HttpServer {
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        const secrets = this.vault.getSecrets(data.projectName);
+                        const secrets = this.vault.getSecrets(safeData.projectName);
                         const keys = Object.keys(secrets);
 
                         if (keys.length === 0) {
                             result = { success: true, data: {} };
                         } else {
-                            const approvalResult = await this.requestBatchApproval(data.projectName, keys, "read");
+                            const approvalResult = await this.requestBatchApproval(safeData.projectName, keys, "read");
 
                             if (approvalResult.approved) {
                                 result = { success: true, data: secrets };
@@ -231,13 +245,14 @@ class HttpServer {
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        const approvalResult = await this.requestBatchApproval(data.projectName, data.keys, "read");
+                        const keys = Array.isArray(safeData.keys) ? safeData.keys.filter((k) => typeof k === "string") : [];
+                        const approvalResult = await this.requestBatchApproval(safeData.projectName, keys, "read");
 
                         if (approvalResult.approved) {
-                            const secrets = {};
-                            for (const key of data.keys) {
+                            const secrets = Object.create(null);
+                            for (const key of keys) {
                                 try {
-                                    secrets[key] = this.vault.getSecret(data.projectName, key);
+                                    secrets[key] = this.vault.getSecret(safeData.projectName, key);
                                 } catch (error) {}
                             }
                             result = { success: true, data: secrets };
@@ -252,10 +267,10 @@ class HttpServer {
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        const approvalResult = await this.requestBatchApproval(data.projectName, [data.key], "read");
+                        const approvalResult = await this.requestBatchApproval(safeData.projectName, [safeData.key], "read");
 
                         if (approvalResult.approved) {
-                            const value = this.vault.getSecret(data.projectName, data.key);
+                            const value = this.vault.getSecret(safeData.projectName, safeData.key);
                             result = { success: true, data: value };
                         } else {
                             const reason = approvalResult.reason || "User denied";
@@ -268,9 +283,9 @@ class HttpServer {
                     if (!this.isUnlocked) {
                         result = { success: false, error: "Vault is locked" };
                     } else {
-                        const approvalResult = await this.requestBatchApproval(data.projectName, [data.key], "write");
+                        const approvalResult = await this.requestBatchApproval(safeData.projectName, [safeData.key], "write");
                         if (approvalResult.approved) {
-                            this.vault.setSecret(data.projectName, data.key, data.value);
+                            this.vault.setSecret(safeData.projectName, safeData.key, safeData.value);
                             result = { success: true };
                         } else {
                             const reason = approvalResult.reason || "User denied";

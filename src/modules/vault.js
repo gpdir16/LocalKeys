@@ -166,7 +166,7 @@ class Vault {
         }
 
         const secrets = this.data.projects[projectName].secrets;
-        const result = {};
+        const result = Object.create(null);
         for (const [key, secret] of Object.entries(secrets)) {
             if (typeof secret === "string") {
                 // 기존 형태 (하위 호환성)
@@ -284,6 +284,65 @@ class Vault {
                 this.setSecret(projectName, key, value, null);
             }
         }
+    }
+
+    renameSecret(projectName, fromKey, toKey) {
+        this._ensureUnlocked();
+
+        if (!this.data.projects[projectName]) {
+            throw new Error(`Project '${projectName}' does not exist`);
+        }
+
+        if (typeof fromKey !== "string" || typeof toKey !== "string") {
+            throw new Error("Invalid secret key");
+        }
+
+        if (!fromKey.trim() || !toKey.trim()) {
+            throw new Error("Secret key cannot be empty");
+        }
+
+        if (fromKey === toKey) {
+            return;
+        }
+
+        const project = this.data.projects[projectName];
+        const secrets = project.secrets;
+
+        if (secrets[fromKey] === undefined) {
+            throw new Error(`Secret '${fromKey}' does not exist in project '${projectName}'`);
+        }
+
+        if (secrets[toKey] !== undefined) {
+            throw new Error(`Secret '${toKey}' already exists in project '${projectName}'`);
+        }
+
+        secrets[toKey] = secrets[fromKey];
+        delete secrets[fromKey];
+
+        // 즐겨찾기에서도 키 변경
+        const favoriteKeys = this.data.favorites?.secrets?.[projectName];
+        if (Array.isArray(favoriteKeys)) {
+            const nextKeys = [];
+            const seen = new Set();
+            for (const k of favoriteKeys) {
+                const next = k === fromKey ? toKey : k;
+                if (typeof next !== "string") continue;
+                if (seen.has(next)) continue;
+                seen.add(next);
+                nextKeys.push(next);
+            }
+
+            if (nextKeys.length > 0) {
+                this.data.favorites.secrets[projectName] = nextKeys;
+            } else {
+                delete this.data.favorites.secrets[projectName];
+            }
+        }
+
+        const now = new Date().toISOString();
+        project.updatedAt = now;
+        this.data.updatedAt = now;
+        this._scheduleAutoSave();
     }
 
     deleteSecret(projectName, key) {
@@ -578,9 +637,18 @@ class Vault {
     getFavorites() {
         this._ensureUnlocked();
 
+        const secrets = Object.create(null);
+        const favoriteSecrets = this.data.favorites?.secrets;
+        if (favoriteSecrets && typeof favoriteSecrets === "object") {
+            for (const [projectName, secretKeys] of Object.entries(favoriteSecrets)) {
+                if (!Array.isArray(secretKeys)) continue;
+                secrets[projectName] = secretKeys.filter((k) => typeof k === "string");
+            }
+        }
+
         return {
-            projects: [...this.data.favorites.projects],
-            secrets: JSON.parse(JSON.stringify(this.data.favorites.secrets)),
+            projects: Array.isArray(this.data.favorites?.projects) ? [...this.data.favorites.projects] : [],
+            secrets,
         };
     }
 

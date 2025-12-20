@@ -26,7 +26,6 @@ let appInitialized = false;
 let ipcHandlersInitialized = false;
 
 // 자동 잠금 타이머
-let autoLockTimer = null;
 let autoLockCheckInterval = null;
 
 const LOCALKEYS_DIR = path.join(os.homedir(), ".localkeys");
@@ -44,6 +43,48 @@ const DEFAULT_SETTINGS = {
     screenCaptureProtection: true,
 };
 
+function coerceBoolean(value, fallback) {
+    return typeof value === "boolean" ? value : fallback;
+}
+
+function coerceString(value, fallback) {
+    return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+function coerceAutoLockTimeout(value, fallback) {
+    if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+    const coerced = Math.floor(value);
+    if (coerced < 1) return 1;
+    if (coerced > 1440) return 1440;
+    return coerced;
+}
+
+function normalizeSettings(settings) {
+    const safeSettings = settings && typeof settings === "object" && !Array.isArray(settings) ? settings : {};
+    const safeAutoLock = safeSettings.autoLock && typeof safeSettings.autoLock === "object" && !Array.isArray(safeSettings.autoLock) ? safeSettings.autoLock : {};
+
+    const normalized = {
+        checkForUpdates: coerceBoolean(safeSettings.checkForUpdates, DEFAULT_SETTINGS.checkForUpdates),
+        locale: coerceString(safeSettings.locale, DEFAULT_SETTINGS.locale),
+        showStatistics: coerceBoolean(safeSettings.showStatistics, DEFAULT_SETTINGS.showStatistics),
+        autoLock: {
+            enabled: coerceBoolean(safeAutoLock.enabled, DEFAULT_SETTINGS.autoLock.enabled),
+            timeout: coerceAutoLockTimeout(safeAutoLock.timeout, DEFAULT_SETTINGS.autoLock.timeout),
+        },
+        screenCaptureProtection: coerceBoolean(safeSettings.screenCaptureProtection, DEFAULT_SETTINGS.screenCaptureProtection),
+    };
+
+    const repairs = [];
+    if (normalized.checkForUpdates !== safeSettings.checkForUpdates) repairs.push("checkForUpdates");
+    if (normalized.locale !== safeSettings.locale) repairs.push("locale");
+    if (normalized.showStatistics !== safeSettings.showStatistics) repairs.push("showStatistics");
+    if (normalized.autoLock.enabled !== safeAutoLock.enabled) repairs.push("autoLock.enabled");
+    if (normalized.autoLock.timeout !== safeAutoLock.timeout) repairs.push("autoLock.timeout");
+    if (normalized.screenCaptureProtection !== safeSettings.screenCaptureProtection) repairs.push("screenCaptureProtection");
+
+    return { normalized, repairs };
+}
+
 function openExternalSafely(rawUrl) {
     try {
         const parsed = new URL(rawUrl);
@@ -57,18 +98,39 @@ function loadSettings() {
     try {
         if (fs.existsSync(SETTINGS_FILE)) {
             const data = fs.readFileSync(SETTINGS_FILE, "utf8");
-            return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+            const parsed = JSON.parse(data);
+            const { normalized, repairs } = normalizeSettings(parsed);
+
+            if (repairs.length > 0) {
+                try {
+                    saveSettings(normalized);
+                } catch {}
+                return { ...normalized, __loadStatus: "repaired", __repairs: repairs };
+            }
+
+            return { ...normalized, __loadStatus: "ok", __repairs: [] };
         }
     } catch (error) {
         console.error("설정 로드 실패:", error);
+        const { normalized } = normalizeSettings();
+        try {
+            saveSettings(normalized);
+        } catch {}
+        return { ...normalized, __loadStatus: "reset", __repairs: ["__invalidFile"] };
     }
-    return { ...DEFAULT_SETTINGS };
+    const { normalized } = normalizeSettings();
+    return { ...normalized, __loadStatus: "ok", __repairs: [] };
 }
 
 // 설정 저장
 function saveSettings(settings) {
     try {
-        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+        const { normalized } = normalizeSettings(settings);
+        try {
+            fs.mkdirSync(LOCALKEYS_DIR, { recursive: true });
+        } catch {}
+
+        fs.writeFileSync(SETTINGS_FILE, JSON.stringify(normalized, null, 2));
         try {
             fs.chmodSync(SETTINGS_FILE, 0o600);
         } catch {}
@@ -77,6 +139,34 @@ function saveSettings(settings) {
         console.error("설정 저장 실패:", error);
         return { success: false, error: error.message };
     }
+}
+
+async function ensureHttpServerStarted() {
+    if (!vault || !logger) return;
+
+    if (!httpServer) {
+        httpServer = new HttpServer(vault, logger);
+        httpServer.setApprovalCallback(showApprovalDialog);
+    }
+
+    if (httpServer.server) return;
+
+    try {
+        await httpServer.start();
+    } catch (error) {
+        console.error("HTTP 서버 시작 실패:", error);
+    }
+}
+
+function stopHttpServer() {
+    if (!httpServer) return;
+    try {
+        const stopPromise = httpServer.stop();
+        if (stopPromise && typeof stopPromise.catch === "function") {
+            stopPromise.catch(() => {});
+        }
+    } catch {}
+    httpServer = null;
 }
 
 // 자동 잠금 시작
@@ -117,25 +207,6 @@ function applyScreenCaptureProtection() {
     if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.setContentProtection(enabled);
     }
-}
-
-// 볼트 잠금
-function lockVault() {
-    if (!isUnlocked) return;
-
-    isUnlocked = false;
-    stopAutoLock();
-
-    if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("vault:locked");
-    }
-
-    if (httpServer) {
-        httpServer.stop();
-        httpServer = null;
-    }
-
-    console.log("볼트가 잠겼습니다.");
 }
 
 function getAppVersion() {
@@ -540,29 +611,41 @@ ELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliJsPath}" "$@"`;
 
 // Vault 잠금
 function lockVault() {
-    if (isUnlocked && vault) {
-        // 실제 Vault 잠금 상태 확인
-        if (!vault.isLocked) {
-            // Logger 암호화 키 제거
-            if (logger) {
-                logger.clearEncryptionKey();
-            }
+    if (!vault) return;
+    if (!isUnlocked && vault.isLocked) return;
 
-            vault.lock();
-        }
+    stopAutoLock();
+    isUnlocked = false;
 
-        isUnlocked = false;
-
-        // HTTP 서버 상태 업데이트
-        if (httpServer) {
+    // HTTP 서버 종료 (server-info.json 제거 및 토큰 폐기)
+    if (httpServer) {
+        try {
             httpServer.setUnlocked(false);
-        }
+        } catch {}
+        stopHttpServer();
+    }
 
-        if (mainWindow) {
-            mainWindow.loadFile("src/views/lock.html");
-        }
+    // UI 업데이트
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.loadFile("src/views/lock.html");
+        try {
+            mainWindow.webContents.send("vault:locked");
+        } catch {}
+    }
 
-        logger.logLock("Vault locked");
+    // Vault 잠금 (비동기)
+    if (!vault.isLocked) {
+        const lockPromise = vault.lock();
+        if (lockPromise && typeof lockPromise.catch === "function") {
+            lockPromise.catch((error) => {
+                console.error("Vault 잠금 실패:", error?.message || error);
+            });
+        }
+    }
+
+    // Logger 암호화 키 제거 (잠금 후 로그는 저장되지 않음)
+    if (logger) {
+        logger.clearEncryptionKey();
     }
 }
 
@@ -662,13 +745,20 @@ function setupIpcHandlers() {
             }
 
             // HTTP 서버 상태 업데이트
-            if (httpServer) {
-                httpServer.setUnlocked(isUnlocked);
-            }
+            await ensureHttpServerStarted();
+            if (httpServer) httpServer.setUnlocked(isUnlocked);
 
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle("vault:exists", () => {
+        try {
+            return vault?.exists?.() === true;
+        } catch {
+            return false;
         }
     });
 
@@ -686,9 +776,8 @@ function setupIpcHandlers() {
             }
 
             // HTTP 서버 상태 업데이트
-            if (httpServer) {
-                httpServer.setUnlocked(isUnlocked);
-            }
+            await ensureHttpServerStarted();
+            if (httpServer) httpServer.setUnlocked(isUnlocked);
 
             // 자동 잠금 시작
             startAutoLock();
@@ -744,6 +833,43 @@ function setupIpcHandlers() {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
             vault.setSecret(projectName, key, value, expiresAt);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 시크릿 편집 저장 (rename + set를 원자적으로 처리)
+    ipcMain.handle("secret:update", async (event, projectName, fromKey, toKey, value, expiresAt = null) => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+
+        const didRename = typeof fromKey === "string" && typeof toKey === "string" && fromKey !== toKey;
+        let renameSucceeded = false;
+
+        try {
+            if (didRename) {
+                vault.renameSecret(projectName, fromKey, toKey);
+                renameSucceeded = true;
+            }
+
+            const targetKey = didRename ? toKey : fromKey;
+            vault.setSecret(projectName, targetKey, value, expiresAt);
+            return { success: true };
+        } catch (error) {
+            // rename 성공 후 set 실패 시 롤백 시도
+            if (renameSucceeded) {
+                try {
+                    vault.renameSecret(projectName, toKey, fromKey);
+                } catch {}
+            }
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle("secret:rename", async (event, projectName, fromKey, toKey) => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        try {
+            vault.renameSecret(projectName, fromKey, toKey);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -921,7 +1047,7 @@ function setupIpcHandlers() {
             filters: [{ name: "Environment Files", extensions: ["env"] }],
         });
 
-        if (!result.canceled) {
+        if (!result.canceled && result.filePath) {
             const secrets = vault.getSecrets(projectName);
             const encodeEnvValue = (value) => {
                 const stringValue = String(value ?? "");
@@ -1459,7 +1585,7 @@ function setupIpcHandlers() {
 
     ipcMain.handle("license:openBuyPage", () => {
         // 외부 브라우저에서 구매 페이지 열기
-        shell.openExternal("https://id.privatestater.com/buy?product=localkeys");
+        openExternalSafely("https://id.privatestater.com/buy?product=localkeys");
 
         return { success: true };
     });
@@ -1471,7 +1597,16 @@ function setupIpcHandlers() {
 
     ipcMain.handle("settings:set", (event, newSettings) => {
         const currentSettings = loadSettings();
-        const mergedSettings = { ...currentSettings, ...newSettings };
+        const safeNewSettings = newSettings && typeof newSettings === "object" && !Array.isArray(newSettings) ? newSettings : {};
+        const safeNewAutoLock = safeNewSettings.autoLock && typeof safeNewSettings.autoLock === "object" && !Array.isArray(safeNewSettings.autoLock) ? safeNewSettings.autoLock : {};
+        const { normalized: mergedSettings } = normalizeSettings({
+            ...currentSettings,
+            ...safeNewSettings,
+            autoLock: {
+                ...currentSettings.autoLock,
+                ...safeNewAutoLock,
+            },
+        });
         const saveResult = saveSettings(mergedSettings);
 
         if (saveResult.success) {
@@ -1623,11 +1758,7 @@ app.whenReady().then(async () => {
     setupIpcHandlers();
 
     // HTTP 서버 시작
-    try {
-        await httpServer.start();
-    } catch (error) {
-        console.error("HTTP 서버 시작 실패:", error);
-    }
+    await ensureHttpServerStarted();
 
     app.on("activate", () => {
         // macOS Dock 클릭 시 창 다시 표시

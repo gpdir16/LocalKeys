@@ -161,10 +161,10 @@
                 const confirmEditSecret = document.getElementById("confirm-edit-secret");
 
                 let projectName = "";
-                let secrets = {};
-                let filteredSecrets = {};
+                let secrets = Object.create(null);
+                let filteredSecrets = Object.create(null);
                 let editingKey = "";
-                let favorites = { projects: [], secrets: {} };
+                let favorites = { projects: [], secrets: Object.create(null) };
 
                 // 즐겨찾기 로드
                 async function loadFavorites() {
@@ -192,7 +192,13 @@
                         const result = await window.localkeys.secrets.getAll(projectName);
 
                         if (result.success) {
-                            secrets = result.data;
+                            const nextSecrets = Object.create(null);
+                            if (result.data && typeof result.data === "object") {
+                                for (const key of Object.keys(result.data)) {
+                                    nextSecrets[key] = result.data[key];
+                                }
+                            }
+                            secrets = nextSecrets;
                             applyFilter();
                         } else {
                             notificationManager.error(i18n.t("project.notifications.failedToLoad"));
@@ -204,15 +210,15 @@
 
                 // 필터 및 정렬 적용
                 function applyFilter() {
-                    let filtered = { ...secrets };
+                    let filtered = secrets;
 
                     // 검색 필터
                     const query = searchInput.value.toLowerCase().trim();
                     if (query) {
-                        const searchFiltered = {};
-                        Object.keys(filtered).forEach((key) => {
+                        const searchFiltered = Object.create(null);
+                        Object.keys(secrets).forEach((key) => {
                             if (key.toLowerCase().includes(query)) {
-                                searchFiltered[key] = filtered[key];
+                                searchFiltered[key] = secrets[key];
                             }
                         });
                         filtered = searchFiltered;
@@ -312,7 +318,6 @@
                     visibilityIcon.className = "lk-icon lk-icon-eye";
                     visibilityIcon.setAttribute("aria-hidden", "true");
                     toggleBtn.appendChild(visibilityIcon);
-                    toggleBtn.onclick = () => toggleVisibility(key, toggleBtn);
 
                     const editBtn = document.createElement("button");
                     editBtn.className = "btn btn-secondary";
@@ -330,12 +335,11 @@
                     dropdownBtn.appendChild(ellipsisIcon);
                     dropdownBtn.onclick = (e) => {
                         e.stopPropagation();
-                        toggleDropdown(key);
+                        toggleDropdown(dropdownMenu);
                     };
 
                     const dropdownMenu = document.createElement("div");
                     dropdownMenu.className = "dropdown-menu hidden";
-                    dropdownMenu.id = `dropdown-${key}`;
 
                     const historyBtn = document.createElement("button");
                     historyBtn.className = "dropdown-item";
@@ -365,11 +369,12 @@
 
                     const valueDiv = document.createElement("div");
                     valueDiv.className = "secret-value masked";
-                    valueDiv.id = `value-${key}`;
                     valueDiv.textContent = value;
 
                     item.appendChild(header);
                     item.appendChild(valueDiv);
+
+                    toggleBtn.onclick = () => toggleVisibility(valueDiv, toggleBtn);
 
                     // 만료일 표시
                     if (expiresAt) {
@@ -465,8 +470,8 @@
                 }
 
                 // 시크릿 가시성 토글
-                function toggleVisibility(key, toggleBtn) {
-                    const valueEl = document.getElementById(`value-${key}`);
+                function toggleVisibility(valueEl, toggleBtn) {
+                    if (!valueEl) return;
                     valueEl.classList.toggle("masked");
                     if (!toggleBtn) return;
                     const iconEl = toggleBtn.querySelector(".lk-icon");
@@ -569,7 +574,7 @@
                         return;
                     }
 
-                    if (secrets.hasOwnProperty(key)) {
+                    if (Object.prototype.hasOwnProperty.call(secrets, key)) {
                         notificationManager.error(i18n.t("project.notifications.keyExists"));
                         return;
                     }
@@ -601,23 +606,20 @@
                     }
 
                     // 키가 변경된 경우
-                    if (key !== editingKey && secrets.hasOwnProperty(key)) {
+                    if (key !== editingKey && Object.prototype.hasOwnProperty.call(secrets, key)) {
                         notificationManager.error(i18n.t("project.notifications.keyExists"));
                         return;
                     }
 
                     try {
-                        // 키가 변경된 경우 기존 키 삭제 후 새 키로 추가
-                        if (key !== editingKey) {
-                            await window.localkeys.secrets.delete(projectName, editingKey);
-                        }
-
-                        const result = await window.localkeys.secrets.set(projectName, key, value, expiresAt);
+                        const result = await window.localkeys.secrets.update(projectName, editingKey, key, value, expiresAt);
 
                         if (result.success) {
                             hideEditSecretModal();
                             await loadSecrets();
                             notificationManager.success(i18n.t("project.notifications.secretSaved", { key: key }));
+                        } else {
+                            notificationManager.error(i18n.t("project.notifications.failedToSave"));
                         }
                     } catch (error) {
                         notificationManager.error(i18n.t("project.notifications.failedToSave"));
@@ -731,8 +733,8 @@
                 });
 
                 // 드롭다운 토글 함수
-                function toggleDropdown(key) {
-                    const dropdown = document.getElementById(`dropdown-${key}`);
+                function toggleDropdown(dropdown) {
+                    if (!dropdown) return;
                     const allDropdowns = document.querySelectorAll(".dropdown-menu");
 
                     // 다른 드롭다운 모두 닫기
@@ -786,7 +788,12 @@
                             historyContainer.appendChild(noHistoryMsg);
                         }
                     } else {
-                        historyContainer.innerHTML = `<div class="error-state">${i18n.t("project.history.failedToLoad")}: ${result.error}</div>`;
+                        historyContainer.innerHTML = "";
+                        const errorEl = document.createElement("div");
+                        errorEl.className = "error-state";
+                        const label = i18n.t("project.history.failedToLoad");
+                        errorEl.textContent = `${label}: ${String(result.error ?? "")}`;
+                        historyContainer.appendChild(errorEl);
                     }
                 }
 

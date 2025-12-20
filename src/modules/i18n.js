@@ -95,9 +95,12 @@ class I18n {
             return key;
         }
 
+        const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
         let result = translation;
         for (const [placeholder, value] of Object.entries(replacements)) {
-            result = result.replace(new RegExp(`{{${placeholder}}}`, "g"), value);
+            const pattern = new RegExp(`{{${escapeRegExp(placeholder)}}}`, "g");
+            result = result.replace(pattern, () => String(value));
         }
 
         return result;
