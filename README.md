@@ -51,13 +51,13 @@ After the first setup you can block all internet connections with a firewall.
 ## Build
 
 ```bash
-npm run build -- --mac && npm run build -- --win
+npm run build
 ```
 
 ### Build per platform
 
 ```bash
-npm run build -- --mac
-npm run build -- --win
-npm run build -- --linux # It can be built and used, but it is not yet officially supported.
+npm run build:mac
+npm run build:win
+npm run build:linux # It can be built and used, but it is not yet officially supported.
 ```

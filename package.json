@@ -19,7 +19,8 @@
         "start": "electron .",
         "build": "npm run build:mac && npm run build:win",
         "build:mac": "electron-builder --mac",
-        "build:win": "electron-builder --win"
+        "build:win": "electron-builder --win",
+        "build:linux": "electron-builder --linux"
     },
     "devDependencies": {
         "electron": "^39.1.1",

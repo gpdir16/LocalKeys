@@ -51,13 +51,13 @@ localkeys run --project=myapp -- npm start
 ## 빌드
 
 ```bash
-npm run build -- --mac && npm run build -- --win
+npm run build
 ```
 
 ### 플랫폼별 빌드
 
 ```bash
-npm run build -- --mac
-npm run build -- --win
-npm run build -- --linux # 빌드와 사용은 가능하지만 아직 정식으로 지원하지 않습니다
+npm run build:mac
+npm run build:win
+npm run build:linux # 빌드와 사용은 가능하지만 아직 정식으로 지원하지 않습니다
 ```
