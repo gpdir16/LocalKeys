@@ -120,7 +120,12 @@
 
                     projectNameEl.textContent = projectName;
                     // 키를 쉼표로 구분하여 표시
-                    secretKeysEl.textContent = keys.join(", ");
+                    const keysString = keys.join(", ");
+                    if (keysString.length > 100) {
+                        secretKeysEl.textContent = keysString.substring(0, 30) + "...";
+                    } else {
+                        secretKeysEl.textContent = keysString;
+                    }
 
                     const actionTextKey = action === "write" ? "approval.actionTextWrite" : "approval.actionTextRead";
                     document.getElementById("action-text").textContent = i18n.t(actionTextKey);
