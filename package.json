@@ -1,6 +1,6 @@
 {
     "name": "localkeys",
-    "version": "1.4.1",
+    "version": "1.4.2",
     "description": "Electron desktop app to encrypt and manage secrets locally with GUI + CLI approval prompts.",
     "author": "gpdir16 <me@gpdir16.com>",
     "homepage": "https://localkeys.privatestater.com",
