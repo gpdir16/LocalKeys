@@ -95,3 +95,41 @@ class I18nHelper {
 
 // 전역 i18n 인스턴스 생성
 const i18n = new I18nHelper();
+
+// 플랫폼 클래스 및 윈도우 포커스 상태 초기화
+(function () {
+    // body에 플랫폼 클래스 추가 (platform-darwin 또는 platform-win32)
+    const addPlatformClass = () => {
+        if (typeof window.platform === "string") {
+            document.body.classList.add(`platform-${window.platform}`);
+        }
+    };
+
+    // 윈도우 포커스 상태에 따른 클래스 토글
+    const setupFocusTracking = () => {
+        if (!window.localkeys?.onWindowFocusChanged) return;
+
+        // 초기 상태: 포커스됨
+        document.body.classList.add("window-focused");
+
+        window.localkeys.onWindowFocusChanged((focused) => {
+            if (focused) {
+                document.body.classList.remove("window-blurred");
+                document.body.classList.add("window-focused");
+            } else {
+                document.body.classList.remove("window-focused");
+                document.body.classList.add("window-blurred");
+            }
+        });
+    };
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+            addPlatformClass();
+            setupFocusTracking();
+        });
+    } else {
+        addPlatformClass();
+        setupFocusTracking();
+    }
+})();

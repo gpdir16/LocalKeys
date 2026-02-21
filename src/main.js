@@ -1,10 +1,11 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeImage, powerMonitor } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell, Tray, Menu, nativeImage, nativeTheme, powerMonitor } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const crypto = require("crypto");
 const https = require("https");
 const { URL } = require("url");
+const windowStateKeeper = require("electron-window-state");
 
 const Vault = require("./modules/vault");
 const Logger = require("./modules/logger");
@@ -651,9 +652,19 @@ function lockVault() {
 
 // 윈도우 생성
 function createWindow() {
+    // 윈도우 상태 저장/복원
+    const mainWindowState = windowStateKeeper({
+        defaultWidth: 1000,
+        defaultHeight: 700,
+    });
+
     mainWindow = new BrowserWindow({
-        width: 1000,
-        height: 700,
+        x: mainWindowState.x,
+        y: mainWindowState.y,
+        width: mainWindowState.width,
+        height: mainWindowState.height,
+        minWidth: 680,
+        minHeight: 500,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -662,7 +673,24 @@ function createWindow() {
         titleBarStyle: "default", // 운영체제 기본 윈도우 메뉴바 사용
         menuBarVisible: false, // 윈도우에서 메뉴 바 숨기기
         show: false,
+        backgroundColor: "#1a1a1a",
+        acceptFirstMouse: true,
         icon: path.join(__dirname, "assets", "icon.png"),
+    });
+
+    // 윈도우 상태 자동 관리 (위치/크기 저장)
+    mainWindowState.manage(mainWindow);
+
+    // 윈도우 포커스 상태를 렌더러에 전달
+    mainWindow.on("focus", () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send("window-focus-changed", true);
+        }
+    });
+    mainWindow.on("blur", () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send("window-focus-changed", false);
+        }
     });
 
     // 화면 캡처 방지 적용
@@ -1751,9 +1779,117 @@ function showApprovalDialog(projectName, keys, action = "read") {
     });
 }
 
+// 네이티브 메뉴 구성
+function buildAppMenu() {
+    const isMac = process.platform === "darwin";
+
+    const template = [];
+
+    // macOS 앱 메뉴
+    if (isMac) {
+        template.push({
+            role: "appMenu",
+            submenu: [
+                { role: "about" },
+                { type: "separator" },
+                {
+                    label: i18n ? i18n.t("menu.preferences") : "Preferences...",
+                    accelerator: "Cmd+,",
+                    click: () => {
+                        if (mainWindow && !mainWindow.isDestroyed() && isUnlocked) {
+                            mainWindow.loadFile("src/views/settings.html");
+                            mainWindow.show();
+                        }
+                    },
+                },
+                { type: "separator" },
+                { role: "services" },
+                { type: "separator" },
+                { role: "hide" },
+                { role: "hideOthers" },
+                { role: "unhide" },
+                { type: "separator" },
+                { role: "quit" },
+            ],
+        });
+    }
+
+    // Edit 메뉴
+    template.push({
+        label: "Edit",
+        submenu: [
+            { role: "cut" },
+            { role: "copy" },
+            { role: "paste" },
+        ],
+    });
+
+    // View 메뉴
+    template.push({
+        label: "View",
+        submenu: [
+            { role: "resetZoom" },
+            { role: "zoomIn" },
+            { role: "zoomOut" },
+            { type: "separator" },
+            { role: "togglefullscreen" },
+        ],
+    });
+
+    // View 메뉴
+    template.push({
+        label: "Developer",
+        submenu: [
+            { role: "reload" },
+            { role: "forceReload" },
+            { type: "separator" },
+            { role: "toggleDevTools" },
+        ],
+    });
+
+    // Window 메뉴
+    const windowSubmenu = [
+        { role: "minimize" },
+        { role: "zoom" },
+        { role: "close" },
+    ];
+
+    if (isMac) {
+        windowSubmenu.push(
+            { type: "separator" },
+            { role: "front" }
+        );
+    }
+
+    template.push({
+        label: "Window",
+        submenu: windowSubmenu,
+    });
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+}
+
 // 앱 이벤트 핸들러
 app.whenReady().then(async () => {
+    // 다크 모드 강제 고정
+    nativeTheme.themeSource = "dark";
+
+    // 네이티브 컨텍스트 메뉴 설정 (ESM 패키지이므로 dynamic import 사용)
+    const { default: contextMenu } = await import("electron-context-menu");
+    contextMenu({
+        showServices: process.platform === "darwin",
+        showSearchWithGoogle: true,
+        showCopyImage: true,
+        showSaveImageAs: true,
+        showInspectElement: !app.isPackaged,
+    });
+
     initializeApp();
+
+    // 네이티브 메뉴 구성
+    buildAppMenu();
+
     createWindow();
     setupIpcHandlers();
 
@@ -1773,6 +1909,13 @@ app.whenReady().then(async () => {
             mainWindow.focus();
         }
     });
+});
+
+// macOS: 모든 창을 닫아도 앱이 독에 남아 있음
+app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+        app.quit();
+    }
 });
 
 // 앱 종료 시 정리

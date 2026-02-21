@@ -98,10 +98,19 @@ const api = {
     statistics: {
         get: () => ipcRenderer.invoke("statistics:get"),
     },
+
+    // 윈도우 포커스 상태 감지
+    onWindowFocusChanged: (callback) => {
+        if (typeof callback !== "function") return;
+        ipcRenderer.on("window-focus-changed", (event, focused) => callback(focused));
+    },
 };
 
 // 렌더러 프로세스에 API 노출
 contextBridge.exposeInMainWorld("localkeys", api);
+
+// 플랫폼 정보 노출
+contextBridge.exposeInMainWorld("platform", process.platform);
 
 // 개발 모드 확인
 contextBridge.exposeInMainWorld("isDev", process.argv.includes("--dev"));

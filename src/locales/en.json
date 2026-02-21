@@ -236,6 +236,12 @@
         "lock": "Lock Vault",
         "quit": "Quit"
     },
+    "menu": {
+        "preferences": "Preferences..."
+    },
+    "dock": {
+        "newWindow": "New Window"
+    },
     "settings": {
         "title": "Settings",
         "language": "Language",

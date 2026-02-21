@@ -24,13 +24,14 @@
     },
     "devDependencies": {
         "electron": "^39.1.1",
-        "electron-builder": "^24.0.0"
+        "electron-builder": "^26.8.1"
     },
     "overrides": {
         "config-file-ts": {
             "glob": "^10.5.0"
         },
-        "js-yaml": "^4.1.1"
+        "js-yaml": "^4.1.1",
+        "minimatch": "^10.2.1"
     },
     "build": {
         "appId": "com.localkeys.app",
@@ -62,5 +63,9 @@
             "icon": "src/assets/icon.png"
         },
         "afterPack": "./scripts/sign-adhoc.js"
+    },
+    "dependencies": {
+        "electron-context-menu": "^4.1.1",
+        "electron-window-state": "^5.0.3"
     }
 }

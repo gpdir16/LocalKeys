@@ -236,6 +236,12 @@
         "lock": "Vault 잠금",
         "quit": "종료"
     },
+    "menu": {
+        "preferences": "설정..."
+    },
+    "dock": {
+        "newWindow": "새 윈도우"
+    },
     "settings": {
         "title": "설정",
         "language": "언어",

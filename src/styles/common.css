@@ -5,23 +5,40 @@
     box-sizing: border-box;
 }
 
+/* 시스템 폰트 + macOS 네이티브 폰트 크기 (13px) */
+html {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
 /* 텍스트 선택 비활성화 */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background-color: #1a1a1a;
     color: #e0e0e0;
     height: 100vh;
     overflow: hidden;
+    -webkit-user-select: none;
     user-select: none;
 }
 
-/* 입력 필드와 텍스트 선택이 필요한 영역에서는 선택 가능 */
+/* 입력 필드와 텍스트 콘텐츠 영역은 선택 가능 */
 input,
 textarea,
 select,
 [contenteditable="true"],
-.selectable {
+.selectable,
+.content,
+.editor,
+article,
+p {
+    -webkit-user-select: text;
     user-select: text;
+}
+
+/* 이미지 드래그 방지 */
+img {
+    -webkit-user-drag: none;
 }
 
 /* 다크모드 색상 변수 */
@@ -36,6 +53,66 @@ select,
     --warning: #ff9800;
     --error: #f44336;
     --border: #262626;
+    --sidebar-bg: rgba(30, 30, 30, 0.8);
+    --selection-active: #0058d0;
+    --selection-inactive: #5a5a5a;
+}
+
+/* 기본 커서 사용 */
+button,
+[role="button"],
+.clickable,
+.sidebar-item,
+.tab,
+.nav-item,
+.project-card,
+.secret-item,
+.dropdown-item,
+.back-btn,
+.toggle-visibility,
+.settings-item,
+.pagination button {
+    cursor: default;
+}
+
+a[href^="http"],
+a[href^="mailto:"],
+.external-link {
+    cursor: pointer;
+}
+
+
+
+/* 윈도우 포커스 상태에 따른 선택 색상 */
+body.window-focused .sidebar-item.active,
+body.window-focused .project-card.active {
+    background-color: var(--selection-active);
+    color: white;
+}
+
+body.window-blurred .sidebar-item.active,
+body.window-blurred .project-card.active {
+    background-color: var(--selection-inactive);
+    color: var(--text-primary);
+}
+
+/* 오버레이 스크롤바 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
 }
 
 /* SVG 아이콘 (마스크 방식, currentColor로 색상 제어) */
@@ -175,10 +252,11 @@ select,
     border: none;
     color: #fff;
     background-origin: border-box;
+    -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;
-    cursor: pointer;
-    font-size: 14px;
+    cursor: default;
+    font-size: 13px;
 }
 
 /* 버튼 타입별 스타일 */
@@ -358,7 +436,7 @@ select,
 
 .project-card,
 .secret-item {
-    cursor: pointer;
+    cursor: default;
 }
 
 .project-card:hover {
@@ -555,7 +633,7 @@ select,
     border: none;
     background: none;
     color: var(--text-secondary);
-    cursor: pointer;
+    cursor: default;
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -850,8 +928,8 @@ select,
 .approval-btn {
     flex: 1;
     padding: 12px;
-    font-size: 16px;
-    cursor: pointer;
+    font-size: 14px;
+    cursor: default;
     border: none;
 }
 
@@ -1033,40 +1111,7 @@ select,
     flex: 1;
 }
 
-/* 스크롤바 공통 */
-.scrollable-container::-webkit-scrollbar,
-.logs-container::-webkit-scrollbar,
-#projects-container::-webkit-scrollbar,
-.secrets-container::-webkit-scrollbar,
-.history-container::-webkit-scrollbar {
-    width: 8px;
-}
-
-.scrollable-container::-webkit-scrollbar-track,
-.logs-container::-webkit-scrollbar-track,
-#projects-container::-webkit-scrollbar-track,
-.secrets-container::-webkit-scrollbar-track,
-.history-container::-webkit-scrollbar-track {
-    background: var(--bg-tertiary);
-    border-radius: 4px;
-}
-
-.scrollable-container::-webkit-scrollbar-thumb,
-.logs-container::-webkit-scrollbar-thumb,
-#projects-container::-webkit-scrollbar-thumb,
-.secrets-container::-webkit-scrollbar-thumb,
-.history-container::-webkit-scrollbar-thumb {
-    background: var(--text-secondary);
-    border-radius: 4px;
-}
-
-.scrollable-container::-webkit-scrollbar-thumb:hover,
-.logs-container::-webkit-scrollbar-thumb:hover,
-#projects-container::-webkit-scrollbar-thumb:hover,
-.secrets-container::-webkit-scrollbar-thumb:hover,
-.history-container::-webkit-scrollbar-thumb:hover {
-    background: var(--text-primary);
-}
+/* 스크롤바는 ::-webkit-scrollbar 글로벌 규칙으로 통합됨 */
 
 .log-item {
     padding: 15px 20px;
@@ -1139,7 +1184,7 @@ select,
     padding: 8px 12px;
     background-color: var(--bg-secondary);
     color: var(--text-primary);
-    cursor: pointer;
+    cursor: default;
 }
 
 .pagination button:hover:not(:disabled) {
@@ -1164,7 +1209,7 @@ select,
     background: none;
     border: none;
     color: var(--text-secondary);
-    cursor: pointer;
+    cursor: default;
     padding: 5px;
     display: inline-flex;
     align-items: center;
@@ -1266,7 +1311,7 @@ select,
     background: none;
     border: none;
     color: var(--accent);
-    cursor: pointer;
+    cursor: default;
     padding: 5px;
     display: inline-flex;
     align-items: center;
@@ -1401,8 +1446,8 @@ select,
     background: none;
     color: var(--text-primary);
     text-align: left;
-    cursor: pointer;
-    font-size: 14px;
+    cursor: default;
+    font-size: 13px;
 }
 
 .dropdown-item:hover {
@@ -1494,7 +1539,7 @@ select,
 
 .toggle-slider {
     position: absolute;
-    cursor: pointer;
+    cursor: default;
     top: 0;
     left: 0;
     right: 0;
@@ -1692,7 +1737,7 @@ select,
 .btn-icon-small {
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: default;
     color: var(--text-secondary);
     margin: 0 0 -2px 0;
 }
