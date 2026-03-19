@@ -5,6 +5,82 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>LocalKeys</title>
         <link rel="stylesheet" href="../styles/common.css" />
+        <style>
+            /* Setup 페이지 스타일 */
+            .setup-container {
+                max-width: 500px;
+                margin: 0 auto;
+                padding-top: 50px;
+            }
+
+            .password-strength {
+                height: 4px;
+                background-color: var(--bg-tertiary);
+                margin-top: 8px;
+                overflow: hidden;
+            }
+
+            .password-strength-bar {
+                height: 100%;
+                width: 0%;
+            }
+
+            .strength-weak {
+                background-color: var(--error);
+                width: 33%;
+            }
+
+            .strength-medium {
+                background-color: var(--warning);
+                width: 66%;
+            }
+
+            .strength-strong {
+                background-color: var(--success);
+                width: 100%;
+            }
+
+            .requirements {
+                margin-top: 10px;
+                font-size: 12px;
+                color: var(--text-secondary);
+            }
+
+            .requirement {
+                margin-top: 5px;
+                display: flex;
+                align-items: center;
+            }
+
+            .requirement::before {
+                content: "";
+                display: inline-block;
+                width: 14px;
+                height: 14px;
+                margin-right: 8px;
+                background-color: var(--error);
+                -webkit-mask-image: url("../icons/x.svg");
+                -webkit-mask-repeat: no-repeat;
+                -webkit-mask-position: center;
+                -webkit-mask-size: contain;
+                mask-image: url("../icons/x.svg");
+                mask-repeat: no-repeat;
+                mask-position: center;
+                mask-size: contain;
+            }
+
+            .requirement.met::before {
+                background-color: var(--success);
+                -webkit-mask-image: url("../icons/check.svg");
+                -webkit-mask-repeat: no-repeat;
+                -webkit-mask-position: center;
+                -webkit-mask-size: contain;
+                mask-image: url("../icons/check.svg");
+                mask-repeat: no-repeat;
+                mask-position: center;
+                mask-size: contain;
+            }
+        </style>
     </head>
     <body>
         <div class="container">

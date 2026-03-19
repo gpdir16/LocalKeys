@@ -5,6 +5,229 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>LocalKeys</title>
         <link rel="stylesheet" href="../styles/common.css" />
+        <style>
+            /* Project 페이지 스타일 */
+            .project-card {
+                background-color: var(--bg-secondary);
+                padding: 20px;
+                border-radius: 8px;
+                border: 1px solid var(--border);
+                cursor: default;
+            }
+
+            .secret-item {
+                background-color: var(--bg-secondary);
+                padding: 20px;
+                border-radius: 8px;
+                border: 1px solid var(--border);
+                cursor: default;
+            }
+
+            .secrets-container {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                margin-bottom: 15px;
+                overflow-y: auto;
+                flex: 1;
+                padding-right: 5px;
+            }
+
+            .secret-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+
+            .secret-key {
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--text-primary);
+                word-break: break-all;
+            }
+
+            .secret-value {
+                font-family: "Courier New", monospace;
+                font-size: 14px;
+                color: var(--text-secondary);
+                background-color: var(--bg-tertiary);
+                padding: 8px;
+                word-break: break-all;
+                position: relative;
+                border-radius: 8px;
+                user-select: text;
+            }
+
+            .secret-78 {
+                width: 78%;
+            }
+
+            .secret-value.masked {
+                color: transparent;
+                text-shadow: 0 0 15px rgba(224, 224, 224, 0.8);
+                user-select: none;
+            }
+
+            .secret-expires {
+                font-size: 12px;
+                color: var(--text-secondary);
+                padding: 4px 8px;
+                border-radius: 8px;
+                background-color: var(--bg-tertiary);
+                display: inline-block;
+                margin-top: 10px;
+            }
+
+            .secret-expires.expiring-soon {
+                color: var(--warning);
+                background-color: rgba(255, 152, 0, 0.1);
+            }
+
+            .secret-expires.expired {
+                color: var(--error);
+                background-color: rgba(244, 67, 54, 0.1);
+            }
+
+            .secret-item.expired {
+                border-color: var(--error);
+                opacity: 0.7;
+            }
+
+            .secret-item.expiring-soon {
+                border-color: var(--warning);
+            }
+
+            .secret-actions {
+                display: flex;
+                gap: 10px;
+            }
+
+            .toggle-visibility {
+                background: none;
+                color: var(--text-secondary);
+                padding: 5px;
+                box-shadow: none;
+                border: none;
+                color: var(--accent);
+                cursor: default;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .toggle-visibility:hover {
+                background-color: var(--bg-tertiary);
+                color: var(--text-primary);
+            }
+
+            .toggle-visibility .lk-icon {
+                width: 16px;
+                height: 16px;
+            }
+
+            .export-section {
+                margin-top: 20px;
+                padding-top: 20px;
+            }
+
+            .modal-large {
+                width: 600px;
+                max-width: 90vw;
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+                overflow: hidden;
+            }
+
+            .modal-large .modal-body {
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 0;
+            }
+
+            .modal-large .modal-header {
+                margin-bottom: 0;
+            }
+
+            .secret-key-title {
+                font-size: 14px;
+                color: var(--text-secondary);
+                margin-top: 4px;
+                font-family: monospace;
+            }
+
+            .history-container {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                flex: 1 1 auto;
+                min-height: 0;
+                overflow-y: auto;
+            }
+
+            .history-item {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 16px 16px 0 16px;
+            }
+
+            .history-item.current-version {
+                border-color: var(--accent);
+                background: rgba(74, 158, 255, 0.1);
+            }
+
+            .history-item.current-version .secret-key {
+                font-weight: bold;
+                color: var(--accent);
+            }
+
+            .btn-sm {
+                padding: 6px 12px;
+                font-size: 13px;
+                height: auto;
+                min-height: 32px;
+            }
+
+            .history-container .empty-state,
+            .history-container .error-state,
+            .logs-container .empty-state {
+                text-align: center;
+                padding: 40px 20px;
+                color: var(--text-secondary);
+            }
+
+            .history-container .error-state {
+                color: var(--error);
+            }
+
+            .btn-icon-small {
+                background: none;
+                border: none;
+                cursor: default;
+                color: var(--text-secondary);
+                margin: 0 0 -2px 0;
+            }
+
+            .unlock-btn {
+                width: 40px;
+                height: 40px;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .copy-btn {
+                background: none;
+                color: var(--text-secondary);
+                padding: 5px;
+                box-shadow: none;
+            }
+        </style>
     </head>
     <body>
         <div class="container">

@@ -5,6 +5,101 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>LocalKeys</title>
         <link rel="stylesheet" href="../styles/common.css" />
+        <style>
+            /* Dashboard 페이지 스타일 */
+            .project-card {
+                background-color: var(--bg-secondary);
+                padding: 20px;
+                border-radius: 8px;
+                border: 1px solid var(--border);
+                cursor: default;
+            }
+
+            .project-card:hover {
+                background-color: var(--bg-tertiary);
+            }
+
+            .projects-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 14px;
+                margin-bottom: 20px;
+            }
+
+            .project-name {
+                font-size: 18px;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: 8px;
+            }
+
+            .project-stats {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 15px;
+            }
+
+            .secret-count {
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+
+            .project-date {
+                font-size: 12px;
+                color: var(--text-secondary);
+            }
+
+            /* 통계 카드 */
+            .project-card.stat-card {
+                cursor: default;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                padding: 16px;
+            }
+
+            .project-card.stat-card:hover {
+                transform: none;
+                border-color: var(--border);
+            }
+
+            .stat-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .stat-value {
+                font-size: 21px;
+                font-weight: 600;
+                color: var(--text-primary);
+                margin-bottom: 4px;
+            }
+
+            .stat-value.stat-warning {
+                color: var(--warning);
+            }
+
+            .stat-value.stat-error {
+                color: var(--error);
+            }
+
+            .stat-label {
+                font-size: 12px;
+                color: var(--text-secondary);
+                text-align: center;
+            }
+
+            .btn-icon-small {
+                background: none;
+                border: none;
+                cursor: default;
+                color: var(--text-secondary);
+                margin: 0 0 -2px 0;
+            }
+        </style>
     </head>
     <body>
         <div class="container">

@@ -5,6 +5,167 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>LocalKeys</title>
         <link rel="stylesheet" href="../styles/common.css" />
+        <style>
+            /* Logs 페이지 스타일 */
+            .filters {
+                display: flex;
+                gap: 15px;
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+
+            .filter-group {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .filter-group label {
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+
+            .filter-group select {
+                padding: 8px 12px;
+                background-color: var(--bg-secondary);
+                border: none;
+                border-radius: 8px;
+                color: var(--text-primary);
+                font-size: 14px;
+            }
+
+            .filter-group select:focus {
+                outline: none;
+                background-color: var(--bg-tertiary);
+            }
+
+            .logs-container {
+                background-color: var(--bg-secondary);
+                overflow-y: auto;
+                height: calc(100vh - 160px);
+                border-radius: 8px;
+                margin: 0;
+                flex: 1;
+            }
+
+            .log-item {
+                padding: 15px 20px;
+            }
+
+            .log-item:hover {
+                background-color: var(--bg-tertiary);
+            }
+
+            .log-item:last-child {
+                border-bottom: none;
+            }
+
+            .log-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+            }
+
+            .log-timestamp {
+                font-size: 12px;
+                color: var(--text-secondary);
+                font-family: "Courier New", monospace;
+            }
+
+            .log-type {
+                padding: 2px 8px;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+
+            .log-type.info {
+                background-color: rgba(74, 158, 255, 0.2);
+                color: var(--accent);
+            }
+
+            .log-type.access {
+                background-color: rgba(76, 175, 80, 0.2);
+                color: var(--success);
+            }
+
+            .log-type.warning {
+                background-color: rgba(255, 152, 0, 0.2);
+                color: var(--warning);
+            }
+
+            .log-type.error {
+                background-color: rgba(244, 67, 54, 0.2);
+                color: var(--error);
+            }
+
+            .log-message {
+                font-size: 14px;
+                color: var(--text-primary);
+                line-height: 1.4;
+                word-break: break-word;
+            }
+
+            .pagination {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 10px;
+                margin-top: 20px;
+            }
+
+            .pagination button {
+                padding: 8px 12px;
+                background-color: var(--bg-secondary);
+                color: var(--text-primary);
+                cursor: default;
+            }
+
+            .pagination button:hover:not(:disabled) {
+                background-color: var(--bg-tertiary);
+            }
+
+            .pagination button:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .pagination .current-page {
+                padding: 8px 12px;
+                background-color: var(--accent);
+                color: white;
+                font-weight: 600;
+            }
+
+            .logs-filters {
+                display: flex;
+                gap: 14px;
+            }
+
+            .log-type {
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+                text-transform: uppercase;
+            }
+
+            .log-type.access {
+                background: rgba(74, 158, 255, 0.2);
+                color: var(--accent);
+            }
+
+            .log-type.app {
+                background: rgba(158, 158, 158, 0.2);
+                color: #9e9e9e;
+            }
+
+            .log-type.lock {
+                background: rgba(255, 152, 0, 0.2);
+                color: #ff9800;
+            }
+        </style>
     </head>
     <body>
         <div class="container">

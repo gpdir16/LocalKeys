@@ -69,7 +69,6 @@ button,
 .secret-item,
 .dropdown-item,
 .back-btn,
-.toggle-visibility,
 .settings-item,
 .pagination button {
     cursor: default;
@@ -80,8 +79,6 @@ a[href^="mailto:"],
 .external-link {
     cursor: pointer;
 }
-
-
 
 /* 윈도우 포커스 상태에 따른 선택 색상 */
 body.window-focused .sidebar-item.active,
@@ -243,7 +240,6 @@ body.window-blurred .project-card.active {
 .unlock-btn,
 .approval-btn,
 .back-btn,
-.toggle-visibility,
 .copy-btn,
 .pagination button {
     display: flex;
@@ -350,30 +346,25 @@ body.window-blurred .project-card.active {
     cursor: not-allowed;
 }
 
-/* 특수 버튼들 */
-.toggle-visibility {
+/* 뒤로 가기 버튼 (logs, project, settings 공용) */
+.back-btn {
     background: none;
+    border: none;
     color: var(--text-secondary);
+    cursor: default;
     padding: 5px;
-    box-shadow: none;
-}
-
-.toggle-visibility:hover {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-}
-
-/* 페이지네이션 버튼 특수 스타일 */
-.pagination .current-page {
-    background: linear-gradient(180deg, rgb(75, 145, 247) 0%, rgb(54, 122, 246) 100%);
-    box-shadow: 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
-}
-
-.unlock-btn {
-    width: 40px;
-    height: 40px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+.back-btn .lk-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.back-btn:hover {
+    background-color: var(--bg-tertiary);
 }
 
 /* 입력 필드 */
@@ -420,27 +411,12 @@ body.window-blurred .project-card.active {
 }
 
 /* 카드 스타일 */
-.card,
-.approval-card,
-.project-card,
-.secret-item {
+.card {
     background-color: var(--bg-secondary);
     padding: 20px;
     border-radius: 8px;
     border: 1px solid var(--border);
-}
-
-.card {
     margin-bottom: 20px;
-}
-
-.project-card,
-.secret-item {
-    cursor: default;
-}
-
-.project-card:hover {
-    background-color: var(--bg-tertiary);
 }
 
 .card-header {
@@ -843,109 +819,6 @@ body.window-blurred .project-card.active {
     gap: 10px;
 }
 
-/* Lock 페이지 스타일 */
-.lock-container {
-    max-width: 400px;
-    margin: 0 auto;
-    padding-top: 100px;
-}
-
-.logo {
-    margin-bottom: 40px;
-}
-
-.logo h1 {
-    font-size: 36px;
-    color: var(--accent);
-    margin-bottom: 10px;
-}
-
-.logo p {
-    color: var(--text-secondary);
-    font-size: 16px;
-}
-
-/* Approval 페이지 스타일 */
-.approval-container {
-    flex-direction: column;
-}
-
-.approval-card {
-    max-width: 450px;
-    width: 100%;
-}
-
-.titlebar {
-    display: flex;
-    gap: 8px;
-}
-
-.approval-icon {
-    width: 28px;
-    height: 28px;
-    margin-bottom: 20px;
-}
-
-.approval-title {
-    font-weight: 600;
-    margin-top: 2px;
-}
-
-.approval-details {
-    background-color: var(--bg-tertiary);
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-}
-
-.detail-row {
-    display: flex;
-    margin-bottom: 12px;
-}
-
-.detail-row:last-child {
-    margin-bottom: 0;
-}
-
-.detail-label {
-    font-weight: 600;
-    color: var(--text-secondary);
-    width: 80px;
-    flex-shrink: 0;
-}
-
-.detail-value {
-    color: var(--text-primary);
-    word-break: break-all;
-    flex: 1;
-}
-
-.approval-actions {
-    display: flex;
-    gap: 15px;
-}
-
-.approval-btn {
-    flex: 1;
-    padding: 12px;
-    font-size: 14px;
-    cursor: default;
-    border: none;
-}
-
-.timeout-bar {
-    height: 4px;
-    background-color: var(--bg-tertiary);
-    margin-bottom: 20px;
-    overflow: hidden;
-}
-
-.timeout-progress {
-    height: 100%;
-    background-color: var(--warning);
-    width: 100%;
-}
-
 /* 페이지 헤더 스타일 */
 .page-header {
     display: flex;
@@ -980,39 +853,7 @@ body.window-blurred .project-card.active {
     gap: 10px;
 }
 
-/* Dashboard 페이지 스타일 */
-
-.projects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 14px;
-    margin-bottom: 20px;
-}
-
-.project-name {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-}
-
-.project-stats {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 15px;
-}
-
-.secret-count {
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-.project-date {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
+/* 빈 상태 (dashboard, logs, project 공용) */
 .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -1039,6 +880,7 @@ body.window-blurred .project-card.active {
     margin-right: auto;
 }
 
+/* 검색 바 (dashboard, logs, project 공용) */
 .search-bar {
     position: relative;
     margin-bottom: 15px;
@@ -1068,346 +910,7 @@ body.window-blurred .project-card.active {
     color: var(--text-secondary);
 }
 
-/* Logs 페이지 스타일 */
-
-.filters {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.filter-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.filter-group label {
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-.filter-group select {
-    padding: 8px 12px;
-    background-color: var(--bg-secondary);
-    border: none;
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-size: 14px;
-}
-
-.filter-group select:focus {
-    outline: none;
-    background-color: var(--bg-tertiary);
-}
-
-.logs-container {
-    background-color: var(--bg-secondary);
-    overflow-y: auto;
-    height: calc(100vh - 160px);
-    border-radius: 8px;
-    margin: 0;
-    flex: 1;
-}
-
-/* 스크롤바는 ::-webkit-scrollbar 글로벌 규칙으로 통합됨 */
-
-.log-item {
-    padding: 15px 20px;
-}
-
-.log-item:hover {
-    background-color: var(--bg-tertiary);
-}
-
-.log-item:last-child {
-    border-bottom: none;
-}
-
-.log-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.log-timestamp {
-    font-size: 12px;
-    color: var(--text-secondary);
-    font-family: "Courier New", monospace;
-}
-
-.log-type {
-    padding: 2px 8px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.log-type.info {
-    background-color: rgba(74, 158, 255, 0.2);
-    color: var(--accent);
-}
-
-.log-type.access {
-    background-color: rgba(76, 175, 80, 0.2);
-    color: var(--success);
-}
-
-.log-type.warning {
-    background-color: rgba(255, 152, 0, 0.2);
-    color: var(--warning);
-}
-
-.log-type.error {
-    background-color: rgba(244, 67, 54, 0.2);
-    color: var(--error);
-}
-
-.log-message {
-    font-size: 14px;
-    color: var(--text-primary);
-    line-height: 1.4;
-    word-break: break-word;
-}
-
-.pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.pagination button {
-    padding: 8px 12px;
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    cursor: default;
-}
-
-.pagination button:hover:not(:disabled) {
-    background-color: var(--bg-tertiary);
-}
-
-.pagination button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.pagination .current-page {
-    padding: 8px 12px;
-    background-color: var(--accent);
-    color: white;
-    font-weight: 600;
-}
-
-/* Project 페이지 스타일 */
-
-.back-btn {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: default;
-    padding: 5px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.back-btn .lk-icon {
-    width: 18px;
-    height: 18px;
-}
-
-.back-btn:hover {
-    background-color: var(--bg-tertiary);
-}
-
-.secrets-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 15px;
-    overflow-y: auto;
-    flex: 1;
-    padding-right: 5px;
-}
-
-.secret-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.secret-key {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    word-break: break-all;
-}
-
-.secret-value {
-    font-family: "Courier New", monospace;
-    font-size: 14px;
-    color: var(--text-secondary);
-    background-color: var(--bg-tertiary);
-    padding: 8px;
-    word-break: break-all;
-    position: relative;
-    border-radius: 8px;
-    user-select: text;
-}
-
-.secret-78 {
-    width: 78%;
-}
-
-.secret-value.masked {
-    color: transparent;
-    text-shadow: 0 0 15px rgba(224, 224, 224, 0.8);
-    user-select: none;
-}
-
-/* 시크릿 만료일 표시 */
-.secret-expires {
-    font-size: 12px;
-    color: var(--text-secondary);
-    padding: 4px 8px;
-    border-radius: 8px;
-    background-color: var(--bg-tertiary);
-    display: inline-block;
-    margin-top: 10px;
-}
-
-.secret-expires.expiring-soon {
-    color: var(--warning);
-    background-color: rgba(255, 152, 0, 0.1);
-}
-
-.secret-expires.expired {
-    color: var(--error);
-    background-color: rgba(244, 67, 54, 0.1);
-}
-
-/* 만료된 시크릿 카드 스타일 */
-.secret-item.expired {
-    border-color: var(--error);
-    opacity: 0.7;
-}
-
-.secret-item.expiring-soon {
-    border-color: var(--warning);
-}
-
-.secret-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.toggle-visibility {
-    background: none;
-    border: none;
-    color: var(--accent);
-    cursor: default;
-    padding: 5px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.toggle-visibility .lk-icon {
-    width: 16px;
-    height: 16px;
-}
-
-.toggle-visibility:hover {
-    background-color: var(--bg-tertiary);
-}
-
-.export-section {
-    margin-top: 20px;
-    padding-top: 20px;
-}
-
-/* Setup 페이지 스타일 */
-.setup-container {
-    max-width: 500px;
-    margin: 0 auto;
-    padding-top: 50px;
-}
-
-.password-strength {
-    height: 4px;
-    background-color: var(--bg-tertiary);
-    margin-top: 8px;
-    overflow: hidden;
-}
-
-.password-strength-bar {
-    height: 100%;
-    width: 0%;
-}
-
-.strength-weak {
-    background-color: var(--error);
-    width: 33%;
-}
-
-.strength-medium {
-    background-color: var(--warning);
-    width: 66%;
-}
-
-.strength-strong {
-    background-color: var(--success);
-    width: 100%;
-}
-
-.requirements {
-    margin-top: 10px;
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.requirement {
-    margin-top: 5px;
-    display: flex;
-    align-items: center;
-}
-
-.requirement::before {
-    content: "";
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    margin-right: 8px;
-    background-color: var(--error);
-    -webkit-mask-image: url("../icons/x.svg");
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    -webkit-mask-size: contain;
-    mask-image: url("../icons/x.svg");
-    mask-repeat: no-repeat;
-    mask-position: center;
-    mask-size: contain;
-}
-
-.requirement.met::before {
-    background-color: var(--success);
-    -webkit-mask-image: url("../icons/check.svg");
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    -webkit-mask-size: contain;
-    mask-image: url("../icons/check.svg");
-    mask-repeat: no-repeat;
-    mask-position: center;
-    mask-size: contain;
-}
-
-/* 드롭다운 메뉴 스타일 */
+/* 드롭다운 메뉴 스타일 (dashboard, project 공용) */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -1462,196 +965,7 @@ body.window-blurred .project-card.active {
     background-color: rgba(244, 67, 54, 0.1);
 }
 
-/* Settings 페이지 스타일 */
-.settings-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.settings-section {
-    background-color: var(--bg-secondary);
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-}
-
-.settings-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-}
-
-.settings-item:last-child {
-    border-bottom: none;
-}
-
-.settings-item-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.settings-item-label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.settings-item-description {
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-.settings-input {
-    width: 100px;
-    height: 44px;
-    padding: 0 12px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.settings-input:focus {
-    border-color: var(--primary);
-}
-
-/* 토글 스위치 */
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-    flex-shrink: 0;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: default;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--bg-tertiary);
-    border-radius: 24px;
-    border: 1px solid var(--border);
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 2px;
-    bottom: 2px;
-    background-color: var(--text-secondary);
-    border-radius: 50%;
-}
-
-.toggle-switch input:checked + .toggle-slider {
-    background-color: var(--accent);
-    border-color: var(--accent);
-}
-
-.toggle-switch input:checked + .toggle-slider:before {
-    transform: translateX(20px);
-    background-color: white;
-}
-
-/* 히스토리 모달 */
-.modal-large {
-    width: 600px;
-    max-width: 90vw;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    overflow: hidden;
-}
-
-.modal-large .modal-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 0;
-}
-
-.modal-large .modal-header {
-    margin-bottom: 0;
-}
-
-.secret-key-title {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    font-family: monospace;
-}
-
-.history-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-}
-
-.history-item {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px 16px 0 16px;
-}
-
-.history-item.current-version {
-    border-color: var(--accent);
-    background: rgba(74, 158, 255, 0.1);
-}
-
-.history-item.current-version .secret-key {
-    font-weight: bold;
-    color: var(--accent);
-}
-
-.btn-sm {
-    padding: 6px 12px;
-    font-size: 13px;
-    height: auto;
-    min-height: 32px;
-}
-
-.history-container .empty-state,
-.history-container .error-state,
-.logs-container .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-secondary);
-}
-
-.history-container .error-state {
-    color: var(--error);
-}
-
-/* 로그 인터페이스 개선 */
-.logs-filters {
-    display: flex;
-    gap: 14px;
-}
-
+/* 필터 선택 (logs, settings 공용) */
 .filter-select {
     padding: 8px 12px;
     background: var(--bg-secondary);
@@ -1666,78 +980,4 @@ body.window-blurred .project-card.active {
 .filter-select:focus {
     outline: none;
     border-color: var(--accent);
-}
-
-.log-type {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-}
-
-.log-type.access {
-    background: rgba(74, 158, 255, 0.2);
-    color: var(--accent);
-}
-
-.log-type.app {
-    background: rgba(158, 158, 158, 0.2);
-    color: #9e9e9e;
-}
-
-.log-type.lock {
-    background: rgba(255, 152, 0, 0.2);
-    color: #ff9800;
-}
-
-/* 통계 카드 */
-.project-card.stat-card {
-    cursor: default;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 16px;
-}
-
-.project-card.stat-card:hover {
-    transform: none;
-    border-color: var(--border);
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.stat-value {
-    font-size: 21px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.stat-value.stat-warning {
-    color: var(--warning);
-}
-
-.stat-value.stat-error {
-    color: var(--error);
-}
-
-.stat-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    text-align: center;
-}
-
-/* 작은 아이콘 버튼 */
-.btn-icon-small {
-    background: none;
-    border: none;
-    cursor: default;
-    color: var(--text-secondary);
-    margin: 0 0 -2px 0;
 }
