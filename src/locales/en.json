@@ -268,6 +268,73 @@
             "resetDueToError": "Settings could not be loaded and were reset to defaults"
         }
     },
+    "vault": {
+        "selector": {
+            "buttonLabel": "Vault",
+            "newVault": "New Vault",
+            "importVault": "Import Vault"
+        },
+        "status": {
+            "offline": "Offline"
+        },
+        "create": {
+            "title": "Create New Vault",
+            "nameLabel": "Vault Name",
+            "namePlaceholder": "Enter vault name",
+            "pathLabel": "Save Location",
+            "pathPlaceholder": "Select a folder",
+            "browse": "Browse",
+            "passwordLabel": "Master Password",
+            "passwordPlaceholder": "Enter a strong password",
+            "confirmLabel": "Confirm Password",
+            "confirmPlaceholder": "Re-enter your password",
+            "submit": "Create Vault",
+            "creating": "Creating..."
+        },
+        "import": {
+            "title": "Import Existing Vault",
+            "nameLabel": "Vault Name",
+            "namePlaceholder": "Enter vault name",
+            "pathLabel": "Vault Location (lkv folder)",
+            "pathPlaceholder": "Select lkv folder",
+            "browse": "Browse",
+            "passwordLabel": "Vault Password",
+            "passwordPlaceholder": "Enter this vault's password",
+            "passwordDesc": "The password used when this vault was created. On this computer, you only need to enter it once — after that, it unlocks automatically.",
+            "submit": "Import Vault",
+            "importing": "Importing..."
+        },
+        "context": {
+            "rename": "Rename",
+            "remove": "Remove from list"
+        },
+        "rename": {
+            "title": "Rename Vault",
+            "label": "New Name",
+            "placeholder": "Enter new vault name",
+            "submit": "Rename"
+        },
+        "remove": {
+            "confirm": "Remove \"{{name}}\" from the list? The vault files will not be deleted."
+        },
+        "notifications": {
+            "created": "Vault \"{{name}}\" created",
+            "imported": "Vault \"{{name}}\" imported",
+            "switched": "Switched to vault \"{{name}}\"",
+            "renamed": "Vault renamed to \"{{name}}\"",
+            "removed": "Vault \"{{name}}\" removed from list",
+            "failedToCreate": "Failed to create vault",
+            "failedToImport": "Failed to import vault",
+            "failedToSwitch": "Failed to switch vault",
+            "failedToRename": "Failed to rename vault",
+            "failedToRemove": "Failed to remove vault",
+            "passwordMismatch": "Passwords do not match",
+            "nameRequired": "Please enter a vault name",
+            "pathRequired": "Please select a location",
+            "passwordRequired": "Please enter the vault password",
+            "offlineVault": "Cannot access offline vault"
+        }
+    },
     "setup": {
         "title": "LocalKeys",
         "subtitle": "Secure Credential Management",

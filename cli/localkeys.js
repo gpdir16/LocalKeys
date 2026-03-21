@@ -7,8 +7,25 @@ const os = require("os");
 const http = require("http");
 
 // CLI 인자 파싱
-const args = process.argv.slice(2);
+const rawArgs = process.argv.slice(2);
+
+// --vault 옵션 추출
+let vaultName = null;
+const args = rawArgs.filter((arg) => {
+    const match = arg.match(/^--vault=(.+)$/);
+    if (match) {
+        vaultName = match[1];
+        return false;
+    }
+    return true;
+});
+
 const command = args[0];
+
+// vaultName이 지정된 경우 data에 추가하는 헬퍼
+function withVault(data) {
+    return vaultName ? { ...data, vaultName } : data;
+}
 
 // LocalKeys 데이터 디렉토리
 const LOCALKEYS_DIR = path.join(os.homedir(), ".localkeys");
@@ -20,20 +37,27 @@ function showHelp() {
 LocalKeys
 
 Usage:
-  localkeys <command> [options]
+  localkeys [--vault=<name>] <command> [options]
 
 Commands:
   run --project=<name> <command>    Run command with environment variables
   get <project> <key>               Get a secret value
   set <project> <key> <value>       Set a secret value
   list                              List all projects
+  vaults                            List all vaults
   help                              Show this help message
+
+Options:
+  --vault=<name>                    Specify vault (default: System)
 
 Examples:
   localkeys run --project=myapp -- npm start
   localkeys get myapp API_KEY
   localkeys set myapp API_KEY "sk-1234567890"
   localkeys list
+  localkeys --vault="Work" list
+  localkeys --vault="Work" get api API_KEY
+  localkeys vaults
 `);
 }
 
@@ -52,9 +76,7 @@ function getServerInfo() {
             return info;
         } catch (error) {
             // 프로세스가 존재하지 않으면 서버 정보 파일 삭제
-            if (fs.existsSync(SERVER_INFO_PATH)) {
-                fs.unlinkSync(SERVER_INFO_PATH);
-            }
+            try { fs.unlinkSync(SERVER_INFO_PATH); } catch {}
             return null;
         }
     } catch (error) {
@@ -156,9 +178,10 @@ async function handleRun() {
     }
 
     try {
-        console.log(`Requesting approval for secrets from project "${projectName}"...`);
+        const vaultLabel = vaultName ? ` (vault: ${vaultName})` : "";
+        console.log(`Requesting approval for secrets from project "${projectName}"${vaultLabel}...`);
 
-        const response = await sendRequest("getAllSecrets", { projectName });
+        const response = await sendRequest("getAllSecrets", withVault({ projectName }));
 
         if (!response.success) {
             console.error(`Error: ${response.error}`);
@@ -218,7 +241,7 @@ async function handleGet() {
     const [projectName, key] = args.slice(1);
 
     try {
-        const response = await sendRequest("getSecret", { projectName, key });
+        const response = await sendRequest("getSecret", withVault({ projectName, key }));
 
         if (response.success) {
             console.log(response.data);
@@ -242,7 +265,7 @@ async function handleSet() {
     const [projectName, key, value] = args.slice(1);
 
     try {
-        const response = await sendRequest("setSecret", { projectName, key, value });
+        const response = await sendRequest("setSecret", withVault({ projectName, key, value }));
 
         if (response.success) {
             console.log(`Secret "${key}" set successfully in project "${projectName}"`);
@@ -256,10 +279,36 @@ async function handleSet() {
     }
 }
 
+// vaults 명령어 처리
+async function handleVaults() {
+    try {
+        const response = await sendRequest("listVaults", {});
+
+        if (response.success) {
+            const vaults = response.data;
+            if (vaults.length === 0) {
+                console.log("No vaults found");
+            } else {
+                console.log("Vaults:");
+                vaults.forEach((vault) => {
+                    const offlineMarker = vault.status === "offline" ? " (offline)" : "";
+                    console.log(`  ${vault.name}${offlineMarker} — ${vault.path}`);
+                });
+            }
+        } else {
+            console.error(`Error: ${response.error}`);
+            process.exit(1);
+        }
+    } catch (error) {
+        console.error(`Error: ${error.message}`);
+        process.exit(1);
+    }
+}
+
 // list 명령어 처리
 async function handleList() {
     try {
-        const response = await sendRequest("listProjects");
+        const response = await sendRequest("listProjects", withVault({}));
 
         if (response.success) {
             const projects = response.data;
@@ -311,6 +360,9 @@ async function main() {
             break;
         case "list":
             await handleList();
+            break;
+        case "vaults":
+            await handleVaults();
             break;
         case "help":
         case "--help":

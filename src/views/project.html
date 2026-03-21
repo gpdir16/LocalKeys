@@ -969,6 +969,15 @@
 
                     // 현재 드롭다운 토글
                     dropdown.classList.toggle("hidden");
+
+                    // 오른쪽 공간 부족 시 왼쪽으로 위치 조정
+                    if (!dropdown.classList.contains("hidden")) {
+                        dropdown.classList.remove("dropdown-menu-left");
+                        const rect = dropdown.getBoundingClientRect();
+                        if (rect.right > window.innerWidth) {
+                            dropdown.classList.add("dropdown-menu-left");
+                        }
+                    }
                 }
 
                 // 시크릿 히스토리 보기

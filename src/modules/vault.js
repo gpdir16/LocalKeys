@@ -63,6 +63,21 @@ class Vault {
             }
         } catch (error) {}
 
+        const saltHex = fs.readFileSync(this.saltPath, "utf8");
+        const salt = Buffer.from(saltHex, "hex");
+        const key = CryptoUtil.deriveKey(password, salt);
+
+        this._loadVaultData(key, "Invalid password");
+    }
+
+    async unlockWithKey(key) {
+        if (!this.exists()) {
+            throw new Error("Vault does not exist");
+        }
+        this._loadVaultData(key, "Invalid key");
+    }
+
+    _loadVaultData(key, errorMessage) {
         try {
             const stats = fs.statSync(this.vaultPath);
             const mode = stats.mode & 0o777;
@@ -71,10 +86,7 @@ class Vault {
             }
         } catch (error) {}
 
-        const saltHex = fs.readFileSync(this.saltPath, "utf8");
-        const salt = Buffer.from(saltHex, "hex");
-
-        this.key = CryptoUtil.deriveKey(password, salt);
+        this.key = key;
 
         try {
             const encryptedData = fs.readFileSync(this.vaultPath);
@@ -84,7 +96,7 @@ class Vault {
         } catch (error) {
             this.key = null;
             this.data = null;
-            throw new Error("Invalid password");
+            throw new Error(errorMessage);
         }
     }
 

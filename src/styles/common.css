@@ -45,7 +45,7 @@ img {
 :root {
     --bg-primary: #131313;
     --bg-secondary: #212121;
-    --bg-tertiary: #2a2a2a;
+    --bg-tertiary: #303030;
     --text-primary: #e0e0e0;
     --text-secondary: #a0a0a0;
     --accent: #4a9eff;
@@ -909,7 +909,7 @@ body.window-blurred .project-card.active {
     color: var(--text-secondary);
 }
 
-/* 드롭다운 메뉴 스타일 (dashboard, project 공용) */
+/* 드롭다운 (공용) */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -924,16 +924,20 @@ body.window-blurred .project-card.active {
 
 .dropdown-menu {
     position: absolute;
-    right: 0;
+    left: 0;
     top: 100%;
-    background-color: rgba(33, 33, 33, 0.1);
-    backdrop-filter: blur(20px);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     z-index: 1000;
-    min-width: 150px;
-    overflow: hidden;
+    width: max-content;
+    min-width: 100px;
+}
+
+.dropdown-menu.dropdown-menu-left {
+    left: auto;
+    right: 0;
 }
 
 .dropdown-menu.hidden {
@@ -941,15 +945,18 @@ body.window-blurred .project-card.active {
 }
 
 .dropdown-item {
-    display: block;
-    width: 100%;
-    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    margin: 4px;
     border: none;
+    border-radius: 6px;
     background: none;
     color: var(--text-primary);
     text-align: left;
-    cursor: default;
     font-size: 13px;
+    width: calc(100% - 8px);
 }
 
 .dropdown-item:hover {
@@ -962,6 +969,88 @@ body.window-blurred .project-card.active {
 
 .dropdown-item-danger:hover {
     background-color: rgba(244, 67, 54, 0.1);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--border);
+    margin: 4px 0;
+}
+
+.dropdown-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: default;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dropdown-btn:hover {
+    color: var(--text-primary);
+}
+
+.dropdown-btn #vault-dropdown-name {
+    border-bottom: 1px dashed var(--text-secondary);
+    line-height: 1.2;
+}
+
+.dropdown-btn:hover #vault-dropdown-name {
+    border-bottom-color: var(--text-primary);
+}
+
+.dropdown-item.active {
+    background-color: rgba(74, 158, 255, 0.1);
+}
+
+.dropdown-item.offline {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.dropdown-item-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.dropdown-item-icon {
+    flex-shrink: 0;
+    color: var(--text-secondary);
+}
+
+.dropdown-item-icon.status-offline {
+    color: var(--warning);
+}
+
+.dropdown-item-name {
+    font-size: 13px;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dropdown-item-name.active {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.dropdown-item-context-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    opacity: 0;
+}
+
+.dropdown-item:hover .dropdown-item-context-btn {
+    opacity: 1;
 }
 
 /* 필터 선택 (logs, settings 공용) */
@@ -979,4 +1068,56 @@ body.window-blurred .project-card.active {
 .filter-select:focus {
     outline: none;
     border-color: var(--accent);
+}
+
+/* 인라인 입력 + 버튼 행 */
+.input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.input-row input {
+    flex: 1;
+}
+
+.input-row button {
+    flex-shrink: 0;
+}
+
+/* 입력 필드 설명 텍스트 */
+.input-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* 페이지 제목 그룹 (아이콘 + 텍스트) */
+.page-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 모달 변형 */
+.modal-sm {
+    max-width: 360px;
+    width: 360px;
+}
+
+.modal-footer-column {
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-footer-column .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.modal-error {
+    color: var(--error);
+    font-size: 12px;
+    margin-top: 4px;
+    display: none;
 }

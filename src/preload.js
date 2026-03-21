@@ -9,6 +9,18 @@ const api = {
         lock: () => ipcRenderer.invoke("vault:lock"),
         save: () => ipcRenderer.invoke("vault:save"),
         exists: () => ipcRenderer.invoke("vault:exists"),
+        // Multi-vault
+        list: () => ipcRenderer.invoke("vaults:list"),
+        switch: (vaultId) => ipcRenderer.invoke("vault:switch", vaultId),
+        create: (name, folderPath, password) => ipcRenderer.invoke("vault:create", name, folderPath, password),
+        import: (name, lkvPath, password) => ipcRenderer.invoke("vault:import", name, lkvPath, password),
+        rename: (vaultId, newName) => ipcRenderer.invoke("vault:rename", vaultId, newName),
+        remove: (vaultId) => ipcRenderer.invoke("vault:remove", vaultId),
+    },
+
+    // 다이얼로그
+    dialog: {
+        selectFolder: () => ipcRenderer.invoke("dialog:selectFolder"),
     },
 
     // 프로젝트 관리

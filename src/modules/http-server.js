@@ -5,10 +5,12 @@ const path = require("path");
 const os = require("os");
 
 const SERVER_INFO_PATH = path.join(os.homedir(), ".localkeys", "server-info.json");
+const VAULT_LOCKED = { success: false, error: "Vault is locked" };
+const SYSTEM_VAULT_ID = "system";
 
 class HttpServer {
-    constructor(vault, logger) {
-        this.vault = vault;
+    constructor(vaultManager, logger) {
+        this.vaultManager = vaultManager;
         this.logger = logger;
         this.server = null;
         this.port = 0;
@@ -185,25 +187,36 @@ class HttpServer {
         });
     }
 
+    async _getVault(vaultName) {
+        if (!this.vaultManager) return null;
+        // --vault 없이 호출 시 항상 System 금고 사용
+        const vault = vaultName
+            ? await this.vaultManager.getVaultByName(vaultName)
+            : this.vaultManager.vaults.get(SYSTEM_VAULT_ID) || null;
+        if (!vault || vault.isLocked) return null;
+        return vault;
+    }
+
     async handleAction(action, data) {
         try {
             let result;
             const safeData = data && typeof data === "object" && !Array.isArray(data) ? data : {};
+            const vault = await this._getVault(safeData.vaultName || null);
 
             switch (action) {
                 case "listProjects":
-                    if (!this.isUnlocked) {
-                        result = { success: false, error: "Vault is locked" };
+                    if (!this.isUnlocked || !vault) {
+                        result = VAULT_LOCKED;
                     } else {
-                        result = { success: true, data: this.vault.getProjects() };
+                        result = { success: true, data: vault.getProjects() };
                     }
                     break;
 
                 case "listSecretKeys":
-                    if (!this.isUnlocked) {
-                        result = { success: false, error: "Vault is locked" };
+                    if (!this.isUnlocked || !vault) {
+                        result = VAULT_LOCKED;
                     } else {
-                        const secrets = this.vault.getSecrets(safeData.projectName);
+                        const secrets = vault.getSecrets(safeData.projectName);
                         const keys = Object.keys(secrets);
                         if (keys.length === 0) {
                             result = { success: true, data: [] };
@@ -220,10 +233,10 @@ class HttpServer {
                     break;
 
                 case "getAllSecrets":
-                    if (!this.isUnlocked) {
-                        result = { success: false, error: "Vault is locked" };
+                    if (!this.isUnlocked || !vault) {
+                        result = VAULT_LOCKED;
                     } else {
-                        const secrets = this.vault.getSecrets(safeData.projectName);
+                        const secrets = vault.getSecrets(safeData.projectName);
                         const keys = Object.keys(secrets);
 
                         if (keys.length === 0) {
@@ -242,8 +255,8 @@ class HttpServer {
                     break;
 
                 case "getBatchSecrets":
-                    if (!this.isUnlocked) {
-                        result = { success: false, error: "Vault is locked" };
+                    if (!this.isUnlocked || !vault) {
+                        result = VAULT_LOCKED;
                     } else {
                         const keys = Array.isArray(safeData.keys) ? safeData.keys.filter((k) => typeof k === "string") : [];
                         const approvalResult = await this.requestBatchApproval(safeData.projectName, keys, "read");
@@ -252,7 +265,7 @@ class HttpServer {
                             const secrets = Object.create(null);
                             for (const key of keys) {
                                 try {
-                                    secrets[key] = this.vault.getSecret(safeData.projectName, key);
+                                    secrets[key] = vault.getSecret(safeData.projectName, key);
                                 } catch (error) {}
                             }
                             result = { success: true, data: secrets };
@@ -264,13 +277,13 @@ class HttpServer {
                     break;
 
                 case "getSecret":
-                    if (!this.isUnlocked) {
-                        result = { success: false, error: "Vault is locked" };
+                    if (!this.isUnlocked || !vault) {
+                        result = VAULT_LOCKED;
                     } else {
                         const approvalResult = await this.requestBatchApproval(safeData.projectName, [safeData.key], "read");
 
                         if (approvalResult.approved) {
-                            const value = this.vault.getSecret(safeData.projectName, safeData.key);
+                            const value = vault.getSecret(safeData.projectName, safeData.key);
                             result = { success: true, data: value };
                         } else {
                             const reason = approvalResult.reason || "User denied";
@@ -280,17 +293,25 @@ class HttpServer {
                     break;
 
                 case "setSecret":
-                    if (!this.isUnlocked) {
-                        result = { success: false, error: "Vault is locked" };
+                    if (!this.isUnlocked || !vault) {
+                        result = VAULT_LOCKED;
                     } else {
                         const approvalResult = await this.requestBatchApproval(safeData.projectName, [safeData.key], "write");
                         if (approvalResult.approved) {
-                            this.vault.setSecret(safeData.projectName, safeData.key, safeData.value);
+                            vault.setSecret(safeData.projectName, safeData.key, safeData.value);
                             result = { success: true };
                         } else {
                             const reason = approvalResult.reason || "User denied";
                             result = { success: false, error: `Access denied: ${reason}` };
                         }
+                    }
+                    break;
+
+                case "listVaults":
+                    if (!this.isUnlocked) {
+                        result = VAULT_LOCKED;
+                    } else {
+                        result = { success: true, data: this.vaultManager ? this.vaultManager.getVaultList() : [] };
                     }
                     break;
 

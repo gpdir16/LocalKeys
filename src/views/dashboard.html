@@ -104,7 +104,25 @@
     <body>
         <div class="container">
             <div class="page-header dashboard-header">
-                <h1 class="page-title" id="page-title">Projects</h1>
+                <div class="page-title-group">
+                    <h1 class="page-title" id="page-title">Projects</h1>
+                    <!-- 금고 드롭다운 -->
+                    <div class="dropdown" id="vault-dropdown">
+                        <button class="dropdown-btn" id="vault-dropdown-btn">
+                            <span id="vault-dropdown-name">System</span>
+                        </button>
+                        <div class="dropdown-menu hidden" id="vault-dropdown-menu">
+                            <div class="dropdown-list" id="vault-dropdown-list"></div>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item" id="vault-new-btn">
+                                <span id="vault-new-label">New Vault</span>
+                            </button>
+                            <button class="dropdown-item" id="vault-import-btn">
+                                <span id="vault-import-label">Import Vault</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 <div class="header-actions">
                     <button class="btn" id="add-project-btn">Add Project</button>
                     <button class="btn btn-secondary" id="logs-btn">Logs</button>
@@ -154,7 +172,94 @@
             </div>
         </div>
 
-        <script src="../modules/i18n-helper.js"></script>
+        <!-- 금고 생성 모달 -->
+        <div id="vault-create-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="vault-create-title">Create New Vault</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label id="vault-create-name-label">Vault Name</label>
+                        <input type="text" id="vault-create-name" placeholder="Enter vault name" autocomplete="off" />
+                    </div>
+                    <div class="input-group">
+                        <label id="vault-create-path-label">Save Location</label>
+                        <div class="input-row">
+                            <input type="text" id="vault-create-path" placeholder="Select a folder" autocomplete="off" readonly />
+                            <button class="btn btn-secondary" id="vault-create-browse">Browse</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label id="vault-create-pw-label">Master Password</label>
+                        <input type="password" id="vault-create-password" placeholder="Enter a strong password" autocomplete="new-password" />
+                    </div>
+                    <div class="input-group">
+                        <label id="vault-create-confirm-label">Confirm Password</label>
+                        <input type="password" id="vault-create-confirm" placeholder="Re-enter your password" autocomplete="new-password" />
+                    </div>
+                    <p id="vault-create-error" class="modal-error"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="vault-create-cancel">Cancel</button>
+                    <button class="btn" id="vault-create-submit">Create Vault</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 금고 불러오기 모달 -->
+        <div id="vault-import-modal" class="modal-overlay hidden">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="vault-import-title">Import Existing Vault</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label id="vault-import-path-label">Vault Location (lkv folder)</label>
+                        <div class="input-row">
+                            <input type="text" id="vault-import-path" placeholder="Select lkv folder" autocomplete="off" readonly />
+                            <button class="btn btn-secondary" id="vault-import-browse">Browse</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label id="vault-import-name-label">Vault Name</label>
+                        <input type="text" id="vault-import-name" placeholder="Enter vault name" autocomplete="off" />
+                    </div>
+                    <div class="input-group">
+                        <label id="vault-import-pw-label">Vault Password</label>
+                        <input type="password" id="vault-import-password" placeholder="Enter this vault's password" autocomplete="current-password" />
+                        <p id="vault-import-pw-desc" class="input-desc"></p>
+                    </div>
+                    <p id="vault-import-error" class="modal-error"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="vault-import-cancel">Cancel</button>
+                    <button class="btn" id="vault-import-submit">Import Vault</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 금고 이름 변경 모달 -->
+        <div id="vault-rename-modal" class="modal-overlay hidden">
+            <div class="modal modal-sm">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="vault-rename-title">Rename Vault</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label id="vault-rename-label">New Name</label>
+                        <input type="text" id="vault-rename-input" placeholder="Enter new vault name" autocomplete="off" />
+                    </div>
+                    <p id="vault-rename-error" class="modal-error"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="vault-rename-cancel">Cancel</button>
+                    <button class="btn" id="vault-rename-submit">Rename</button>
+                </div>
+            </div>
+        </div>
+
+<script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
 
         <script>
@@ -175,6 +280,36 @@
                 document.getElementById("project-name").placeholder = i18n.t("dashboard.addProjectModal.placeholder");
                 document.getElementById("cancel-add-project").textContent = i18n.t("common.cancel");
                 document.getElementById("confirm-add-project").textContent = i18n.t("dashboard.addProjectModal.add");
+                document.getElementById("vault-new-label").textContent = i18n.t("vault.selector.newVault");
+                document.getElementById("vault-import-label").textContent = i18n.t("vault.selector.importVault");
+                document.getElementById("vault-create-title").textContent = i18n.t("vault.create.title");
+                document.getElementById("vault-create-name-label").textContent = i18n.t("vault.create.nameLabel");
+                document.getElementById("vault-create-name").placeholder = i18n.t("vault.create.namePlaceholder");
+                document.getElementById("vault-create-path-label").textContent = i18n.t("vault.create.pathLabel");
+                document.getElementById("vault-create-path").placeholder = i18n.t("vault.create.pathPlaceholder");
+                document.getElementById("vault-create-browse").textContent = i18n.t("vault.create.browse");
+                document.getElementById("vault-create-pw-label").textContent = i18n.t("vault.create.passwordLabel");
+                document.getElementById("vault-create-password").placeholder = i18n.t("vault.create.passwordPlaceholder");
+                document.getElementById("vault-create-confirm-label").textContent = i18n.t("vault.create.confirmLabel");
+                document.getElementById("vault-create-confirm").placeholder = i18n.t("vault.create.confirmPlaceholder");
+                document.getElementById("vault-create-cancel").textContent = i18n.t("common.cancel");
+                document.getElementById("vault-create-submit").textContent = i18n.t("vault.create.submit");
+                document.getElementById("vault-import-title").textContent = i18n.t("vault.import.title");
+                document.getElementById("vault-import-path-label").textContent = i18n.t("vault.import.pathLabel");
+                document.getElementById("vault-import-path").placeholder = i18n.t("vault.import.pathPlaceholder");
+                document.getElementById("vault-import-browse").textContent = i18n.t("vault.import.browse");
+                document.getElementById("vault-import-name-label").textContent = i18n.t("vault.import.nameLabel");
+                document.getElementById("vault-import-name").placeholder = i18n.t("vault.import.namePlaceholder");
+                document.getElementById("vault-import-pw-label").textContent = i18n.t("vault.import.passwordLabel");
+                document.getElementById("vault-import-password").placeholder = i18n.t("vault.import.passwordPlaceholder");
+                document.getElementById("vault-import-pw-desc").textContent = i18n.t("vault.import.passwordDesc");
+                document.getElementById("vault-import-cancel").textContent = i18n.t("common.cancel");
+                document.getElementById("vault-import-submit").textContent = i18n.t("vault.import.submit");
+                document.getElementById("vault-rename-title").textContent = i18n.t("vault.rename.title");
+                document.getElementById("vault-rename-label").textContent = i18n.t("vault.rename.label");
+                document.getElementById("vault-rename-input").placeholder = i18n.t("vault.rename.placeholder");
+                document.getElementById("vault-rename-cancel").textContent = i18n.t("common.cancel");
+                document.getElementById("vault-rename-submit").textContent = i18n.t("vault.rename.submit");
 
                 const projectsContainer = document.getElementById("projects-container");
 
@@ -546,33 +681,13 @@
                 // 프로젝트 추가 모달 표시
 
                 function showAddProjectModal() {
-                    addProjectModal.classList.remove("hidden");
-
                     projectNameInput.value = "";
-
-                    // 다음 프레임에서 애니메이션 시작
-
-                    requestAnimationFrame(() => {
-                        addProjectModal.classList.add("show");
-                    });
-
+                    showModal("add-project-modal");
                     projectNameInput.focus();
                 }
 
-                // 프로젝트 추가 모달 숨기기
-
                 function hideAddProjectModal() {
-                    addProjectModal.classList.remove("show");
-
-                    addProjectModal.classList.add("closing");
-
-                    // 애니메이션 완료 후 모달 완전히 숨기기
-
-                    setTimeout(() => {
-                        addProjectModal.classList.add("hidden");
-
-                        addProjectModal.classList.remove("closing");
-                    }, 250);
+                    hideModal("add-project-modal");
                 }
 
                 // 프로젝트 추가
@@ -724,7 +839,6 @@
                     const allDropdowns = document.querySelectorAll(".dropdown-menu");
 
                     // 다른 드롭다운 모두 닫기
-
                     allDropdowns.forEach((d) => {
                         if (d !== dropdown) {
                             d.classList.add("hidden");
@@ -732,8 +846,16 @@
                     });
 
                     // 현재 드롭다운 토글
-
                     dropdown.classList.toggle("hidden");
+
+                    // 오른쪽 공간 부족 시 왼쪽으로 위치 조정
+                    if (!dropdown.classList.contains("hidden")) {
+                        dropdown.classList.remove("dropdown-menu-left");
+                        const rect = dropdown.getBoundingClientRect();
+                        if (rect.right > window.innerWidth) {
+                            dropdown.classList.add("dropdown-menu-left");
+                        }
+                    }
                 }
 
                 // 외부 클릭 시 드롭다운 닫기
@@ -835,6 +957,341 @@
                         handleCliAction("uninstall");
                     }
                 };
+
+                // ===== 금고 선택기 =====
+
+                // 모달 헬퍼
+                function showModal(id) {
+                    const el = document.getElementById(id);
+                    el.classList.remove("hidden");
+                    requestAnimationFrame(() => el.classList.add("show"));
+                }
+                function hideModal(id) {
+                    const el = document.getElementById(id);
+                    el.classList.remove("show");
+                    el.classList.add("closing");
+                    setTimeout(() => {
+                        el.classList.add("hidden");
+                        el.classList.remove("closing");
+                    }, 250);
+                }
+
+                // 금고 목록 드롭다운 렌더링
+                async function renderVaultDropdown() {
+                    const result = await window.localkeys.vault.list();
+                    if (!result.success) return null;
+
+                    const vaults = result.data;
+                    const list = document.getElementById("vault-dropdown-list");
+                    list.innerHTML = "";
+
+                    const active = vaults.find(v => v.isActive) || vaults.find(v => v.id === "system") || vaults[0];
+                    if (active) {
+                        document.getElementById("vault-dropdown-name").textContent = active.name;
+                    }
+
+                    vaults.forEach(vault => {
+                        const item = document.createElement("button");
+                        item.className = "dropdown-item" + (vault.isActive ? " active" : "") + (vault.status === "offline" ? " offline" : "");
+
+                        const left = document.createElement("div");
+                        left.className = "dropdown-item-left";
+
+                        if (vault.status === "offline") {
+                            const icon = document.createElement("span");
+                            icon.className = "lk-icon dropdown-item-icon lk-icon-circle-alert status-offline";
+                            left.appendChild(icon);
+                        }
+
+                        const name = document.createElement("span");
+                        name.className = "dropdown-item-name" + (vault.isActive ? " active" : "");
+                        name.textContent = vault.name;
+                        left.appendChild(name);
+
+                        item.appendChild(left);
+
+                        // 컨텍스트 버튼 (System 금고 제외)
+                        if (!vault.isSystem) {
+                            const ctxBtn = document.createElement("button");
+                            ctxBtn.className = "dropdown-item-context-btn";
+                            const ctxIcon = document.createElement("span");
+                            ctxIcon.className = "lk-icon lk-icon-sm lk-icon-ellipsis";
+                            ctxBtn.appendChild(ctxIcon);
+                            ctxBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                showVaultContextMenu(vault, ctxBtn);
+                            };
+                            item.appendChild(ctxBtn);
+                        }
+
+                        if (vault.status !== "offline") {
+                            item.onclick = () => handleVaultSelect(vault);
+                        }
+
+                        list.appendChild(item);
+                    });
+
+                    return vaults;
+                }
+
+                // 금고 선택 처리 (새 구조: 모두 잠금 해제 상태이므로 비밀번호 불필요)
+                async function handleVaultSelect(vault) {
+                    closeVaultDropdown();
+                    if (vault.isActive) return;
+
+                    if (vault.status === "offline") {
+                        notificationManager.error(i18n.t("vault.notifications.offlineVault"));
+                        return;
+                    }
+
+                    await doSwitchVault(vault.id);
+                }
+
+                async function doSwitchVault(vaultId) {
+                    try {
+                        const result = await window.localkeys.vault.switch(vaultId);
+                        if (result.success) {
+                            const vaultList = await renderVaultDropdown();
+                            await loadProjects();
+                            const switched = vaultList?.find(v => v.id === vaultId);
+                            if (switched) notificationManager.success(i18n.t("vault.notifications.switched", { name: switched.name }));
+                        } else {
+                            notificationManager.error(result.error || i18n.t("vault.notifications.failedToSwitch"));
+                        }
+                    } catch (error) {
+                        notificationManager.error(i18n.t("vault.notifications.failedToSwitch"));
+                    }
+                }
+
+                // 금고 드롭다운 토글
+                const vaultDropdownBtn = document.getElementById("vault-dropdown-btn");
+                const vaultDropdownMenu = document.getElementById("vault-dropdown-menu");
+
+                vaultDropdownBtn.addEventListener("click", async (e) => {
+                    e.stopPropagation();
+                    const isHidden = vaultDropdownMenu.classList.contains("hidden");
+                    closeVaultDropdown();
+                    if (isHidden) {
+                        await renderVaultDropdown();
+                        vaultDropdownMenu.classList.remove("hidden");
+                    }
+                });
+
+                function closeVaultDropdown() {
+                    vaultDropdownMenu.classList.add("hidden");
+                }
+
+                document.addEventListener("click", (e) => {
+                    if (!e.target.closest("#vault-dropdown")) {
+                        closeVaultDropdown();
+                    }
+                });
+
+                // 금고 컨텍스트 메뉴
+                let contextMenuEl = null;
+                function showVaultContextMenu(vault, anchorEl) {
+                    if (contextMenuEl) contextMenuEl.remove();
+
+                    const menu = document.createElement("div");
+                    menu.className = "dropdown-menu";
+                    menu.style.cssText = "position:fixed;z-index:2000;";
+
+                    const renameBtn = document.createElement("button");
+                    renameBtn.className = "dropdown-item";
+                    renameBtn.textContent = i18n.t("vault.context.rename");
+                    renameBtn.onclick = () => {
+                        menu.remove();
+                        showVaultRenameModal(vault);
+                    };
+
+                    const removeBtn = document.createElement("button");
+                    removeBtn.className = "dropdown-item";
+                    removeBtn.textContent = i18n.t("vault.context.remove");
+                    removeBtn.onclick = () => {
+                        menu.remove();
+                        handleVaultRemove(vault);
+                    };
+
+                    menu.appendChild(renameBtn);
+                    menu.appendChild(removeBtn);
+                    menu.style.minWidth = "140px";
+                    document.body.appendChild(menu);
+                    contextMenuEl = menu;
+
+                    const rect = anchorEl.getBoundingClientRect();
+                    menu.style.top = (rect.bottom + 4) + "px";
+                    // 우측 정렬: 앵커 버튼 오른쪽 끝에 맞춤
+                    menu.style.right = (window.innerWidth - rect.right) + "px";
+                    menu.style.left = "auto";
+
+                    setTimeout(() => {
+                        document.addEventListener("click", () => menu.remove(), { once: true });
+                    }, 0);
+                }
+
+                // 새 금고 생성
+                document.getElementById("vault-new-btn").addEventListener("click", () => {
+                    closeVaultDropdown();
+                    document.getElementById("vault-create-name").value = "";
+                    document.getElementById("vault-create-path").value = "";
+                    document.getElementById("vault-create-password").value = "";
+                    document.getElementById("vault-create-confirm").value = "";
+                    document.getElementById("vault-create-error").style.display = "none";
+                    showModal("vault-create-modal");
+                    setTimeout(() => document.getElementById("vault-create-name").focus(), 100);
+                });
+
+                document.getElementById("vault-create-browse").addEventListener("click", async () => {
+                    const result = await window.localkeys.dialog.selectFolder();
+                    if (result.success && result.data) {
+                        document.getElementById("vault-create-path").value = result.data;
+                    }
+                });
+
+                document.getElementById("vault-create-cancel").addEventListener("click", () => hideModal("vault-create-modal"));
+
+                document.getElementById("vault-create-submit").addEventListener("click", async () => {
+                    const name = document.getElementById("vault-create-name").value.trim();
+                    const folderPath = document.getElementById("vault-create-path").value.trim();
+                    const password = document.getElementById("vault-create-password").value;
+                    const confirm = document.getElementById("vault-create-confirm").value;
+                    const errorEl = document.getElementById("vault-create-error");
+
+                    if (!name) { errorEl.textContent = i18n.t("vault.notifications.nameRequired"); errorEl.style.display = ""; return; }
+                    if (!folderPath) { errorEl.textContent = i18n.t("vault.notifications.pathRequired"); errorEl.style.display = ""; return; }
+                    if (password !== confirm) { errorEl.textContent = i18n.t("vault.notifications.passwordMismatch"); errorEl.style.display = ""; return; }
+                    errorEl.style.display = "none";
+
+                    const btn = document.getElementById("vault-create-submit");
+                    btn.textContent = i18n.t("vault.create.creating");
+                    btn.disabled = true;
+
+                    const result = await window.localkeys.vault.create(name, folderPath, password);
+                    btn.textContent = i18n.t("vault.create.submit");
+                    btn.disabled = false;
+
+                    if (result.success) {
+                        hideModal("vault-create-modal");
+                        await renderVaultDropdown();
+                        notificationManager.success(i18n.t("vault.notifications.created", { name }));
+                    } else {
+                        errorEl.textContent = result.error || i18n.t("vault.notifications.failedToCreate");
+                        errorEl.style.display = "";
+                    }
+                });
+
+                // 기존 금고 불러오기
+                document.getElementById("vault-import-btn").addEventListener("click", () => {
+                    closeVaultDropdown();
+                    document.getElementById("vault-import-path").value = "";
+                    document.getElementById("vault-import-name").value = "";
+                    document.getElementById("vault-import-password").value = "";
+                    document.getElementById("vault-import-error").style.display = "none";
+                    showModal("vault-import-modal");
+                });
+
+                document.getElementById("vault-import-browse").addEventListener("click", async () => {
+                    const result = await window.localkeys.dialog.selectFolder();
+                    if (result.success && result.data) {
+                        document.getElementById("vault-import-path").value = result.data;
+                        // 이름 자동 완성 (폴더명 사용)
+                        const nameInput = document.getElementById("vault-import-name");
+                        if (!nameInput.value) {
+                            const parts = result.data.split(/[\/\\]/);
+                            const folderName = parts[parts.length - 1];
+                            if (folderName && folderName !== "lkv") {
+                                nameInput.value = folderName;
+                            }
+                        }
+                    }
+                });
+
+                document.getElementById("vault-import-cancel").addEventListener("click", () => hideModal("vault-import-modal"));
+
+                document.getElementById("vault-import-submit").addEventListener("click", async () => {
+                    const lkvPath = document.getElementById("vault-import-path").value.trim();
+                    const name = document.getElementById("vault-import-name").value.trim();
+                    const password = document.getElementById("vault-import-password").value;
+                    const errorEl = document.getElementById("vault-import-error");
+
+                    if (!lkvPath) { errorEl.textContent = i18n.t("vault.notifications.pathRequired"); errorEl.style.display = ""; return; }
+                    if (!name) { errorEl.textContent = i18n.t("vault.notifications.nameRequired"); errorEl.style.display = ""; return; }
+                    if (!password) { errorEl.textContent = i18n.t("vault.notifications.passwordRequired"); errorEl.style.display = ""; return; }
+                    errorEl.style.display = "none";
+
+                    const btn = document.getElementById("vault-import-submit");
+                    btn.textContent = i18n.t("vault.import.importing");
+                    btn.disabled = true;
+
+                    const result = await window.localkeys.vault.import(name, lkvPath, password);
+                    btn.textContent = i18n.t("vault.import.submit");
+                    btn.disabled = false;
+
+                    if (result.success) {
+                        hideModal("vault-import-modal");
+                        await renderVaultDropdown();
+                        notificationManager.success(i18n.t("vault.notifications.imported", { name }));
+                    } else {
+                        errorEl.textContent = result.error || i18n.t("vault.notifications.failedToImport");
+                        errorEl.style.display = "";
+                    }
+                });
+
+                // 금고 이름 변경
+                let renamingVaultId = null;
+                function showVaultRenameModal(vault) {
+                    renamingVaultId = vault.id;
+                    document.getElementById("vault-rename-input").value = vault.name;
+                    document.getElementById("vault-rename-error").style.display = "none";
+                    showModal("vault-rename-modal");
+                    setTimeout(() => document.getElementById("vault-rename-input").select(), 100);
+                }
+
+                document.getElementById("vault-rename-cancel").addEventListener("click", () => hideModal("vault-rename-modal"));
+
+                document.getElementById("vault-rename-submit").addEventListener("click", async () => {
+                    const newName = document.getElementById("vault-rename-input").value.trim();
+                    const errorEl = document.getElementById("vault-rename-error");
+                    if (!newName) { errorEl.textContent = i18n.t("vault.notifications.nameRequired"); errorEl.style.display = ""; return; }
+
+                    const result = await window.localkeys.vault.rename(renamingVaultId, newName);
+                    if (result.success) {
+                        hideModal("vault-rename-modal");
+                        await renderVaultDropdown();
+                        notificationManager.success(i18n.t("vault.notifications.renamed", { name: newName }));
+                    } else {
+                        errorEl.textContent = result.error || i18n.t("vault.notifications.failedToRename");
+                        errorEl.style.display = "";
+                    }
+                });
+
+                document.getElementById("vault-rename-input").addEventListener("keypress", (e) => {
+                    if (e.key === "Enter") document.getElementById("vault-rename-submit").click();
+                });
+
+                // 금고 제거
+                async function handleVaultRemove(vault) {
+                    if (!confirm(i18n.t("vault.remove.confirm", { name: vault.name }))) return;
+                    const result = await window.localkeys.vault.remove(vault.id);
+                    if (result.success) {
+                        await renderVaultDropdown();
+                        await loadProjects();
+                        notificationManager.success(i18n.t("vault.notifications.removed", { name: vault.name }));
+                    } else {
+                        notificationManager.error(result.error || i18n.t("vault.notifications.failedToRemove"));
+                    }
+                }
+
+                // 모달 외부 클릭으로 닫기 (vault 모달들)
+                ["vault-create-modal", "vault-import-modal", "vault-rename-modal"].forEach(id => {
+                    const overlay = document.getElementById(id);
+                    overlay.addEventListener("click", (e) => {
+                        if (e.target === overlay) hideModal(id);
+                    });
+                });
+
+                // 초기 금고 선택기 로드
+                renderVaultDropdown();
 
                 // 초기 로드
 

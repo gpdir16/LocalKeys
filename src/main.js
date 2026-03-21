@@ -7,14 +7,14 @@ const https = require("https");
 const { URL } = require("url");
 const windowStateKeeper = require("electron-window-state");
 
-const Vault = require("./modules/vault");
+const VaultManager = require("./modules/vault-manager");
 const Logger = require("./modules/logger");
 const HttpServer = require("./modules/http-server");
 const I18n = require("./modules/i18n");
 const License = require("./modules/license");
 
 let mainWindow = null;
-let vault = null;
+let vaultManager = null;
 let logger = null;
 let httpServer = null;
 let isUnlocked = false;
@@ -142,11 +142,21 @@ function saveSettings(settings) {
     }
 }
 
+// 활성 금고 헬퍼
+function getVault() {
+    return vaultManager ? vaultManager.getActiveVault() : null;
+}
+
+// 시스템 금고 헬퍼
+function getSystemVault() {
+    return vaultManager ? vaultManager.systemVault : null;
+}
+
 async function ensureHttpServerStarted() {
-    if (!vault || !logger) return;
+    if (!vaultManager || !logger) return;
 
     if (!httpServer) {
-        httpServer = new HttpServer(vault, logger);
+        httpServer = new HttpServer(vaultManager, logger);
         httpServer.setApprovalCallback(showApprovalDialog);
     }
 
@@ -525,14 +535,15 @@ function initializeApp() {
     // 로거 초기화
     logger = new Logger(path.join(LOCALKEYS_DIR, "logs.enc"));
 
-    // Vault 초기화
-    vault = new Vault(LOCALKEYS_DIR);
+    // VaultManager 초기화 (시스템 금고 인스턴스 생성만, vaults.enc는 잠금 해제 후 복호화)
+    vaultManager = new VaultManager(LOCALKEYS_DIR);
+    vaultManager.init();
 
     // License 초기화
     license = new License(LOCALKEYS_DIR);
 
     // HTTP 서버 초기화
-    httpServer = new HttpServer(vault, logger);
+    httpServer = new HttpServer(vaultManager, logger);
 
     // 승인 콜백 설정
     httpServer.setApprovalCallback(showApprovalDialog);
@@ -612,8 +623,8 @@ ELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliJsPath}" "$@"`;
 
 // Vault 잠금
 function lockVault() {
-    if (!vault) return;
-    if (!isUnlocked && vault.isLocked) return;
+    if (!vaultManager) return;
+    if (!isUnlocked) return;
 
     stopAutoLock();
     isUnlocked = false;
@@ -635,14 +646,9 @@ function lockVault() {
     }
 
     // Vault 잠금 (비동기)
-    if (!vault.isLocked) {
-        const lockPromise = vault.lock();
-        if (lockPromise && typeof lockPromise.catch === "function") {
-            lockPromise.catch((error) => {
-                console.error("Vault 잠금 실패:", error?.message || error);
-            });
-        }
-    }
+    vaultManager.lockAllVaults().catch((error) => {
+        console.error("Vault 잠금 실패:", error?.message || error);
+    });
 
     // Logger 암호화 키 제거 (잠금 후 로그는 저장되지 않음)
     if (logger) {
@@ -714,10 +720,10 @@ function createWindow() {
     if (!licenseCheck.valid) {
         // 라이선스가 없거나 유효하지 않으면 라이선스 화면 표시
         mainWindow.loadFile("src/views/license.html");
-    } else if (!vault.exists()) {
+    } else if (!getSystemVault()?.exists()) {
         // 라이선스는 있지만 Vault가 없으면 설정 화면
         mainWindow.loadFile("src/views/setup.html");
-    } else if (isUnlocked && !vault.isLocked) {
+    } else if (isUnlocked && !getSystemVault()?.isLocked) {
         // Vault가 이미 잠금 해제된 상태면 대시보드 표시
         mainWindow.loadFile("src/views/dashboard.html");
         logger.logLock("Vault already unlocked - showing dashboard");
@@ -762,14 +768,14 @@ function setupIpcHandlers() {
     // Vault 설정
     ipcMain.handle("vault:setup", async (event, password) => {
         try {
-            await vault.setup(password);
+            await vaultManager.setupSystemVault(password);
 
             // Vault 상태 동기화
-            isUnlocked = !vault.isLocked;
+            isUnlocked = true;
 
             // Logger 암호화 키 설정
-            if (logger && vault.key) {
-                logger.setEncryptionKey(vault.key);
+            if (logger && vaultManager.systemVault.key) {
+                logger.setEncryptionKey(vaultManager.systemVault.key);
             }
 
             // HTTP 서버 상태 업데이트
@@ -784,7 +790,7 @@ function setupIpcHandlers() {
 
     ipcMain.handle("vault:exists", () => {
         try {
-            return vault?.exists?.() === true;
+            return vaultManager?.systemVault?.exists?.() === true;
         } catch {
             return false;
         }
@@ -793,14 +799,14 @@ function setupIpcHandlers() {
     // Vault 잠금 해제
     ipcMain.handle("vault:unlock", async (event, password) => {
         try {
-            await vault.unlock(password);
+            await vaultManager.unlockAll(password);
 
             // Vault 상태 동기화
-            isUnlocked = !vault.isLocked;
+            isUnlocked = true;
 
             // Logger 암호화 키 설정
-            if (logger && vault.key) {
-                logger.setEncryptionKey(vault.key);
+            if (logger && vaultManager.systemVault.key) {
+                logger.setEncryptionKey(vaultManager.systemVault.key);
             }
 
             // HTTP 서버 상태 업데이트
@@ -822,17 +828,85 @@ function setupIpcHandlers() {
         return { success: true };
     });
 
+    // 금고 목록 조회
+    ipcMain.handle("vaults:list", () => {
+        return { success: true, data: vaultManager.getVaultList() };
+    });
+
+    // 금고 전환
+    ipcMain.handle("vault:switch", async (event, vaultId) => {
+        try {
+            await vaultManager.switchVault(vaultId);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 외부 금고 생성 (별도 비밀번호 사용)
+    ipcMain.handle("vault:create", async (event, name, folderPath, password) => {
+        try {
+            const result = await vaultManager.createVault(name, folderPath, password);
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 외부 금고 가져오기 (새 컴퓨터에서: 비밀번호 필요 / 기존 컴퓨터: vaults.enc에 키 있어 자동 잠금 해제)
+    ipcMain.handle("vault:import", async (event, name, lkvPath, password) => {
+        try {
+            const result = await vaultManager.importVault(name, lkvPath, password);
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 금고 이름 변경
+    ipcMain.handle("vault:rename", (event, vaultId, newName) => {
+        try {
+            vaultManager.renameVault(vaultId, newName);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 금고 목록에서 제거
+    ipcMain.handle("vault:remove", (event, vaultId) => {
+        try {
+            vaultManager.removeVault(vaultId);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 폴더 선택 다이얼로그
+    ipcMain.handle("dialog:selectFolder", async () => {
+        try {
+            const result = await dialog.showOpenDialog(mainWindow, {
+                properties: ["openDirectory", "createDirectory"],
+            });
+            if (result.canceled) return { success: true, data: null };
+            return { success: true, data: result.filePaths[0] };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
     // 프로젝트 목록 가져오기
     ipcMain.handle("projects:get", () => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
-        return { success: true, data: vault.getProjects() };
+        return { success: true, data: getVault().getProjects() };
     });
 
     // 프로젝트 생성
     ipcMain.handle("project:create", async (event, name) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            vault.createProject(name);
+            getVault().createProject(name);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -843,7 +917,7 @@ function setupIpcHandlers() {
     ipcMain.handle("project:delete", async (event, name) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            vault.deleteProject(name);
+            getVault().deleteProject(name);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -853,14 +927,14 @@ function setupIpcHandlers() {
     // 시크릿 목록 가져오기
     ipcMain.handle("secrets:get", (event, projectName) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
-        return { success: true, data: vault.getSecrets(projectName) };
+        return { success: true, data: getVault().getSecrets(projectName) };
     });
 
     // 시크릿 저장
     ipcMain.handle("secret:set", async (event, projectName, key, value, expiresAt = null) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            vault.setSecret(projectName, key, value, expiresAt);
+            getVault().setSecret(projectName, key, value, expiresAt);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -871,6 +945,7 @@ function setupIpcHandlers() {
     ipcMain.handle("secret:update", async (event, projectName, fromKey, toKey, value, expiresAt = null) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
 
+        const vault = getVault();
         const didRename = typeof fromKey === "string" && typeof toKey === "string" && fromKey !== toKey;
         let renameSucceeded = false;
 
@@ -897,7 +972,7 @@ function setupIpcHandlers() {
     ipcMain.handle("secret:rename", async (event, projectName, fromKey, toKey) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            vault.renameSecret(projectName, fromKey, toKey);
+            getVault().renameSecret(projectName, fromKey, toKey);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -908,7 +983,7 @@ function setupIpcHandlers() {
     ipcMain.handle("secret:delete", async (event, projectName, key) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            vault.deleteSecret(projectName, key);
+            getVault().deleteSecret(projectName, key);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -919,7 +994,7 @@ function setupIpcHandlers() {
     ipcMain.handle("favorite:toggleProject", async (event, projectName) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            const added = vault.toggleProjectFavorite(projectName);
+            const added = getVault().toggleProjectFavorite(projectName);
             return { success: true, added };
         } catch (error) {
             return { success: false, error: error.message };
@@ -930,7 +1005,7 @@ function setupIpcHandlers() {
     ipcMain.handle("favorite:toggleSecret", async (event, projectName, secretKey) => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            const added = vault.toggleSecretFavorite(projectName, secretKey);
+            const added = getVault().toggleSecretFavorite(projectName, secretKey);
             return { success: true, added };
         } catch (error) {
             return { success: false, error: error.message };
@@ -941,7 +1016,7 @@ function setupIpcHandlers() {
     ipcMain.handle("favorites:get", () => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            const favorites = vault.getFavorites();
+            const favorites = getVault().getFavorites();
             return { success: true, data: favorites };
         } catch (error) {
             return { success: false, error: error.message };
@@ -952,7 +1027,7 @@ function setupIpcHandlers() {
     ipcMain.handle("statistics:get", async () => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            const stats = vault.getStatistics();
+            const stats = getVault().getStatistics();
             // 최근 24시간 이내 로그 수 추가
             const logs = logger.getLogs();
             const now = new Date();
@@ -983,7 +1058,7 @@ function setupIpcHandlers() {
         const result = await showApprovalDialog(projectName, key);
 
         if (result.approved) {
-            const value = vault.getSecret(projectName, key);
+            const value = getVault().getSecret(projectName, key);
             return { success: true, data: value };
         } else {
             return { success: false, error: "Access denied" };
@@ -995,7 +1070,7 @@ function setupIpcHandlers() {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
 
         try {
-            const history = vault.getSecretHistory(projectName, key);
+            const history = getVault().getSecretHistory(projectName, key);
             return { success: true, data: history };
         } catch (error) {
             return { success: false, error: error.message };
@@ -1007,7 +1082,7 @@ function setupIpcHandlers() {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
 
         try {
-            vault.restoreSecretVersion(projectName, key, versionIndex);
+            getVault().restoreSecretVersion(projectName, key, versionIndex);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -1076,7 +1151,7 @@ function setupIpcHandlers() {
         });
 
         if (!result.canceled && result.filePath) {
-            const secrets = vault.getSecrets(projectName);
+            const secrets = getVault().getSecrets(projectName);
             const encodeEnvValue = (value) => {
                 const stringValue = String(value ?? "");
                 const escaped = stringValue.replace(/\\/g, "\\\\").replace(/\r/g, "\\r").replace(/\n/g, "\\n").replace(/"/g, '\\"');
@@ -1167,7 +1242,7 @@ function setupIpcHandlers() {
                 }
 
                 if (count > 0) {
-                    vault.setSecrets(projectName, secrets);
+                    getVault().setSecrets(projectName, secrets);
                     logger.logApp(`Secrets imported: ${projectName} <- ${filePath} (${count} secrets)`);
                     return { success: true, count };
                 } else {
@@ -1211,7 +1286,7 @@ function setupIpcHandlers() {
     ipcMain.handle("vault:save", async () => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
         try {
-            await vault.saveNow();
+            await getVault().saveNow();
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -1602,9 +1677,9 @@ function setupIpcHandlers() {
 
         if (!licenseCheck.valid) {
             mainWindow.loadFile("src/views/license.html");
-        } else if (!vault.exists()) {
+        } else if (!getSystemVault()?.exists()) {
             mainWindow.loadFile("src/views/setup.html");
-        } else if (isUnlocked && !vault.isLocked) {
+        } else if (isUnlocked && !getSystemVault()?.isLocked) {
             mainWindow.loadFile("src/views/dashboard.html");
         } else {
             mainWindow.loadFile("src/views/lock.html");
@@ -1929,10 +2004,10 @@ app.on("before-quit", async () => {
     }
 
     // Vault 상태 확인 및 데이터 저장
-    if (vault && !vault.isLocked) {
+    if (vaultManager) {
         try {
             // 동기 저장으로 Vault 잠금 (앱 종료시 비동기가 완료되기 전에 프로세스 종료되는 것 방지)
-            await vault.lock(true);
+            vaultManager.lockAllVaultsSync();
         } catch (error) {
             console.error("Vault 저장/잠금 실패:", error);
         }
