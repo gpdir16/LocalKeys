@@ -242,7 +242,6 @@ body.window-blurred .project-card.active {
 .back-btn,
 .copy-btn,
 .pagination button {
-    display: flex;
     padding: 6px 14px;
     border-radius: 6px;
     border: none;
