@@ -7,24 +7,16 @@
         <link rel="stylesheet" href="../styles/common.css" />
         <style>
             /* Settings 페이지 스타일 */
-            .settings-container {
-                display: flex;
-                flex-direction: column;
-                gap: 20px;
-            }
-
             .settings-section {
                 background-color: var(--bg-secondary);
                 border-radius: 8px;
-                border: 1px solid var(--border);
-                overflow: hidden;
             }
 
             .settings-item {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 16px 20px;
+                padding: 10px 16px;
                 border-bottom: 1px solid var(--border);
             }
 
@@ -35,7 +27,7 @@
             .settings-item-info {
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 2px;
             }
 
             .settings-item-label {
@@ -82,14 +74,12 @@
 
             .toggle-slider {
                 position: absolute;
-                cursor: default;
                 top: 0;
                 left: 0;
                 right: 0;
                 bottom: 0;
                 background-color: var(--bg-tertiary);
                 border-radius: 24px;
-                border: 1px solid var(--border);
             }
 
             .toggle-slider:before {
@@ -97,26 +87,24 @@
                 content: "";
                 height: 18px;
                 width: 18px;
-                left: 2px;
-                bottom: 2px;
-                background-color: var(--text-secondary);
+                left: 3px;
+                bottom: 3px;
+                background-color: var(--text-primary);
                 border-radius: 50%;
             }
 
             .toggle-switch input:checked + .toggle-slider {
                 background-color: var(--accent);
-                border-color: var(--accent);
             }
 
             .toggle-switch input:checked + .toggle-slider:before {
                 transform: translateX(20px);
-                background-color: white;
             }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="page-header settings-header">
+            <div class="page-header">
                 <div class="page-title">
                     <button class="back-btn" id="back-btn">
                         <span class="lk-icon lk-icon-arrow-left" aria-hidden="true"></span>
@@ -126,14 +114,14 @@
             </div>
 
             <!-- 설정 목록 -->
-            <div class="settings-container" id="settings-container">
+            <div id="settings-container">
                 <div class="settings-section">
                     <div class="settings-item">
                         <div class="settings-item-info">
                             <span class="settings-item-label" id="label-language">Language</span>
                             <span class="settings-item-description" id="desc-language">Choose the display language</span>
                         </div>
-                        <select id="language-select" class="filter-select">
+                        <select id="language-select" class="btn btn-secondary filter-select">
                             <option value="system" id="lang-opt-system">System</option>
                             <option value="en" id="lang-opt-en">English</option>
                             <option value="ko" id="lang-opt-ko">Korean</option>

@@ -3,9 +3,10 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    cursor: default;
 }
 
-/* 시스템 폰트 + macOS 네이티브 폰트 크기 (13px) */
+/* 시스템 폰트 (13px) */
 html {
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 13px;
@@ -18,27 +19,37 @@ body {
     color: #e0e0e0;
     height: 100vh;
     overflow: hidden;
-    -webkit-user-select: none;
     user-select: none;
 }
 
-/* 입력 필드와 텍스트 콘텐츠 영역은 선택 가능 */
-input,
-textarea,
+/* 텍스트형 입력과 텍스트 콘텐츠 영역은 선택 가능 */
+input[type="text"],
+input[type="search"],
+input[type="password"],
+input[type="email"],
+input[type="url"],
+input[type="tel"],
+input[type="number"],
+input:not([type]),
 select,
-[contenteditable="true"],
-.selectable,
-.content,
-.editor,
-article,
 p {
-    -webkit-user-select: text;
     user-select: text;
 }
 
-/* 이미지 드래그 방지 */
-img {
-    -webkit-user-drag: none;
+/* 텍스트 마우스 커서 */
+input[type="text"],
+input[type="search"],
+input[type="password"],
+input[type="email"],
+input[type="url"],
+input[type="tel"],
+input[type="number"] {
+    cursor: text;
+}
+
+/* 선택 마우스 커서 */
+a {
+    cursor: pointer;
 }
 
 /* 다크모드 색상 변수 */
@@ -48,7 +59,7 @@ img {
     --bg-tertiary: #303030;
     --text-primary: #e0e0e0;
     --text-secondary: #a0a0a0;
-    --accent: #4a9eff;
+    --accent: dodgerblue;
     --success: #4caf50;
     --warning: #ff9800;
     --error: #f44336;
@@ -58,36 +69,12 @@ img {
     --selection-inactive: #5a5a5a;
 }
 
-/* 기본 커서 사용 */
-button,
-[role="button"],
-.clickable,
-.sidebar-item,
-.tab,
-.nav-item,
-.project-card,
-.secret-item,
-.dropdown-item,
-.back-btn,
-.settings-item,
-.pagination button {
-    cursor: default;
-}
-
-a[href^="http"],
-a[href^="mailto:"],
-.external-link {
-    cursor: pointer;
-}
-
 /* 윈도우 포커스 상태에 따른 선택 색상 */
-body.window-focused .sidebar-item.active,
 body.window-focused .project-card.active {
     background-color: var(--selection-active);
     color: white;
 }
 
-body.window-blurred .sidebar-item.active,
 body.window-blurred .project-card.active {
     background-color: var(--selection-inactive);
     color: var(--text-primary);
@@ -109,7 +96,7 @@ body.window-blurred .project-card.active {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.25);
 }
 
 /* SVG 아이콘 (마스크 방식, currentColor로 색상 제어) */
@@ -133,16 +120,6 @@ body.window-blurred .project-card.active {
 .lk-icon-sm {
     width: 12px;
     height: 12px;
-}
-
-.lk-icon-md {
-    width: 16px;
-    height: 16px;
-}
-
-.lk-icon-lg {
-    width: 20px;
-    height: 20px;
 }
 
 .lk-icon-xl {
@@ -220,81 +197,71 @@ body.window-blurred .project-card.active {
 }
 
 /* 헤더 */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid var(--border);
+.lock-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding-top: 100px;
 }
 
-.header h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
+.logo {
+    margin-bottom: 40px;
+}
+
+.logo h1 {
+    font-size: 36px;
+    color: var(--accent);
+    margin-bottom: 10px;
+}
+
+.logo p {
+    color: var(--text-secondary);
+    font-size: 16px;
 }
 
 /* 버튼 기본 스타일 */
-.btn,
-.unlock-btn,
-.approval-btn,
-.back-btn,
-.copy-btn,
-.pagination button {
+.btn, .back-btn {
     padding: 6px 14px;
     border-radius: 6px;
     border: none;
     color: #fff;
     background-origin: border-box;
-    -webkit-user-select: none;
     user-select: none;
     touch-action: manipulation;
-    cursor: default;
     font-size: 13px;
 }
 
 /* 버튼 타입별 스타일 */
 .btn-primary,
-.btn,
-.unlock-btn,
-.approve-btn {
+.btn {
     background: linear-gradient(180deg, rgb(75, 145, 247) 0%, rgb(54, 122, 246) 100%);
     box-shadow: 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
 }
 
 .btn-primary:focus,
-.btn:focus,
-.unlock-btn:focus,
-.approve-btn:focus {
+.btn:focus {
     box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(54, 122, 246, 0.25), 0px 0px 0px 3.5px rgba(58, 108, 217, 0.5);
     outline: 0;
 }
 
 .btn-primary:active,
-.btn:active,
-.unlock-btn:active,
-.approve-btn:active {
+.btn:active {
     background: linear-gradient(180deg, rgb(107, 163, 249) 0%, #4b91f7 100%);
 }
 
 .btn-secondary,
-.back-btn,
-.pagination button {
+.back-btn {
     background: linear-gradient(180deg, rgb(100, 100, 100) 0%, rgb(90, 90, 90) 100%);
     box-shadow: 0px 0.5px 1.5px rgba(90, 90, 90, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
 }
 
 .btn-secondary:focus,
-.back-btn:focus,
-.pagination button:focus {
+.back-btn:focus {
     box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(90, 90, 90, 0.25), 0px 0px 0px 3.5px rgba(90, 90, 90, 0.5);
     outline: 0;
 }
 
 .btn-secondary:active,
-.back-btn:active,
-.pagination button:active {
+.back-btn:active {
     background: linear-gradient(180deg, rgb(120, 120, 120) 0%, rgb(100, 100, 100) 100%);
 }
 
@@ -315,42 +282,27 @@ body.window-blurred .project-card.active {
     background: linear-gradient(180deg, rgb(249, 107, 107) 0%, rgb(247, 75, 75) 100%);
 }
 
-.btn-success {
-    background: linear-gradient(180deg, rgb(75, 247, 75) 0%, rgb(54, 246, 54) 100%);
-    box-shadow: 0px 0.5px 1.5px rgba(54, 246, 54, 0.25), inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2);
-}
-
-.btn-success:focus {
-    box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(54, 246, 54, 0.25), 0px 0px 0px 3.5px rgba(58, 217, 58, 0.5);
-    outline: 0;
-}
-
-.btn-success:active {
-    background: linear-gradient(180deg, rgb(163, 249, 107) 0%, rgb(75, 247, 75) 100%);
-}
-
 /* 버튼 상태별 스타일 */
-.btn:disabled,
-.btn-primary:disabled,
-.btn-secondary:disabled,
-.btn-danger:disabled,
-.btn-success:disabled,
-.unlock-btn:disabled,
-.approval-btn:disabled,
-.back-btn:disabled,
-.pagination button:disabled {
+.btn:disabled {
     background: linear-gradient(180deg, rgb(100, 100, 100) 0%, rgb(90, 90, 90) 100%);
     box-shadow: none;
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-/* 뒤로 가기 버튼 (logs, project, settings 공용) */
+/* 즐겨찾기 등 아이콘만 있는 작은 버튼 */
+.btn-icon-small {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    margin: 0 0 -2px 0;
+}
+
+/* 뒤로 가기 버튼 */
 .back-btn {
     background: none;
     border: none;
     color: var(--text-secondary);
-    cursor: default;
     padding: 5px;
     display: inline-flex;
     align-items: center;
@@ -362,43 +314,14 @@ body.window-blurred .project-card.active {
     height: 18px;
 }
 
-.back-btn:hover {
-    background-color: var(--bg-tertiary);
-}
-
 /* 입력 필드 */
 .input-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .input-group label {
     display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-
-.input-group input,
-.input-group textarea,
-.input-group select {
-    width: 100%;
-    padding: 12px;
-    background-color: var(--bg-secondary);
-    border: var(--border) 1px solid;
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-size: 14px;
-}
-
-.input-group input:focus,
-.input-group textarea:focus,
-.input-group select:focus {
-    outline: none;
-    background-color: var(--bg-tertiary);
-}
-
-.input-group input::placeholder {
+    margin-bottom: 6px;
     color: var(--text-secondary);
 }
 
@@ -431,48 +354,6 @@ body.window-blurred .project-card.active {
     color: var(--text-primary);
 }
 
-/* 리스트 */
-.list {
-    list-style: none;
-}
-
-.list-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-}
-
-.list-item:hover:not(:has(.dropdown-menu:not(.hidden))) {
-    background-color: var(--bg-tertiary);
-}
-
-.list-item:last-child {
-    border-bottom: none;
-}
-
-.list-item-title {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.list-item-subtitle {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: 4px;
-}
-
-.list-item-actions {
-    display: flex;
-    gap: 10px;
-}
-
-/* 폼 */
-.form {
-    max-width: 500px;
-    margin: 0 auto;
-}
-
 .form-actions {
     display: flex;
     gap: 10px;
@@ -494,7 +375,7 @@ body.window-blurred .project-card.active {
     background: rgba(33, 33, 33, 0.9);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     opacity: 0;
 }
@@ -608,7 +489,6 @@ body.window-blurred .project-card.active {
     border: none;
     background: none;
     color: var(--text-secondary);
-    cursor: default;
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -622,11 +502,6 @@ body.window-blurred .project-card.active {
 .message-close .lk-icon {
     width: 14px;
     height: 14px;
-}
-
-.message-close:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
 }
 
 /* 로딩 스피너 */
@@ -683,7 +558,7 @@ body.window-blurred .project-card.active {
     max-height: 80vh;
     overflow-y: auto;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     transform: translateY(-30px);
     opacity: 0;
     transition: all 0.25s linear;
@@ -719,104 +594,15 @@ body.window-blurred .project-card.active {
     gap: 10px;
 }
 
-/* 테이블 */
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th,
-.table td {
-    padding: 12px;
-    text-align: left;
-}
-
-.table th {
-    background-color: var(--bg-tertiary);
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.table tr:hover {
-    background-color: var(--bg-tertiary);
-}
-
 /* 유틸리티 클래스 */
 .text-center {
     text-align: center;
-}
-
-.text-right {
-    text-align: right;
-}
-
-.mt-10 {
-    margin-top: 10px;
-}
-
-.mt-20 {
-    margin-top: 20px;
-}
-
-.mb-10 {
-    margin-bottom: 10px;
-}
-
-.mb-20 {
-    margin-bottom: 20px;
 }
 
 .hidden {
     display: none;
 }
 
-.flex {
-    display: flex;
-}
-
-.flex-column {
-    flex-direction: column;
-}
-
-.flex-center {
-    justify-content: center;
-    align-items: center;
-}
-
-.flex-between {
-    justify-content: space-between;
-}
-
-.flex-1 {
-    flex: 1;
-}
-
-.gap-10 {
-    gap: 10px;
-}
-
-.gap-20 {
-    gap: 20px;
-}
-
-.container-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-.container-horizontal {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.container-vertical {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
 
 /* 페이지 헤더 스타일 */
 .page-header {
@@ -832,23 +618,13 @@ body.window-blurred .project-card.active {
     font-size: 28px;
     font-weight: 600;
     color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .header-actions {
     display: flex;
-    gap: 10px;
-}
-
-/* 페이지별 제목 스타일 통합 */
-.dashboard-title,
-.logs-title,
-.project-title,
-.page-title {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
     gap: 10px;
 }
 
@@ -879,26 +655,26 @@ body.window-blurred .project-card.active {
     margin-right: auto;
 }
 
-/* 검색 바 (dashboard, logs, project 공용) */
+/* 검색 바 */
 .search-bar {
     position: relative;
     margin-bottom: 15px;
     width: 100%;
 }
 
-.search-input {
+input {
     width: 100%;
-    padding: 12px 40px 12px 16px;
-    background-color: var(--bg-secondary);
-    border: var(--border) 1px solid;
-    border-radius: 8px;
+    padding-left: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
     color: var(--text-primary);
-    font-size: 14px;
+    height: 28px;
 }
 
-.search-input:focus {
-    outline: none;
-    background-color: var(--bg-tertiary);
+input:focus {
+    box-shadow: inset 0px 0.8px 0px -0.25px rgba(255, 255, 255, 0.2), 0px 0.5px 1.5px rgba(90, 90, 90, 0.25), 0px 0px 0px 3.5px rgba(90, 90, 90, 0.5);
+    outline: 0;
 }
 
 .search-icon {
@@ -909,7 +685,7 @@ body.window-blurred .project-card.active {
     color: var(--text-secondary);
 }
 
-/* 드롭다운 (공용) */
+/* 드롭다운 */
 .dropdown {
     position: relative;
     display: inline-block;
@@ -1001,7 +777,6 @@ body.window-blurred .project-card.active {
     font-size: 13px;
     padding: 4px 6px;
     border-radius: 4px;
-    cursor: default;
     display: flex;
     align-items: center;
     gap: 5px;
@@ -1065,21 +840,11 @@ body.window-blurred .project-card.active {
     opacity: 1;
 }
 
-/* 필터 선택 (logs, settings 공용) */
+/* 필터 선택 */
 .filter-select {
-    padding: 8px 12px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-size: 14px;
-    min-width: 150px;
-    height: 42px;
-}
-
-.filter-select:focus {
-    outline: none;
-    border-color: var(--accent);
+    padding-left: 6px;
+    min-width: 100px;
+    height: 28px;
 }
 
 /* 인라인 입력 + 버튼 행 */
@@ -1115,16 +880,6 @@ body.window-blurred .project-card.active {
 .modal-sm {
     max-width: 360px;
     width: 360px;
-}
-
-.modal-footer-column {
-    flex-direction: column;
-    gap: 8px;
-}
-
-.modal-footer-column .btn {
-    width: 100%;
-    justify-content: center;
 }
 
 .modal-error {

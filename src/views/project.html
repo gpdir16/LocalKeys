@@ -11,16 +11,12 @@
                 background-color: var(--bg-secondary);
                 padding: 20px;
                 border-radius: 8px;
-                border: 1px solid var(--border);
-                cursor: default;
             }
 
             .secret-item {
                 background-color: var(--bg-secondary);
                 padding: 20px;
                 border-radius: 8px;
-                border: 1px solid var(--border);
-                cursor: default;
             }
 
             .secrets-container {
@@ -30,7 +26,6 @@
                 margin-bottom: 15px;
                 overflow-y: auto;
                 flex: 1;
-                padding-right: 5px;
             }
 
             .secret-header {
@@ -49,13 +44,11 @@
 
             .secret-value {
                 font-family: "Courier New", monospace;
-                font-size: 14px;
                 color: var(--text-secondary);
                 background-color: var(--bg-tertiary);
-                padding: 8px;
+                padding: 6px 8px;
                 word-break: break-all;
-                position: relative;
-                border-radius: 8px;
+                border-radius: 6px;
                 user-select: text;
             }
 
@@ -105,30 +98,14 @@
 
             .toggle-visibility {
                 background: none;
-                color: var(--text-secondary);
-                padding: 5px;
-                box-shadow: none;
+                padding-right: 5px;
                 border: none;
-                color: var(--accent);
-                cursor: default;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .toggle-visibility:hover {
-                background-color: var(--bg-tertiary);
                 color: var(--text-primary);
             }
 
             .toggle-visibility .lk-icon {
                 width: 16px;
                 height: 16px;
-            }
-
-            .export-section {
-                margin-top: 20px;
-                padding-top: 20px;
             }
 
             .modal-large {
@@ -195,8 +172,7 @@
             }
 
             .history-container .empty-state,
-            .history-container .error-state,
-            .logs-container .empty-state {
+            .history-container .error-state {
                 text-align: center;
                 padding: 40px 20px;
                 color: var(--text-secondary);
@@ -206,32 +182,11 @@
                 color: var(--error);
             }
 
-            .btn-icon-small {
-                background: none;
-                border: none;
-                cursor: default;
-                color: var(--text-secondary);
-                margin: 0 0 -2px 0;
-            }
-
-            .unlock-btn {
-                width: 40px;
-                height: 40px;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .copy-btn {
-                background: none;
-                color: var(--text-secondary);
-                padding: 5px;
-                box-shadow: none;
-            }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="page-header project-header">
+            <div class="page-header">
                 <div class="page-title">
                     <button class="back-btn" id="back-btn">
                         <span class="lk-icon lk-icon-arrow-left" aria-hidden="true"></span>
@@ -247,7 +202,7 @@
 
             <!-- 검색 바 -->
             <div class="search-bar">
-                <input type="text" class="search-input" id="search-input" placeholder="Search secrets..." />
+                <input type="text" id="search-input" placeholder="Search secrets..." />
                 <span class="search-icon lk-icon lk-icon-search" aria-hidden="true"></span>
             </div>
 

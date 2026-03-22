@@ -7,53 +7,17 @@
         <link rel="stylesheet" href="../styles/common.css" />
         <style>
             /* Logs 페이지 스타일 */
-            .filters {
-                display: flex;
-                gap: 15px;
-                margin-bottom: 20px;
-                flex-wrap: wrap;
-            }
-
-            .filter-group {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .filter-group label {
-                font-size: 14px;
-                color: var(--text-secondary);
-            }
-
-            .filter-group select {
-                padding: 8px 12px;
-                background-color: var(--bg-secondary);
-                border: none;
-                border-radius: 8px;
-                color: var(--text-primary);
-                font-size: 14px;
-            }
-
-            .filter-group select:focus {
-                outline: none;
-                background-color: var(--bg-tertiary);
-            }
-
             .logs-container {
-                background-color: var(--bg-secondary);
                 overflow-y: auto;
-                height: calc(100vh - 160px);
-                border-radius: 8px;
-                margin: 0;
-                flex: 1;
             }
 
             .log-item {
                 padding: 15px 20px;
+                border-radius: 8px;
             }
 
             .log-item:hover {
-                background-color: var(--bg-tertiary);
+                background-color: var(--bg-secondary);
             }
 
             .log-item:last-child {
@@ -74,9 +38,10 @@
             }
 
             .log-type {
-                padding: 2px 8px;
-                font-size: 11px;
-                font-weight: 600;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
                 text-transform: uppercase;
             }
 
@@ -86,8 +51,18 @@
             }
 
             .log-type.access {
-                background-color: rgba(76, 175, 80, 0.2);
+                background: rgba(76, 175, 80, 0.2);
                 color: var(--success);
+            }
+
+            .log-type.app {
+                background: rgba(158, 158, 158, 0.2);
+                color: #9e9e9e;
+            }
+
+            .log-type.lock {
+                background: rgba(255, 152, 0, 0.2);
+                color: #ff9800;
             }
 
             .log-type.warning {
@@ -107,69 +82,15 @@
                 word-break: break-word;
             }
 
-            .pagination {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                gap: 10px;
-                margin-top: 20px;
-            }
-
-            .pagination button {
-                padding: 8px 12px;
-                background-color: var(--bg-secondary);
-                color: var(--text-primary);
-                cursor: default;
-            }
-
-            .pagination button:hover:not(:disabled) {
-                background-color: var(--bg-tertiary);
-            }
-
-            .pagination button:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
-            }
-
-            .pagination .current-page {
-                padding: 8px 12px;
-                background-color: var(--accent);
-                color: white;
-                font-weight: 600;
-            }
-
             .logs-filters {
                 display: flex;
                 gap: 14px;
-            }
-
-            .log-type {
-                padding: 4px 8px;
-                border-radius: 4px;
-                font-size: 12px;
-                font-weight: 500;
-                text-transform: uppercase;
-            }
-
-            .log-type.access {
-                background: rgba(74, 158, 255, 0.2);
-                color: var(--accent);
-            }
-
-            .log-type.app {
-                background: rgba(158, 158, 158, 0.2);
-                color: #9e9e9e;
-            }
-
-            .log-type.lock {
-                background: rgba(255, 152, 0, 0.2);
-                color: #ff9800;
             }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="page-header logs-header">
+            <div class="page-header">
                 <div class="page-title">
                     <button class="back-btn" id="back-btn">
                         <span class="lk-icon lk-icon-arrow-left" aria-hidden="true"></span>
@@ -184,14 +105,14 @@
 
             <!-- 필터 및 검색 -->
             <div class="logs-filters">
-                <select id="category-filter" class="filter-select">
+                <select id="category-filter" class="btn btn-secondary filter-select">
                     <option value="all">All</option>
                     <option value="access">Access</option>
                     <option value="app">App</option>
                     <option value="lock">Lock</option>
                 </select>
                 <div class="search-bar">
-                    <input type="text" id="search-input" class="search-input" placeholder="Search logs..." />
+                    <input type="text" id="search-input" placeholder="Search logs..." />
                     <span class="search-icon lk-icon lk-icon-search" aria-hidden="true"></span>
                 </div>
             </div>

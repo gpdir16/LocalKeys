@@ -9,19 +9,13 @@
             /* Dashboard 페이지 스타일 */
             .project-card {
                 background-color: var(--bg-secondary);
-                padding: 20px;
+                padding: 18px 22px;
                 border-radius: 8px;
-                border: 1px solid var(--border);
-                cursor: default;
-            }
-
-            .project-card:hover:not(:has(.dropdown-menu:not(.hidden))) {
-                background-color: var(--bg-tertiary);
             }
 
             .projects-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
                 gap: 14px;
                 margin-bottom: 20px;
             }
@@ -52,16 +46,10 @@
 
             /* 통계 카드 */
             .project-card.stat-card {
-                cursor: default;
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 8px;
                 padding: 16px;
-            }
-
-            .project-card.stat-card:hover {
-                transform: none;
-                border-color: var(--border);
             }
 
             .stat-item {
@@ -72,10 +60,9 @@
             }
 
             .stat-value {
-                font-size: 21px;
+                font-size: 18px;
                 font-weight: 600;
                 color: var(--text-primary);
-                margin-bottom: 4px;
             }
 
             .stat-value.stat-warning {
@@ -91,19 +78,11 @@
                 color: var(--text-secondary);
                 text-align: center;
             }
-
-            .btn-icon-small {
-                background: none;
-                border: none;
-                cursor: default;
-                color: var(--text-secondary);
-                margin: 0 0 -2px 0;
-            }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="page-header dashboard-header">
+            <div class="page-header">
                 <div class="page-title-group">
                     <h1 class="page-title" id="page-title">Projects</h1>
                     <!-- 금고 드롭다운 -->
@@ -112,7 +91,7 @@
                             <span id="vault-dropdown-name">System</span>
                         </button>
                         <div class="dropdown-menu hidden" id="vault-dropdown-menu">
-                            <div class="dropdown-list" id="vault-dropdown-list"></div>
+                            <div id="vault-dropdown-list"></div>
                             <div class="dropdown-divider"></div>
                             <button class="dropdown-item" id="vault-new-btn">
                                 <span id="vault-new-label">New Vault</span>
@@ -141,7 +120,7 @@
 
             <!-- 검색 바 -->
             <div class="search-bar">
-                <input type="text" class="search-input" id="search-input" placeholder="Search projects..." />
+                <input type="text" id="search-input" placeholder="Search projects..." />
                 <span class="search-icon lk-icon lk-icon-search" aria-hidden="true"></span>
             </div>
 
