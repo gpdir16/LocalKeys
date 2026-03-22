@@ -215,7 +215,7 @@ body.window-blurred .project-card.active {
 }
 
 .logo h1 {
-    font-size: 36px;
+    font-size: 28px;
     color: var(--accent);
     margin-bottom: 10px;
 }
