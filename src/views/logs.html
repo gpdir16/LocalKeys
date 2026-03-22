@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -313,11 +313,17 @@
                     if (diffMinutes < 1) {
                         return i18n.t("logs.timeAgo.justNow");
                     } else if (diffMinutes < 60) {
-                        return diffMinutes === 1 ? i18n.t("logs.timeAgo.minuteAgo", { count: diffMinutes }) : i18n.t("logs.timeAgo.minutesAgo", { count: diffMinutes });
+                        return diffMinutes === 1
+                            ? i18n.t("logs.timeAgo.minuteAgo", { count: diffMinutes })
+                            : i18n.t("logs.timeAgo.minutesAgo", { count: diffMinutes });
                     } else if (diffHours < 24) {
-                        return diffHours === 1 ? i18n.t("logs.timeAgo.hourAgo", { count: diffHours }) : i18n.t("logs.timeAgo.hoursAgo", { count: diffHours });
+                        return diffHours === 1
+                            ? i18n.t("logs.timeAgo.hourAgo", { count: diffHours })
+                            : i18n.t("logs.timeAgo.hoursAgo", { count: diffHours });
                     } else if (diffDays < 7) {
-                        return diffDays === 1 ? i18n.t("logs.timeAgo.dayAgo", { count: diffDays }) : i18n.t("logs.timeAgo.daysAgo", { count: diffDays });
+                        return diffDays === 1
+                            ? i18n.t("logs.timeAgo.dayAgo", { count: diffDays })
+                            : i18n.t("logs.timeAgo.daysAgo", { count: diffDays });
                     } else {
                         return date.toLocaleString();
                     }

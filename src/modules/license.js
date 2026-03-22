@@ -56,7 +56,7 @@ class License {
                     format: "pem",
                     type: "spki",
                 },
-                signature
+                signature,
             );
         } catch (error) {
             return false;

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -181,7 +181,6 @@
             .history-container .error-state {
                 color: var(--error);
             }
-
         </style>
     </head>
     <body>
@@ -414,7 +413,9 @@
                         if (result.success) {
                             await loadFavorites();
                             applyFilter();
-                            const message = result.added ? i18n.t("dashboard.notifications.favoriteAdded") : i18n.t("dashboard.notifications.favoriteRemoved");
+                            const message = result.added
+                                ? i18n.t("dashboard.notifications.favoriteAdded")
+                                : i18n.t("dashboard.notifications.favoriteRemoved");
                             notificationManager.success(message);
                         }
                     } catch (error) {
@@ -572,14 +573,26 @@
                             // 3일~7일 남았을 때: 일수로 표시
                             if (daysLeft >= 3) {
                                 if (daysLeft === 1) {
-                                    expiresDiv.textContent = i18n.t("project.expiration.expiresInDays", { count: daysLeft, date: formattedDate }, `${daysLeft} day left (${formattedDate})`);
+                                    expiresDiv.textContent = i18n.t(
+                                        "project.expiration.expiresInDays",
+                                        { count: daysLeft, date: formattedDate },
+                                        `${daysLeft} day left (${formattedDate})`,
+                                    );
                                 } else {
-                                    expiresDiv.textContent = i18n.t("project.expiration.expiresInDaysPlural", { count: daysLeft, date: formattedDate }, `${daysLeft} days left (${formattedDate})`);
+                                    expiresDiv.textContent = i18n.t(
+                                        "project.expiration.expiresInDaysPlural",
+                                        { count: daysLeft, date: formattedDate },
+                                        `${daysLeft} days left (${formattedDate})`,
+                                    );
                                 }
                             }
                             // 2일~1일 남았을 때: 시간으로 표시
                             else {
-                                expiresDiv.textContent = i18n.t("project.expiration.expiresInHours", { count: hoursLeft, date: formattedDate }, `${hoursLeft} hours left (${formattedDate})`);
+                                expiresDiv.textContent = i18n.t(
+                                    "project.expiration.expiresInHours",
+                                    { count: hoursLeft, date: formattedDate },
+                                    `${hoursLeft} hours left (${formattedDate})`,
+                                );
                             }
                         } else {
                             expiresDiv.textContent = i18n.t("project.expiration.expiresOn", { date: formattedDate }, `Expires on ${formattedDate}`);
@@ -605,7 +618,10 @@
 
                     const description = document.createElement("div");
                     description.className = "empty-state-description";
-                    description.textContent = Object.keys(secrets).length === 0 ? i18n.t("project.emptyState.descriptionEmpty") : i18n.t("project.emptyState.descriptionSearch");
+                    description.textContent =
+                        Object.keys(secrets).length === 0
+                            ? i18n.t("project.emptyState.descriptionEmpty")
+                            : i18n.t("project.emptyState.descriptionSearch");
 
                     emptyState.appendChild(icon);
                     emptyState.appendChild(title);
@@ -905,7 +921,10 @@
                 // 마우스 업 이벤트 추적 - 클릭 해제도 밖에서 해야 함
                 document.addEventListener("mouseup", function (e) {
                     // 클릭 시작이 모달 오버레이였지만 클릭 해제가 모달 외부인 경우 모달 닫기
-                    if ((mouseDownTarget === addSecretModal && e.target !== addSecretModal) || (mouseDownTarget === editSecretModal && e.target !== editSecretModal)) {
+                    if (
+                        (mouseDownTarget === addSecretModal && e.target !== addSecretModal) ||
+                        (mouseDownTarget === editSecretModal && e.target !== editSecretModal)
+                    ) {
                         mouseDownTarget = null; // 초기화
                         return;
                     }
@@ -921,7 +940,7 @@
                     historyKeyEl.textContent = secretKey;
                     historyModal.classList.remove("hidden");
                     historyContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-                    
+
                     // 다음 프레임에서 애니메이션 시작
                     requestAnimationFrame(() => {
                         historyModal.classList.add("show");

@@ -45,7 +45,7 @@ class HttpServer {
                             port: this.port,
                             authToken: this.authToken,
                             pid: process.pid,
-                        })
+                        }),
                     );
 
                     try {
@@ -154,7 +154,7 @@ class HttpServer {
                 JSON.stringify({
                     success: false,
                     error: error.message,
-                })
+                }),
             );
         }
     }
@@ -190,9 +190,7 @@ class HttpServer {
     async _getVault(vaultName) {
         if (!this.vaultManager) return null;
         // --vault 없이 호출 시 항상 System 금고 사용
-        const vault = vaultName
-            ? await this.vaultManager.getVaultByName(vaultName)
-            : this.vaultManager.vaults.get(SYSTEM_VAULT_ID) || null;
+        const vault = vaultName ? await this.vaultManager.getVaultByName(vaultName) : this.vaultManager.vaults.get(SYSTEM_VAULT_ID) || null;
         if (!vault || vault.isLocked) return null;
         return vault;
     }

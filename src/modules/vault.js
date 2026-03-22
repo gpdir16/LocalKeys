@@ -291,7 +291,7 @@ class Vault {
 
             // 기존 시크릿과 값이 다르면 업데이트
             const existingValue = typeof existing === "string" ? existing : existing?.value;
-            const existingExpiresAt = typeof existing === "object" ? existing?.expiresAt ?? null : null;
+            const existingExpiresAt = typeof existing === "object" ? (existing?.expiresAt ?? null) : null;
             if (existingValue !== value || existingExpiresAt !== null) {
                 this.setSecret(projectName, key, value, null);
             }

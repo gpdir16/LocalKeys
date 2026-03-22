@@ -76,7 +76,9 @@ function getServerInfo() {
             return info;
         } catch (error) {
             // 프로세스가 존재하지 않으면 서버 정보 파일 삭제
-            try { fs.unlinkSync(SERVER_INFO_PATH); } catch {}
+            try {
+                fs.unlinkSync(SERVER_INFO_PATH);
+            } catch {}
             return null;
         }
     } catch (error) {

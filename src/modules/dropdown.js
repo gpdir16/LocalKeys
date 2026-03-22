@@ -16,7 +16,7 @@ class DropdownManager {
                     this.closeAll();
                 }
             },
-            true
+            true,
         ); // capture: true
 
         // 다른 창 클릭 시 드롭다운 닫기
@@ -47,14 +47,14 @@ class DropdownManager {
         if (!dropdown) return;
 
         const wasHidden = dropdown.classList.contains("hidden");
-        
+
         // 다른 드롭다운 닫기 (현재 dropdown과 그 조상은 제외)
         this.closeAll(dropdown);
 
         // 현재 드롭다운 토글
         if (wasHidden) {
             dropdown.classList.remove("hidden");
-            
+
             // 오른쪽 공간 부족 시 왼쪽으로 위치 조정
             dropdown.classList.remove("dropdown-menu-left");
             const rect = dropdown.getBoundingClientRect();

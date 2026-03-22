@@ -98,7 +98,7 @@ class NotificationManager {
                     message,
                     type,
                     timestamp: Date.now(),
-                })
+                }),
             );
         } catch (error) {
             console.error("Failed to save notification:", error);

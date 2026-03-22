@@ -35,7 +35,8 @@ const api = {
         get: (projectName, key) => ipcRenderer.invoke("secret:get", projectName, key),
         getAll: (projectName) => ipcRenderer.invoke("secrets:get", projectName),
         set: (projectName, key, value, expiresAt = null) => ipcRenderer.invoke("secret:set", projectName, key, value, expiresAt),
-        update: (projectName, fromKey, toKey, value, expiresAt = null) => ipcRenderer.invoke("secret:update", projectName, fromKey, toKey, value, expiresAt),
+        update: (projectName, fromKey, toKey, value, expiresAt = null) =>
+            ipcRenderer.invoke("secret:update", projectName, fromKey, toKey, value, expiresAt),
         rename: (projectName, fromKey, toKey) => ipcRenderer.invoke("secret:rename", projectName, fromKey, toKey),
         delete: (projectName, key) => ipcRenderer.invoke("secret:delete", projectName, key),
         export: (projectName) => ipcRenderer.invoke("secrets:export", projectName),

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -238,7 +238,7 @@
             </div>
         </div>
 
-<script src="../modules/i18n-helper.js"></script>
+        <script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
         <script src="../modules/dropdown.js"></script>
 
@@ -546,7 +546,8 @@
 
                     description.className = "empty-state-description";
 
-                    description.textContent = projects.length === 0 ? i18n.t("dashboard.emptyState.descriptionEmpty") : i18n.t("dashboard.emptyState.descriptionSearch");
+                    description.textContent =
+                        projects.length === 0 ? i18n.t("dashboard.emptyState.descriptionEmpty") : i18n.t("dashboard.emptyState.descriptionSearch");
 
                     emptyState.appendChild(icon);
 
@@ -565,7 +566,9 @@
                     card.className = "project-card stat-card";
 
                     // 만료된 것이 포함된 경우 레이블 변경
-                    const expiringLabel = statistics.hasExpired ? i18n.t("dashboard.statistics.expiringAndExpired") : i18n.t("dashboard.statistics.expiringSecrets");
+                    const expiringLabel = statistics.hasExpired
+                        ? i18n.t("dashboard.statistics.expiringAndExpired")
+                        : i18n.t("dashboard.statistics.expiringSecrets");
 
                     // 만료 상태에 따른 색상 결정
                     let expiringColorClass = "";
@@ -710,7 +713,9 @@
                         if (result.success) {
                             await loadFavorites();
                             applyFilter();
-                            const message = result.added ? i18n.t("dashboard.notifications.favoriteAdded") : i18n.t("dashboard.notifications.favoriteRemoved");
+                            const message = result.added
+                                ? i18n.t("dashboard.notifications.favoriteAdded")
+                                : i18n.t("dashboard.notifications.favoriteRemoved");
                             notificationManager.success(message);
                         }
                     } catch (error) {
@@ -810,7 +815,6 @@
                     }
                 });
 
-
                 // 자동 새로고침 설정 (10초마다)
 
                 const autoRefreshInterval = setInterval(async () => {
@@ -862,14 +866,24 @@
                         } else {
                             notificationManager.error(result.error);
 
-                            setCliButtonState(isInstalling ? i18n.t("dashboard.installCli") : i18n.t("dashboard.uninstallCli"), false, "1", isInstalling ? installCli : uninstallCli);
+                            setCliButtonState(
+                                isInstalling ? i18n.t("dashboard.installCli") : i18n.t("dashboard.uninstallCli"),
+                                false,
+                                "1",
+                                isInstalling ? installCli : uninstallCli,
+                            );
                         }
                     } catch (error) {
                         const actionName = action === "install" ? "installation" : "uninstallation";
 
                         notificationManager.error(i18n.t("dashboard.notifications.cliInstallFailed", { action: actionName, error: error.message }));
 
-                        setCliButtonState(action === "install" ? i18n.t("dashboard.installCli") : i18n.t("dashboard.uninstallCli"), false, "1", action === "install" ? installCli : uninstallCli);
+                        setCliButtonState(
+                            action === "install" ? i18n.t("dashboard.installCli") : i18n.t("dashboard.uninstallCli"),
+                            false,
+                            "1",
+                            action === "install" ? installCli : uninstallCli,
+                        );
                     }
                 }
 
@@ -928,12 +942,12 @@
                     const list = document.getElementById("vault-dropdown-list");
                     list.innerHTML = "";
 
-                    const active = vaults.find(v => v.isActive) || vaults.find(v => v.id === "system") || vaults[0];
+                    const active = vaults.find((v) => v.isActive) || vaults.find((v) => v.id === "system") || vaults[0];
                     if (active) {
                         document.getElementById("vault-dropdown-name").textContent = active.name;
                     }
 
-                    vaults.forEach(vault => {
+                    vaults.forEach((vault) => {
                         const item = document.createElement("button");
                         item.className = "dropdown-item" + (vault.isActive ? " active" : "") + (vault.status === "offline" ? " offline" : "");
 
@@ -1027,7 +1041,7 @@
                         if (result.success) {
                             const vaultList = await renderVaultDropdown();
                             await loadProjects();
-                            const switched = vaultList?.find(v => v.id === vaultId);
+                            const switched = vaultList?.find((v) => v.id === vaultId);
                             if (switched) notificationManager.success(i18n.t("vault.notifications.switched", { name: switched.name }));
                         } else {
                             notificationManager.error(result.error || i18n.t("vault.notifications.failedToSwitch"));
@@ -1083,9 +1097,21 @@
                     const confirm = document.getElementById("vault-create-confirm").value;
                     const errorEl = document.getElementById("vault-create-error");
 
-                    if (!name) { errorEl.textContent = i18n.t("vault.notifications.nameRequired"); errorEl.style.display = ""; return; }
-                    if (!folderPath) { errorEl.textContent = i18n.t("vault.notifications.pathRequired"); errorEl.style.display = ""; return; }
-                    if (password !== confirm) { errorEl.textContent = i18n.t("vault.notifications.passwordMismatch"); errorEl.style.display = ""; return; }
+                    if (!name) {
+                        errorEl.textContent = i18n.t("vault.notifications.nameRequired");
+                        errorEl.style.display = "";
+                        return;
+                    }
+                    if (!folderPath) {
+                        errorEl.textContent = i18n.t("vault.notifications.pathRequired");
+                        errorEl.style.display = "";
+                        return;
+                    }
+                    if (password !== confirm) {
+                        errorEl.textContent = i18n.t("vault.notifications.passwordMismatch");
+                        errorEl.style.display = "";
+                        return;
+                    }
                     errorEl.style.display = "none";
 
                     const btn = document.getElementById("vault-create-submit");
@@ -1140,9 +1166,21 @@
                     const password = document.getElementById("vault-import-password").value;
                     const errorEl = document.getElementById("vault-import-error");
 
-                    if (!lkvPath) { errorEl.textContent = i18n.t("vault.notifications.pathRequired"); errorEl.style.display = ""; return; }
-                    if (!name) { errorEl.textContent = i18n.t("vault.notifications.nameRequired"); errorEl.style.display = ""; return; }
-                    if (!password) { errorEl.textContent = i18n.t("vault.notifications.passwordRequired"); errorEl.style.display = ""; return; }
+                    if (!lkvPath) {
+                        errorEl.textContent = i18n.t("vault.notifications.pathRequired");
+                        errorEl.style.display = "";
+                        return;
+                    }
+                    if (!name) {
+                        errorEl.textContent = i18n.t("vault.notifications.nameRequired");
+                        errorEl.style.display = "";
+                        return;
+                    }
+                    if (!password) {
+                        errorEl.textContent = i18n.t("vault.notifications.passwordRequired");
+                        errorEl.style.display = "";
+                        return;
+                    }
                     errorEl.style.display = "none";
 
                     const btn = document.getElementById("vault-import-submit");
@@ -1178,7 +1216,11 @@
                 document.getElementById("vault-rename-submit").addEventListener("click", async () => {
                     const newName = document.getElementById("vault-rename-input").value.trim();
                     const errorEl = document.getElementById("vault-rename-error");
-                    if (!newName) { errorEl.textContent = i18n.t("vault.notifications.nameRequired"); errorEl.style.display = ""; return; }
+                    if (!newName) {
+                        errorEl.textContent = i18n.t("vault.notifications.nameRequired");
+                        errorEl.style.display = "";
+                        return;
+                    }
 
                     const result = await window.localkeys.vault.rename(renamingVaultId, newName);
                     if (result.success) {
@@ -1209,7 +1251,7 @@
                 }
 
                 // 모달 외부 클릭으로 닫기 (vault 모달들)
-                ["vault-create-modal", "vault-import-modal", "vault-rename-modal"].forEach(id => {
+                ["vault-create-modal", "vault-import-modal", "vault-rename-modal"].forEach((id) => {
                     const overlay = document.getElementById(id);
                     overlay.addEventListener("click", (e) => {
                         if (mouseDownTarget === overlay && e.target === overlay) hideModal(id);

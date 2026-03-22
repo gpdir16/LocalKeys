@@ -62,7 +62,8 @@ function coerceAutoLockTimeout(value, fallback) {
 
 function normalizeSettings(settings) {
     const safeSettings = settings && typeof settings === "object" && !Array.isArray(settings) ? settings : {};
-    const safeAutoLock = safeSettings.autoLock && typeof safeSettings.autoLock === "object" && !Array.isArray(safeSettings.autoLock) ? safeSettings.autoLock : {};
+    const safeAutoLock =
+        safeSettings.autoLock && typeof safeSettings.autoLock === "object" && !Array.isArray(safeSettings.autoLock) ? safeSettings.autoLock : {};
 
     const normalized = {
         checkForUpdates: coerceBoolean(safeSettings.checkForUpdates, DEFAULT_SETTINGS.checkForUpdates),
@@ -390,7 +391,9 @@ function showUpdateDialog(newVersion) {
 
     // 번역 가져오기
     const title = i18n ? i18n.t("update.title") : "New update available";
-    const description = i18n ? i18n.t("update.description", { oldVersion: APP_VERSION, newVersion: newVersion }) : `v${APP_VERSION} ➠ v${newVersion}<br/>Click the update button to see more details.`;
+    const description = i18n
+        ? i18n.t("update.description", { oldVersion: APP_VERSION, newVersion: newVersion })
+        : `v${APP_VERSION} ➠ v${newVersion}<br/>Click the update button to see more details.`;
     const closeText = i18n ? i18n.t("common.close") : "Close";
     const updateText = i18n ? i18n.t("update.update") : "Update";
 
@@ -1310,7 +1313,9 @@ function setupIpcHandlers() {
 
             // CLI 생성 함수
             const createCliScript = (electronPath) =>
-                os.platform() === "win32" ? `@echo off\nset ELECTRON_RUN_AS_NODE=1\n"${electronPath}" "${cliPath}" %*` : `#!/bin/bash\nELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliPath}" "$@"`;
+                os.platform() === "win32"
+                    ? `@echo off\nset ELECTRON_RUN_AS_NODE=1\n"${electronPath}" "${cliPath}" %*`
+                    : `#!/bin/bash\nELECTRON_RUN_AS_NODE=1 "${electronPath}" "${cliPath}" "$@"`;
 
             // 설치 경로 목록
             const homeDir = os.homedir();
@@ -1370,7 +1375,12 @@ function setupIpcHandlers() {
                     if (os.platform() !== "win32") {
                         try {
                             const homeDir = os.homedir();
-                            const shellConfigs = [path.join(homeDir, ".zshrc"), path.join(homeDir, ".bashrc"), path.join(homeDir, ".bash_profile"), path.join(homeDir, ".profile")];
+                            const shellConfigs = [
+                                path.join(homeDir, ".zshrc"),
+                                path.join(homeDir, ".bashrc"),
+                                path.join(homeDir, ".bash_profile"),
+                                path.join(homeDir, ".profile"),
+                            ];
 
                             const localBinPath = path.join(homeDir, ".local", "bin");
                             const pathLine = `\n# LocalKeys CLI\nexport PATH="$PATH:${localBinPath}"\n`;
@@ -1576,7 +1586,12 @@ function setupIpcHandlers() {
 
                 try {
                     const homeDir = os.homedir();
-                    const shellConfigs = [path.join(homeDir, ".zshrc"), path.join(homeDir, ".bashrc"), path.join(homeDir, ".bash_profile"), path.join(homeDir, ".profile")];
+                    const shellConfigs = [
+                        path.join(homeDir, ".zshrc"),
+                        path.join(homeDir, ".bashrc"),
+                        path.join(homeDir, ".bash_profile"),
+                        path.join(homeDir, ".profile"),
+                    ];
 
                     const localBinPath = path.join(homeDir, ".local", "bin");
                     let pathRemoved = false;
@@ -1620,8 +1635,8 @@ function setupIpcHandlers() {
                     ? i18n.t("cli.uninstall.success")
                     : "CLI uninstalled successfully."
                 : i18n
-                ? i18n.t("cli.uninstall.notFound")
-                : "CLI not found. Already uninstalled or not installed.";
+                  ? i18n.t("cli.uninstall.notFound")
+                  : "CLI not found. Already uninstalled or not installed.";
 
             return { success: true, message };
         } catch (error) {
@@ -1701,7 +1716,10 @@ function setupIpcHandlers() {
     ipcMain.handle("settings:set", (event, newSettings) => {
         const currentSettings = loadSettings();
         const safeNewSettings = newSettings && typeof newSettings === "object" && !Array.isArray(newSettings) ? newSettings : {};
-        const safeNewAutoLock = safeNewSettings.autoLock && typeof safeNewSettings.autoLock === "object" && !Array.isArray(safeNewSettings.autoLock) ? safeNewSettings.autoLock : {};
+        const safeNewAutoLock =
+            safeNewSettings.autoLock && typeof safeNewSettings.autoLock === "object" && !Array.isArray(safeNewSettings.autoLock)
+                ? safeNewSettings.autoLock
+                : {};
         const { normalized: mergedSettings } = normalizeSettings({
             ...currentSettings,
             ...safeNewSettings,
@@ -1728,7 +1746,9 @@ function setupIpcHandlers() {
             }
 
             // 자동 잠금 설정 변경 처리
-            const autoLockChanged = mergedSettings.autoLock?.enabled !== currentSettings.autoLock?.enabled || mergedSettings.autoLock?.timeout !== currentSettings.autoLock?.timeout;
+            const autoLockChanged =
+                mergedSettings.autoLock?.enabled !== currentSettings.autoLock?.enabled ||
+                mergedSettings.autoLock?.timeout !== currentSettings.autoLock?.timeout;
             if (autoLockChanged && isUnlocked) {
                 startAutoLock(); // 변경된 설정으로 자동 잠금 재시작
             }
@@ -1892,48 +1912,26 @@ function buildAppMenu() {
     // Edit 메뉴
     template.push({
         label: "Edit",
-        submenu: [
-            { role: "cut" },
-            { role: "copy" },
-            { role: "paste" },
-        ],
+        submenu: [{ role: "cut" }, { role: "copy" }, { role: "paste" }],
     });
 
     // View 메뉴
     template.push({
         label: "View",
-        submenu: [
-            { role: "resetZoom" },
-            { role: "zoomIn" },
-            { role: "zoomOut" },
-            { type: "separator" },
-            { role: "togglefullscreen" },
-        ],
+        submenu: [{ role: "resetZoom" }, { role: "zoomIn" }, { role: "zoomOut" }, { type: "separator" }, { role: "togglefullscreen" }],
     });
 
     // View 메뉴
     template.push({
         label: "Developer",
-        submenu: [
-            { role: "reload" },
-            { role: "forceReload" },
-            { type: "separator" },
-            { role: "toggleDevTools" },
-        ],
+        submenu: [{ role: "reload" }, { role: "forceReload" }, { type: "separator" }, { role: "toggleDevTools" }],
     });
 
     // Window 메뉴
-    const windowSubmenu = [
-        { role: "minimize" },
-        { role: "zoom" },
-        { role: "close" },
-    ];
+    const windowSubmenu = [{ role: "minimize" }, { role: "zoom" }, { role: "close" }];
 
     if (isMac) {
-        windowSubmenu.push(
-            { type: "separator" },
-            { role: "front" }
-        );
+        windowSubmenu.push({ type: "separator" }, { role: "front" });
     }
 
     template.push({

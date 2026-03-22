@@ -14,9 +14,9 @@ class VaultManager {
         this.localkeysDir = localkeysDir;
         this.configPath = path.join(localkeysDir, VAULTS_CONFIG_FILE);
 
-        this.systemVault = null;      // 시스템 금고 인스턴스
-        this.vaultsConfig = null;     // 잠금 해제 후 복호화된 설정 ({ version, otherVaults })
-        this.vaults = new Map();      // vaultId -> Vault instance
+        this.systemVault = null; // 시스템 금고 인스턴스
+        this.vaultsConfig = null; // 잠금 해제 후 복호화된 설정 ({ version, otherVaults })
+        this.vaults = new Map(); // vaultId -> Vault instance
         this.activeVaultId = SYSTEM_VAULT_ID;
     }
 
@@ -59,7 +59,7 @@ class VaultManager {
                     } catch (err) {
                         console.error(`Failed to auto-unlock vault "${vaultEntry.name}":`, err.message);
                     }
-                })
+                }),
         );
     }
 
