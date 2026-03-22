@@ -443,7 +443,7 @@ body.window-blurred .project-card.active {
     padding: 15px;
 }
 
-.list-item:hover {
+.list-item:hover:not(:has(.dropdown-menu:not(.hidden))) {
     background-color: var(--bg-tertiary);
 }
 
@@ -915,6 +915,11 @@ body.window-blurred .project-card.active {
     display: inline-block;
 }
 
+/* 드롭다운이 열려있을 때 부모 요소 호버 효과 방지 */
+.dropdown:has(.dropdown-menu:not(.hidden)) {
+    pointer-events: auto;
+}
+
 .dropdown-toggle {
     padding: 6px;
     display: flex;
@@ -935,9 +940,21 @@ body.window-blurred .project-card.active {
     min-width: 100px;
 }
 
+/* 드롭다운 메뉴가 열렸을 때 부모의 호버 효과 제거 */
+.dropdown-menu:not(.hidden) {
+    pointer-events: auto;
+}
+
 .dropdown-menu.dropdown-menu-left {
     left: auto;
     right: 0;
+}
+
+/* Vault 컨텍스트 메뉴 - 우측 정렬 */
+.vault-context-menu {
+    left: auto;
+    right: 0;
+    min-width: 140px;
 }
 
 .dropdown-menu.hidden {
@@ -1005,11 +1022,6 @@ body.window-blurred .project-card.active {
 
 .dropdown-item.active {
     background-color: rgba(74, 158, 255, 0.1);
-}
-
-.dropdown-item.offline {
-    opacity: 0.45;
-    pointer-events: none;
 }
 
 .dropdown-item-left {

@@ -335,6 +335,7 @@
 
         <script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
+        <script src="../modules/dropdown.js"></script>
         <script>
             document.addEventListener("DOMContentLoaded", async function () {
                 // 다국어 초기화
@@ -558,7 +559,7 @@
                     dropdownBtn.appendChild(ellipsisIcon);
                     dropdownBtn.onclick = (e) => {
                         e.stopPropagation();
-                        toggleDropdown(dropdownMenu);
+                        dropdownManager.toggle(dropdownMenu);
                     };
 
                     const dropdownMenu = document.createElement("div");
@@ -955,31 +956,6 @@
                     }
                 });
 
-                // 드롭다운 토글 함수
-                function toggleDropdown(dropdown) {
-                    if (!dropdown) return;
-                    const allDropdowns = document.querySelectorAll(".dropdown-menu");
-
-                    // 다른 드롭다운 모두 닫기
-                    allDropdowns.forEach((d) => {
-                        if (d !== dropdown) {
-                            d.classList.add("hidden");
-                        }
-                    });
-
-                    // 현재 드롭다운 토글
-                    dropdown.classList.toggle("hidden");
-
-                    // 오른쪽 공간 부족 시 왼쪽으로 위치 조정
-                    if (!dropdown.classList.contains("hidden")) {
-                        dropdown.classList.remove("dropdown-menu-left");
-                        const rect = dropdown.getBoundingClientRect();
-                        if (rect.right > window.innerWidth) {
-                            dropdown.classList.add("dropdown-menu-left");
-                        }
-                    }
-                }
-
                 // 시크릿 히스토리 보기
                 async function viewHistory(secretKey) {
                     const historyModal = document.getElementById("history-modal");
@@ -989,8 +965,12 @@
                     // 모달 표시
                     historyKeyEl.textContent = secretKey;
                     historyModal.classList.remove("hidden");
-                    historyModal.classList.add("show");
                     historyContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                    
+                    // 다음 프레임에서 애니메이션 시작
+                    requestAnimationFrame(() => {
+                        historyModal.classList.add("show");
+                    });
 
                     // 히스토리 가져오기
                     const result = await window.localkeys.secrets.getHistory(projectName, secretKey);
@@ -1084,9 +1064,11 @@
                                     notificationManager.success(i18n.t("project.history.restored"));
                                     const historyModal = document.getElementById("history-modal");
                                     historyModal.classList.remove("show");
+                                    historyModal.classList.add("closing");
                                     setTimeout(() => {
                                         historyModal.classList.add("hidden");
-                                    }, 200);
+                                        historyModal.classList.remove("closing");
+                                    }, 250);
                                     await loadSecrets();
                                 } else {
                                     notificationManager.error(i18n.t("project.history.failedToRestore") + `: ${result.error}`);
@@ -1109,27 +1091,24 @@
                 document.getElementById("close-history")?.addEventListener("click", () => {
                     const historyModal = document.getElementById("history-modal");
                     historyModal.classList.remove("show");
+                    historyModal.classList.add("closing");
                     setTimeout(() => {
                         historyModal.classList.add("hidden");
-                    }, 200);
+                        historyModal.classList.remove("closing");
+                    }, 250);
                 });
 
-                // 히스토리 모달 오버레이 클릭 시 닫기
-                document.getElementById("history-modal")?.addEventListener("click", (e) => {
-                    if (e.target.id === "history-modal") {
-                        const historyModal = document.getElementById("history-modal");
-                        historyModal.classList.remove("show");
+                // 히스토리 모달 오버레이 클릭 시 닫기 - mousedown 시작 지점도 체크
+                const historyModalEl = document.getElementById("history-modal");
+                historyModalEl?.addEventListener("click", (e) => {
+                    // 클릭 시작과 끝 모두 모달 오버레이인 경우에만 닫기
+                    if (mouseDownTarget === historyModalEl && e.target === historyModalEl) {
+                        historyModalEl.classList.remove("show");
+                        historyModalEl.classList.add("closing");
                         setTimeout(() => {
-                            historyModal.classList.add("hidden");
-                        }, 200);
-                    }
-                });
-
-                // 외부 클릭 시 드롭다운 닫기
-                document.addEventListener("click", function (e) {
-                    if (!e.target.closest(".dropdown")) {
-                        const allDropdowns = document.querySelectorAll(".dropdown-menu");
-                        allDropdowns.forEach((d) => d.classList.add("hidden"));
+                            historyModalEl.classList.add("hidden");
+                            historyModalEl.classList.remove("closing");
+                        }, 250);
                     }
                 });
 

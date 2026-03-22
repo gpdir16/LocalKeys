@@ -15,7 +15,7 @@
                 cursor: default;
             }
 
-            .project-card:hover {
+            .project-card:hover:not(:has(.dropdown-menu:not(.hidden))) {
                 background-color: var(--bg-tertiary);
             }
 
@@ -261,6 +261,7 @@
 
 <script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
+        <script src="../modules/dropdown.js"></script>
 
         <script>
             document.addEventListener("DOMContentLoaded", async function () {
@@ -504,8 +505,7 @@
 
                     dropdownBtn.onclick = (e) => {
                         e.stopPropagation();
-
-                        toggleDropdown(dropdownMenu);
+                        dropdownManager.toggle(dropdownMenu);
                     };
 
                     const dropdownMenu = document.createElement("div");
@@ -773,7 +773,7 @@
 
                 addProjectBtn.addEventListener("click", showAddProjectModal);
 
-                settingsDropdownBtn.addEventListener("click", () => toggleDropdown(document.getElementById("dropdown-settings")));
+                settingsDropdownBtn.addEventListener("click", () => dropdownManager.toggle(document.getElementById("dropdown-settings")));
 
                 logsBtn.addEventListener("click", function () {
                     window.location.href = "logs.html";
@@ -831,42 +831,6 @@
                     }
                 });
 
-                // 드롭다운 토글 함수
-
-                function toggleDropdown(dropdown) {
-                    if (!dropdown) return;
-
-                    const allDropdowns = document.querySelectorAll(".dropdown-menu");
-
-                    // 다른 드롭다운 모두 닫기
-                    allDropdowns.forEach((d) => {
-                        if (d !== dropdown) {
-                            d.classList.add("hidden");
-                        }
-                    });
-
-                    // 현재 드롭다운 토글
-                    dropdown.classList.toggle("hidden");
-
-                    // 오른쪽 공간 부족 시 왼쪽으로 위치 조정
-                    if (!dropdown.classList.contains("hidden")) {
-                        dropdown.classList.remove("dropdown-menu-left");
-                        const rect = dropdown.getBoundingClientRect();
-                        if (rect.right > window.innerWidth) {
-                            dropdown.classList.add("dropdown-menu-left");
-                        }
-                    }
-                }
-
-                // 외부 클릭 시 드롭다운 닫기
-
-                document.addEventListener("click", function (e) {
-                    if (!e.target.closest(".dropdown")) {
-                        const allDropdowns = document.querySelectorAll(".dropdown-menu");
-
-                        allDropdowns.forEach((d) => d.classList.add("hidden"));
-                    }
-                });
 
                 // 자동 새로고침 설정 (10초마다)
 
@@ -1012,16 +976,47 @@
 
                         // 컨텍스트 버튼 (System 금고 제외)
                         if (!vault.isSystem) {
+                            const dropdownContainer = document.createElement("div");
+                            dropdownContainer.className = "dropdown";
+
                             const ctxBtn = document.createElement("button");
                             ctxBtn.className = "dropdown-item-context-btn";
                             const ctxIcon = document.createElement("span");
                             ctxIcon.className = "lk-icon lk-icon-sm lk-icon-ellipsis";
                             ctxBtn.appendChild(ctxIcon);
+
+                            const ctxMenu = document.createElement("div");
+                            ctxMenu.className = "dropdown-menu hidden vault-context-menu";
+
+                            const renameBtn = document.createElement("button");
+                            renameBtn.className = "dropdown-item";
+                            renameBtn.textContent = i18n.t("vault.context.rename");
+                            renameBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                dropdownManager.closeAll();
+                                showVaultRenameModal(vault);
+                            };
+
+                            const removeBtn = document.createElement("button");
+                            removeBtn.className = "dropdown-item";
+                            removeBtn.textContent = i18n.t("vault.context.remove");
+                            removeBtn.onclick = (e) => {
+                                e.stopPropagation();
+                                dropdownManager.closeAll();
+                                handleVaultRemove(vault);
+                            };
+
+                            ctxMenu.appendChild(renameBtn);
+                            ctxMenu.appendChild(removeBtn);
+
                             ctxBtn.onclick = (e) => {
                                 e.stopPropagation();
-                                showVaultContextMenu(vault, ctxBtn);
+                                dropdownManager.toggle(ctxMenu);
                             };
-                            item.appendChild(ctxBtn);
+
+                            dropdownContainer.appendChild(ctxBtn);
+                            dropdownContainer.appendChild(ctxMenu);
+                            item.appendChild(dropdownContainer);
                         }
 
                         if (vault.status !== "offline") {
@@ -1079,54 +1074,6 @@
 
                 function closeVaultDropdown() {
                     vaultDropdownMenu.classList.add("hidden");
-                }
-
-                document.addEventListener("click", (e) => {
-                    if (!e.target.closest("#vault-dropdown")) {
-                        closeVaultDropdown();
-                    }
-                });
-
-                // 금고 컨텍스트 메뉴
-                let contextMenuEl = null;
-                function showVaultContextMenu(vault, anchorEl) {
-                    if (contextMenuEl) contextMenuEl.remove();
-
-                    const menu = document.createElement("div");
-                    menu.className = "dropdown-menu";
-                    menu.style.cssText = "position:fixed;z-index:2000;";
-
-                    const renameBtn = document.createElement("button");
-                    renameBtn.className = "dropdown-item";
-                    renameBtn.textContent = i18n.t("vault.context.rename");
-                    renameBtn.onclick = () => {
-                        menu.remove();
-                        showVaultRenameModal(vault);
-                    };
-
-                    const removeBtn = document.createElement("button");
-                    removeBtn.className = "dropdown-item";
-                    removeBtn.textContent = i18n.t("vault.context.remove");
-                    removeBtn.onclick = () => {
-                        menu.remove();
-                        handleVaultRemove(vault);
-                    };
-
-                    menu.appendChild(renameBtn);
-                    menu.appendChild(removeBtn);
-                    menu.style.minWidth = "140px";
-                    document.body.appendChild(menu);
-                    contextMenuEl = menu;
-
-                    const rect = anchorEl.getBoundingClientRect();
-                    menu.style.top = (rect.bottom + 4) + "px";
-                    // 우측 정렬: 앵커 버튼 오른쪽 끝에 맞춤
-                    menu.style.right = (window.innerWidth - rect.right) + "px";
-                    menu.style.left = "auto";
-
-                    setTimeout(() => {
-                        document.addEventListener("click", () => menu.remove(), { once: true });
-                    }, 0);
                 }
 
                 // 새 금고 생성
@@ -1286,7 +1233,7 @@
                 ["vault-create-modal", "vault-import-modal", "vault-rename-modal"].forEach(id => {
                     const overlay = document.getElementById(id);
                     overlay.addEventListener("click", (e) => {
-                        if (e.target === overlay) hideModal(id);
+                        if (mouseDownTarget === overlay && e.target === overlay) hideModal(id);
                     });
                 });
 
