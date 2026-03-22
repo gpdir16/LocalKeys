@@ -260,6 +260,10 @@
         "autoLockTimeout": "자동 잠금 시간 (분)",
         "screenCaptureProtection": "화면 캡처 방지",
         "screenCaptureProtectionDesc": "스크린샷 및 화면 녹화를 방지합니다",
+        "vaultDiskSyncInterval": "금고 파일 동기화 주기",
+        "vaultDiskSyncIntervalDesc": "잠금 해제 중 디스크의 금고 파일을 외부 변경과 맞추기 위해 확인하는 간격입니다",
+        "vaultDiskSync5s": "5초마다",
+        "vaultDiskSync1m": "1분마다",
         "notifications": {
             "saved": "설정이 저장되었습니다",
             "saveFailed": "설정 저장에 실패했습니다",
@@ -316,6 +320,35 @@
         },
         "remove": {
             "confirm": "\"{{name}}\" 금고를 목록에서 제거하시겠습니까? 금고 파일은 삭제되지 않습니다."
+        },
+        "externalChange": {
+            "title": "다른 곳에서 금고 파일이 변경됨",
+            "message": "디스크의 암호화된 금고 파일이 이 세션에서 연 상태와 다릅니다. 조치를 선택하기 전에는 편집 내용을 저장할 수 없습니다.",
+            "reloadConfirm": "디스크에서 다시 불러올까요? 이 창에서 저장하지 않은 변경은 사라집니다.",
+            "forceConfirm": "디스크의 파일을 덮어쓰고 강제로 저장할까요? 다른 곳에서 저장한 내용이 사라질 수 있습니다.",
+            "reloadFailed": "다시 불러오기 실패: {{error}}",
+            "saveForceFailed": "저장 실패: {{error}}",
+            "staleTitle": "외부에서 금고가 갱신됨",
+            "staleReloadConfirm": "디스크의 금고 파일이 변경되었습니다. 지금 다시 불러올까요? 이 창에서 저장하지 않은 변경은 사라집니다."
+        },
+        "merge": {
+            "title": "금고 충돌 해결",
+            "subtitle": "",
+            "intro": "디스크에 이 세션의 변경 사항을 동기화하던 중 일부 항목이 충돌했습니다. 어떤 버전의 금고를 살릴지 선택해주세요.",
+            "colProject": "프로젝트",
+            "colSecret": "시크릿",
+            "colSession": "이 세션",
+            "colDisk": "디스크",
+            "autoMergeHint": "모두 살리기는 가능하다면 모든 항목을 합쳐 살려냅니다. 이 기기 또는 다른 기기(팀원)이 지운 항목이 되살아날 수도 있습니다.",
+            "conflictHint": "같은 시크릿 키가 양쪽에 모두 있고 값이 다릅니다. 모두 살리기는 사용할 수 없습니다. 아래 버튼으로 한쪽을 선택하세요.",
+            "applyMerge": "모두 살리기",
+            "cancel": "닫기",
+            "reloadDisk": "이 세션(나)의 변경사항 취소",
+            "overwriteDisk": "무시하고 덮어쓰기 (위험)",
+            "sameContent": "프로젝트/시크릿 내용 차이는 없습니다. 파일은 다른 이유로 다를 수 있습니다(메타데이터 등). 동기화하거나 다시 불러올 수 있습니다.",
+            "saveSync": "이 세션 내용을 디스크에 저장",
+            "loadFailed": "비교를 불러오지 못했습니다: {{error}}",
+            "mergeFailed": "적용 실패: {{error}}"
         },
         "notifications": {
             "created": "금고 \"{{name}}\"이(가) 생성되었습니다",

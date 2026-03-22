@@ -177,12 +177,24 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+                    <div class="settings-item">
+                        <div class="settings-item-info">
+                            <span class="settings-item-label" id="label-vault-sync-interval">Vault sync</span>
+                            <span class="settings-item-description" id="desc-vault-sync-interval">...</span>
+                        </div>
+                        <select id="vault-sync-interval-select" class="btn btn-secondary filter-select">
+                            <option value="5" id="vault-sync-opt-5">5s</option>
+                            <option value="60" id="vault-sync-opt-60">1m</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
 
         <script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
+        <script src="../modules/vault-merge-ui.js"></script>
+        <script src="../modules/vault-external-change.js"></script>
         <script>
             document.addEventListener("DOMContentLoaded", async function () {
                 // 다국어 초기화
@@ -206,6 +218,10 @@
                 document.getElementById("label-auto-lock-timeout").textContent = i18n.t("settings.autoLockTimeout");
                 document.getElementById("label-screen-capture").textContent = i18n.t("settings.screenCaptureProtection");
                 document.getElementById("desc-screen-capture").textContent = i18n.t("settings.screenCaptureProtectionDesc");
+                document.getElementById("label-vault-sync-interval").textContent = i18n.t("settings.vaultDiskSyncInterval");
+                document.getElementById("desc-vault-sync-interval").textContent = i18n.t("settings.vaultDiskSyncIntervalDesc");
+                document.getElementById("vault-sync-opt-5").textContent = i18n.t("settings.vaultDiskSync5s");
+                document.getElementById("vault-sync-opt-60").textContent = i18n.t("settings.vaultDiskSync1m");
 
                 const backBtn = document.getElementById("back-btn");
                 const checkUpdatesToggle = document.getElementById("check-updates-toggle");
@@ -217,6 +233,7 @@
                 const autoLockTimeoutInput = document.getElementById("auto-lock-timeout-input");
                 const autoLockTimeoutItem = document.getElementById("auto-lock-timeout-item");
                 const screenCaptureToggle = document.getElementById("screen-capture-toggle");
+                const vaultSyncIntervalSelect = document.getElementById("vault-sync-interval-select");
 
                 // 타임아웃 입력 필드 표시/숨김
                 function updateTimeoutVisibility() {
@@ -240,6 +257,7 @@
                         autoLockToggle.checked = settings.autoLock?.enabled !== false; // 기본값 true
                         autoLockTimeoutInput.value = settings.autoLock?.timeout || 30;
                         screenCaptureToggle.checked = settings.screenCaptureProtection !== false; // 기본값 true
+                        vaultSyncIntervalSelect.value = settings.vaultDiskSyncIntervalSeconds === 60 ? "60" : "5";
 
                         updateTimeoutVisibility();
                     } catch (error) {
@@ -259,6 +277,7 @@
                                 timeout: parseInt(autoLockTimeoutInput.value) || 30,
                             },
                             screenCaptureProtection: screenCaptureToggle.checked,
+                            vaultDiskSyncIntervalSeconds: parseInt(vaultSyncIntervalSelect.value, 10) === 60 ? 60 : 5,
                         };
 
                         const result = await window.localkeys.settings.set(settings);
@@ -289,6 +308,7 @@
                 });
                 autoLockTimeoutInput.addEventListener("change", saveSettings);
                 screenCaptureToggle.addEventListener("change", saveSettings);
+                vaultSyncIntervalSelect.addEventListener("change", saveSettings);
 
                 // 초기 로드
                 loadSettings();

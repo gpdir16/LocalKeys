@@ -297,6 +297,7 @@ class HttpServer {
                         const approvalResult = await this.requestBatchApproval(safeData.projectName, [safeData.key], "write");
                         if (approvalResult.approved) {
                             vault.setSecret(safeData.projectName, safeData.key, safeData.value);
+                            await vault.saveNow();
                             result = { success: true };
                         } else {
                             const reason = approvalResult.reason || "User denied";
@@ -329,7 +330,11 @@ class HttpServer {
 
             return result;
         } catch (error) {
-            return { success: false, error: error.message };
+            const out = { success: false, error: error.message };
+            if (error.code) {
+                out.code = error.code;
+            }
+            return out;
         }
     }
 

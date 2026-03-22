@@ -18,10 +18,36 @@ class VaultManager {
         this.vaultsConfig = null; // 잠금 해제 후 복호화된 설정 ({ version, otherVaults })
         this.vaults = new Map(); // vaultId -> Vault instance
         this.activeVaultId = SYSTEM_VAULT_ID;
+        /** @type {((payload: { vaultId: string | null; reason?: string }) => void) | null} */
+        this._conflictNotifier = null;
     }
 
     init() {
         this._ensureSystemVaultInstance();
+    }
+
+    setConflictNotifier(fn) {
+        this._conflictNotifier = typeof fn === "function" ? fn : null;
+    }
+
+    _wireVaultConflict(vault) {
+        if (!vault) return;
+        vault.setConflictNotifier((payload) => {
+            if (this._conflictNotifier) {
+                this._conflictNotifier({
+                    ...payload,
+                    vaultId: vault.getVaultId(),
+                });
+            }
+        });
+    }
+
+    async reloadVaultFromDisk(vaultId) {
+        const vault = this.vaults.get(vaultId);
+        if (!vault || vault.isLocked) {
+            throw new Error("Vault is not available");
+        }
+        await vault.reloadFromDisk();
     }
 
     // 시스템 금고 최초 설정 (비밀번호 최초 등록)
@@ -55,6 +81,8 @@ class VaultManager {
                         if (!vault.exists()) return;
                         const keyBuffer = Buffer.from(vaultEntry.encryptionKey, "hex");
                         await vault.unlockWithKey(keyBuffer);
+                        vault.setVaultId(vaultEntry.id);
+                        this._wireVaultConflict(vault);
                         this.vaults.set(vaultEntry.id, vault);
                     } catch (err) {
                         console.error(`Failed to auto-unlock vault "${vaultEntry.name}":`, err.message);
@@ -313,6 +341,8 @@ class VaultManager {
             const vault = new Vault(vaultEntry.path);
             const keyBuffer = Buffer.from(vaultEntry.encryptionKey, "hex");
             await vault.unlockWithKey(keyBuffer);
+            vault.setVaultId(vaultEntry.id);
+            this._wireVaultConflict(vault);
             this.vaults.set(vaultId, vault);
             return vault;
         } catch {
@@ -323,6 +353,8 @@ class VaultManager {
     _ensureSystemVaultInstance() {
         if (!this.systemVault) {
             this.systemVault = new Vault(this.localkeysDir);
+            this.systemVault.setVaultId(SYSTEM_VAULT_ID);
+            this._wireVaultConflict(this.systemVault);
             this.vaults.set(SYSTEM_VAULT_ID, this.systemVault);
         }
     }
@@ -358,6 +390,8 @@ class VaultManager {
     // 금고 항목을 config 및 Map에 등록하고 암호화 키를 제외한 공개 항목 반환
     _registerVaultEntry(name, lkvPath, vault) {
         const id = `vault_${Date.now()}`;
+        vault.setVaultId(id);
+        this._wireVaultConflict(vault);
         const vaultEntry = {
             id,
             name,

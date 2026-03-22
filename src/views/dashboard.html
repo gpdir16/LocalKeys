@@ -242,6 +242,8 @@
         <script src="../modules/notification.js"></script>
         <script src="../modules/dropdown.js"></script>
         <script src="../modules/list-sync.js"></script>
+        <script src="../modules/vault-merge-ui.js"></script>
+        <script src="../modules/vault-external-change.js"></script>
 
         <script>
             document.addEventListener("DOMContentLoaded", async function () {
@@ -912,6 +914,12 @@
                         await loadProjects();
                     }
                 }, 10000);
+
+                window.addEventListener("localkeys:vault-data-synced", () => {
+                    if (document.visibilityState === "visible") {
+                        loadProjects();
+                    }
+                });
 
                 // 페이지가 보이지 않을 때는 자동 새로고침 중지
 

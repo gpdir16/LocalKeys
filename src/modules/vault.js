@@ -1,9 +1,17 @@
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const CryptoUtil = require("./crypto");
+const { isSilentResolvable, mergeVaultThreeWay, snapshotSecretForBaseline, normalizeFavoritesForCompare } = require("./vault-merge");
+
+const VAULT_EXTERNAL_CHANGE = "VAULT_EXTERNAL_CHANGE";
+
+function sha256Hex(buffer) {
+    return crypto.createHash("sha256").update(buffer).digest("hex");
+}
 
 class Vault {
-    constructor(dataDir) {
+    constructor(dataDir, options = {}) {
         this.dataDir = dataDir;
         this.vaultPath = path.join(dataDir, "vault.enc");
         this.saltPath = path.join(dataDir, "salt.txt");
@@ -13,6 +21,123 @@ class Vault {
         this.key = null;
         this.saveTimeout = null;
         this.maxHistoryVersions = 50; // 각 시크릿당 최대 히스토리 버전 수
+
+        this._vaultId = options.vaultId ?? null;
+        this._onConflictNotify = typeof options.onConflict === "function" ? options.onConflict : null;
+        // vault.enc 암호문 전체의 SHA-256 (낙관적 동시성)
+        this._diskContentHash = null;
+        // 마지막으로 디스크와 맞췄을 때 시크릿 값 스냅샷(3-way 병합 공통 조상)
+        this._syncBaseline = null;
+        this._periodicSyncInProgress = false;
+        // 주기 병합 충돌 알림 스팸 방지 (ms 타임스탬프)
+        this._periodicConflictNotifyCooldownUntil = 0;
+    }
+
+    _refreshSyncBaseline() {
+        this._syncBaseline = { projects: Object.create(null) };
+        const projects = this.data?.projects || {};
+        for (const [name, proj] of Object.entries(projects)) {
+            const sec = proj?.secrets && typeof proj.secrets === "object" ? proj.secrets : {};
+            const snap = Object.create(null);
+            for (const [k, v] of Object.entries(sec)) {
+                snap[k] = snapshotSecretForBaseline(v);
+            }
+            this._syncBaseline.projects[name] = { secrets: snap };
+        }
+        this._syncBaseline.favorites = normalizeFavoritesForCompare(this.data.favorites);
+    }
+
+    // 디스크가 바뀌었으면 3-way 병합(비충돌 시 디스크 변경 수용) 후 강제 저장. 동시 편집 충돌 시 알림만 하고 메모리는 유지.
+    async tickPeriodicDiskSync() {
+        if (this.isLocked || this._diskContentHash == null) {
+            return { didSync: false };
+        }
+        if (!this.isDiskStale()) {
+            return { didSync: false };
+        }
+        if (this._periodicSyncInProgress) {
+            return { didSync: false };
+        }
+        this._periodicSyncInProgress = true;
+        try {
+            if (this.saveTimeout) {
+                clearTimeout(this.saveTimeout);
+                this.saveTimeout = null;
+            }
+            const remote = this.peekRemoteData();
+            const local = JSON.parse(JSON.stringify(this.data));
+            const baseline = this._syncBaseline || { projects: {} };
+            const result = mergeVaultThreeWay(local, remote, baseline);
+            if (result.conflicts.length > 0) {
+                const now = Date.now();
+                if (!this._periodicConflictNotifyCooldownUntil || now >= this._periodicConflictNotifyCooldownUntil) {
+                    this._periodicConflictNotifyCooldownUntil = now + 30000;
+                    this._notifyConflict({ reason: "periodic_merge_conflict", conflicts: result.conflicts });
+                }
+                return { didSync: false, conflict: true };
+            }
+            this.applyMergedData(result.merged);
+            await this.saveNow({ force: true });
+            return { didSync: true };
+        } catch (error) {
+            return { didSync: false, error: error.message || String(error) };
+        } finally {
+            this._periodicSyncInProgress = false;
+        }
+    }
+
+    setVaultId(vaultId) {
+        this._vaultId = vaultId;
+    }
+
+    getVaultId() {
+        return this._vaultId;
+    }
+
+    setConflictNotifier(fn) {
+        this._onConflictNotify = typeof fn === "function" ? fn : null;
+    }
+
+    _notifyConflict(payload) {
+        try {
+            this._onConflictNotify?.({
+                ...payload,
+                vaultId: this._vaultId,
+            });
+        } catch (error) {
+            console.error("Vault conflict notifier failed:", error?.message || error);
+        }
+    }
+
+    _setDiskHashFromCiphertext(encryptedBuffer) {
+        this._diskContentHash = sha256Hex(encryptedBuffer);
+    }
+
+    _verifyDiskUnchangedBeforeSave(force) {
+        if (force) {
+            return;
+        }
+        if (this._diskContentHash == null) {
+            return;
+        }
+        if (!fs.existsSync(this.vaultPath)) {
+            const err = new Error("Vault file was removed or replaced externally");
+            err.code = VAULT_EXTERNAL_CHANGE;
+            throw err;
+        }
+        let current;
+        try {
+            current = fs.readFileSync(this.vaultPath);
+        } catch (error) {
+            const err = new Error("Could not read vault file");
+            err.code = VAULT_EXTERNAL_CHANGE;
+            throw err;
+        }
+        if (sha256Hex(current) !== this._diskContentHash) {
+            const err = new Error("Vault file was changed externally");
+            err.code = VAULT_EXTERNAL_CHANGE;
+            throw err;
+        }
     }
 
     exists() {
@@ -90,12 +215,16 @@ class Vault {
 
         try {
             const encryptedData = fs.readFileSync(this.vaultPath);
+            this._setDiskHashFromCiphertext(encryptedData);
             this.data = CryptoUtil.decryptJson(encryptedData, this.key);
             this._normalizeData();
             this.isLocked = false;
+            this._refreshSyncBaseline();
         } catch (error) {
             this.key = null;
             this.data = null;
+            this._diskContentHash = null;
+            this._syncBaseline = null;
             throw new Error(errorMessage);
         }
     }
@@ -107,14 +236,24 @@ class Vault {
                 this.saveTimeout = null;
             }
 
-            if (sync) {
-                this._saveSync();
-            } else {
-                await this._save();
+            try {
+                if (sync) {
+                    this._saveSync(false);
+                } else {
+                    await this._save(false);
+                }
+            } catch (error) {
+                if (error.code === VAULT_EXTERNAL_CHANGE) {
+                    console.error("Vault lock: 저장 생략(외부에서 vault.enc 변경됨) — 메모리에만 있던 변경은 반영되지 않습니다.");
+                } else {
+                    throw error;
+                }
             }
 
             this.data = null;
             this.key = null;
+            this._diskContentHash = null;
+            this._syncBaseline = null;
             this.isLocked = true;
         }
     }
@@ -528,12 +667,13 @@ class Vault {
         this.data.favorites = normalizedFavorites;
     }
 
-    async _save() {
+    async _save(force = false) {
         if (!this.data || !this.key) {
             return;
         }
 
         const encryptedData = CryptoUtil.encryptJson(this.data, this.key);
+        this._verifyDiskUnchangedBeforeSave(force);
 
         return new Promise((resolve, reject) => {
             fs.writeFile(this.vaultPath, encryptedData, (err) => {
@@ -543,23 +683,28 @@ class Vault {
                     try {
                         fs.chmodSync(this.vaultPath, 0o600);
                     } catch (error) {}
+                    this._setDiskHashFromCiphertext(encryptedData);
+                    this._refreshSyncBaseline();
                     resolve();
                 }
             });
         });
     }
 
-    _saveSync() {
+    _saveSync(force = false) {
         if (!this.data || !this.key) {
             return;
         }
 
         const encryptedData = CryptoUtil.encryptJson(this.data, this.key);
+        this._verifyDiskUnchangedBeforeSave(force);
         fs.writeFileSync(this.vaultPath, encryptedData);
 
         try {
             fs.chmodSync(this.vaultPath, 0o600);
         } catch (error) {}
+        this._setDiskHashFromCiphertext(encryptedData);
+        this._refreshSyncBaseline();
     }
 
     _scheduleAutoSave() {
@@ -569,17 +714,41 @@ class Vault {
 
         this.saveTimeout = setTimeout(async () => {
             try {
-                await this._save();
+                await this._save(false);
             } catch (error) {
-                console.error("자동 저장 실패:", error);
+                if (error.code === VAULT_EXTERNAL_CHANGE) {
+                    const silent = await this._trySilentResyncAfterConflict();
+                    if (!silent) {
+                        this._notifyConflict({ reason: "save_failed" });
+                        console.error("자동 저장 실패:", error);
+                    }
+                } else {
+                    console.error("자동 저장 실패:", error);
+                }
             }
         }, 1000);
     }
 
-    async saveNow() {
+    async _trySilentResyncAfterConflict() {
+        try {
+            const local = JSON.parse(JSON.stringify(this.data));
+            const remote = this.peekRemoteData();
+            if (!isSilentResolvable(local, remote)) {
+                return false;
+            }
+            await this.reloadFromDisk();
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    async saveNow(options = {}) {
         if (this.isLocked) {
             throw new Error("Vault is locked");
         }
+
+        const force = options.force === true;
 
         // 기존 타이머 취소
         if (this.saveTimeout) {
@@ -587,7 +756,63 @@ class Vault {
             this.saveTimeout = null;
         }
 
-        return this._save();
+        return this._save(force);
+    }
+
+    async reloadFromDisk() {
+        this._ensureUnlocked();
+        let encryptedData;
+        try {
+            encryptedData = fs.readFileSync(this.vaultPath);
+        } catch (error) {
+            throw new Error("Vault file was removed or replaced externally");
+        }
+        this._setDiskHashFromCiphertext(encryptedData);
+        this.data = CryptoUtil.decryptJson(encryptedData, this.key);
+        this._normalizeData();
+        this._refreshSyncBaseline();
+    }
+
+    isDiskStale() {
+        if (this.isLocked || this._diskContentHash == null) {
+            return false;
+        }
+        if (!fs.existsSync(this.vaultPath)) {
+            return true;
+        }
+        try {
+            const current = fs.readFileSync(this.vaultPath);
+            return sha256Hex(current) !== this._diskContentHash;
+        } catch (error) {
+            return true;
+        }
+    }
+
+    // 병합 UI용: 임의 데이터를 현재 금고와 동일 규칙으로 정규화한 복사본
+    getNormalizedCopyOfData(incoming) {
+        this._ensureUnlocked();
+        const prev = this.data;
+        this.data = JSON.parse(JSON.stringify(incoming));
+        try {
+            this._normalizeData();
+            return JSON.parse(JSON.stringify(this.data));
+        } finally {
+            this.data = prev;
+        }
+    }
+
+    // 디스크의 vault.enc를 복호화한 뒤 정규화한 스냅샷 (메모리의 this.data는 그대로)
+    peekRemoteData() {
+        this._ensureUnlocked();
+        const encryptedData = fs.readFileSync(this.vaultPath);
+        const raw = CryptoUtil.decryptJson(encryptedData, this.key);
+        return this.getNormalizedCopyOfData(raw);
+    }
+
+    // 병합 결과를 메모리에 반영 (이후 saveNow({ force: true }) 필요할 수 있음)
+    applyMergedData(mergedPlain) {
+        this._ensureUnlocked();
+        this.data = this.getNormalizedCopyOfData(mergedPlain);
     }
 
     // 즐겨찾기 관련 메서드
@@ -704,5 +929,7 @@ class Vault {
         };
     }
 }
+
+Vault.VAULT_EXTERNAL_CHANGE = VAULT_EXTERNAL_CHANGE;
 
 module.exports = Vault;

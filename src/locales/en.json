@@ -260,6 +260,10 @@
         "autoLockTimeout": "Auto Lock Timeout (minutes)",
         "screenCaptureProtection": "Screen Capture Protection",
         "screenCaptureProtectionDesc": "Prevent screenshots and screen recording",
+        "vaultDiskSyncInterval": "Vault file sync interval",
+        "vaultDiskSyncIntervalDesc": "How often to check the vault file on disk for external changes while unlocked",
+        "vaultDiskSync5s": "Every 5 seconds",
+        "vaultDiskSync1m": "Every 1 minute",
         "notifications": {
             "saved": "Settings saved",
             "saveFailed": "Failed to save settings",
@@ -316,6 +320,35 @@
         },
         "remove": {
             "confirm": "Remove \"{{name}}\" from the list? The vault files will not be deleted."
+        },
+        "externalChange": {
+            "title": "Vault file changed elsewhere",
+            "message": "The encrypted vault file on disk no longer matches what this session opened. Your edits cannot be saved until you choose an action.",
+            "reloadConfirm": "Reload from disk? Unsaved changes in this window will be lost.",
+            "forceConfirm": "Force save and overwrite the file on disk? Changes saved elsewhere may be lost.",
+            "reloadFailed": "Could not reload: {{error}}",
+            "saveForceFailed": "Could not save: {{error}}",
+            "staleTitle": "Vault updated externally",
+            "staleReloadConfirm": "The vault file on disk changed. Reload now? Unsaved changes in this window will be lost."
+        },
+        "merge": {
+            "title": "Resolve vault conflict",
+            "subtitle": "",
+            "intro": "While syncing this session's changes to disk, some entries conflicted. Choose which version of the vault to keep.",
+            "colProject": "Project",
+            "colSecret": "Secret",
+            "colSession": "This session",
+            "colDisk": "On disk",
+            "autoMergeHint": "When possible, this merges every entry and brings them back. Items deleted on this device or another (e.g. teammates) may reappear.",
+            "conflictHint": "The same secret key exists on both sides with different values. Restore all is not available — pick an option below.",
+            "applyMerge": "Restore all",
+            "cancel": "Close",
+            "reloadDisk": "Discard this session's changes",
+            "overwriteDisk": "Overwrite anyway (risky)",
+            "sameContent": "No project/secret differences found. The file may still differ (e.g. metadata). You can sync or reload.",
+            "saveSync": "Save this session to disk",
+            "loadFailed": "Could not load comparison: {{error}}",
+            "mergeFailed": "Apply failed: {{error}}"
         },
         "notifications": {
             "created": "Vault \"{{name}}\" created",

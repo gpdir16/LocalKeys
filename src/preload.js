@@ -8,6 +8,24 @@ const api = {
         unlock: (password) => ipcRenderer.invoke("vault:unlock", password),
         lock: () => ipcRenderer.invoke("vault:lock"),
         save: () => ipcRenderer.invoke("vault:save"),
+        saveForce: () => ipcRenderer.invoke("vault:saveForce"),
+        reloadFromDisk: () => ipcRenderer.invoke("vault:reloadFromDisk"),
+        checkDiskStale: () => ipcRenderer.invoke("vault:checkDiskStale"),
+        getVaultDiff: () => ipcRenderer.invoke("vault:getVaultDiff"),
+        applyMerge: (payload) => ipcRenderer.invoke("vault:applyMerge", payload),
+        trySilentConflictResolve: () => ipcRenderer.invoke("vault:trySilentConflictResolve"),
+        onExternalChange: (callback) => {
+            if (typeof callback !== "function") return () => {};
+            const handler = (_event, payload) => callback(payload);
+            ipcRenderer.on("vault:external-change", handler);
+            return () => ipcRenderer.removeListener("vault:external-change", handler);
+        },
+        onVaultDataSynced: (callback) => {
+            if (typeof callback !== "function") return () => {};
+            const handler = () => callback();
+            ipcRenderer.on("vault:data-synced", handler);
+            return () => ipcRenderer.removeListener("vault:data-synced", handler);
+        },
         exists: () => ipcRenderer.invoke("vault:exists"),
         // Multi-vault
         list: () => ipcRenderer.invoke("vaults:list"),

@@ -913,3 +913,115 @@ input:focus {
     margin-top: 4px;
     display: none;
 }
+
+/* 금고 충돌 diff / 병합 모달 */
+.lk-muted {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.lk-vault-merge-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.lk-vault-merge-dialog {
+    background: var(--bg-elevated, #1e1e1e);
+    border: 1px solid var(--border, #333);
+    border-radius: 10px;
+    max-width: 920px;
+    width: 100%;
+    max-height: min(90vh, 720px);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.lk-vault-merge-header {
+    padding: 16px 20px 8px;
+    flex-shrink: 0;
+}
+
+.lk-vault-merge-title {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.lk-vault-merge-subtitle {
+    margin: 0 0 8px;
+    font-size: 13px;
+}
+
+.lk-vault-merge-intro {
+    margin: 0;
+    font-size: 12px;
+}
+
+.lk-vault-merge-table-scroll {
+    overflow: auto;
+    flex: 1;
+    min-height: 120px;
+    padding: 0 12px;
+}
+
+.lk-vault-merge-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.lk-vault-merge-table th,
+.lk-vault-merge-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border, #333);
+    vertical-align: top;
+}
+
+.lk-vault-merge-table th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-elevated, #1e1e1e);
+    z-index: 1;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.lk-vault-merge-table code {
+    font-size: 11px;
+    word-break: break-all;
+}
+
+.lk-vault-merge-row-conflict {
+    background: rgba(255, 180, 80, 0.06);
+}
+
+.lk-vault-merge-hint {
+    padding: 0 20px 8px;
+    margin: 0;
+    font-size: 12px;
+}
+
+.lk-vault-merge-same {
+    padding: 12px 20px;
+    margin: 0;
+}
+
+.lk-vault-merge-footer {
+    padding: 16px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+    border-top: 1px solid var(--border, #333);
+    flex-shrink: 0;
+}

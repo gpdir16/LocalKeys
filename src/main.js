@@ -7,6 +7,7 @@ const https = require("https");
 const { URL } = require("url");
 const windowStateKeeper = require("electron-window-state");
 
+const { buildVaultDiff, mergeVaultData, isSilentResolvable } = require("./modules/vault-merge");
 const VaultManager = require("./modules/vault-manager");
 const Logger = require("./modules/logger");
 const HttpServer = require("./modules/http-server");
@@ -29,6 +30,9 @@ let ipcHandlersInitialized = false;
 // 자동 잠금 타이머
 let autoLockCheckInterval = null;
 
+// 금고 디스크 주기 동기화 (외부 변경 pull)
+let vaultDiskSyncIntervalId = null;
+
 const LOCALKEYS_DIR = path.join(os.homedir(), ".localkeys");
 const SETTINGS_FILE = path.join(LOCALKEYS_DIR, "settings.json");
 
@@ -42,6 +46,8 @@ const DEFAULT_SETTINGS = {
         timeout: 30, // 분 단위
     },
     screenCaptureProtection: true,
+    /** 금고 파일 주기 동기화 간격(초): 5 또는 60 */
+    vaultDiskSyncIntervalSeconds: 5,
 };
 
 function coerceBoolean(value, fallback) {
@@ -60,6 +66,12 @@ function coerceAutoLockTimeout(value, fallback) {
     return coerced;
 }
 
+function coerceVaultDiskSyncIntervalSeconds(value) {
+    const n = typeof value === "number" && Number.isFinite(value) ? Math.floor(value) : NaN;
+    if (n === 60) return 60;
+    return 5;
+}
+
 function normalizeSettings(settings) {
     const safeSettings = settings && typeof settings === "object" && !Array.isArray(settings) ? settings : {};
     const safeAutoLock =
@@ -74,6 +86,7 @@ function normalizeSettings(settings) {
             timeout: coerceAutoLockTimeout(safeAutoLock.timeout, DEFAULT_SETTINGS.autoLock.timeout),
         },
         screenCaptureProtection: coerceBoolean(safeSettings.screenCaptureProtection, DEFAULT_SETTINGS.screenCaptureProtection),
+        vaultDiskSyncIntervalSeconds: coerceVaultDiskSyncIntervalSeconds(safeSettings.vaultDiskSyncIntervalSeconds),
     };
 
     const repairs = [];
@@ -83,6 +96,9 @@ function normalizeSettings(settings) {
     if (normalized.autoLock.enabled !== safeAutoLock.enabled) repairs.push("autoLock.enabled");
     if (normalized.autoLock.timeout !== safeAutoLock.timeout) repairs.push("autoLock.timeout");
     if (normalized.screenCaptureProtection !== safeSettings.screenCaptureProtection) repairs.push("screenCaptureProtection");
+    if (normalized.vaultDiskSyncIntervalSeconds !== safeSettings.vaultDiskSyncIntervalSeconds) {
+        repairs.push("vaultDiskSyncIntervalSeconds");
+    }
 
     return { normalized, repairs };
 }
@@ -148,6 +164,18 @@ function getVault() {
     return vaultManager ? vaultManager.getActiveVault() : null;
 }
 
+function attachVaultConflictNotifier() {
+    if (!vaultManager) return;
+    vaultManager.setConflictNotifier((payload) => {
+        const win = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+        if (win) {
+            try {
+                win.webContents.send("vault:external-change", payload);
+            } catch (error) {}
+        }
+    });
+}
+
 // 시스템 금고 헬퍼
 function getSystemVault() {
     return vaultManager ? vaultManager.systemVault : null;
@@ -179,6 +207,41 @@ function stopHttpServer() {
         }
     } catch {}
     httpServer = null;
+}
+
+function getVaultDiskSyncIntervalMs() {
+    const settings = loadSettings();
+    const sec = settings.vaultDiskSyncIntervalSeconds === 60 ? 60 : 5;
+    return sec * 1000;
+}
+
+function startVaultDiskSync() {
+    stopVaultDiskSync();
+    const ms = getVaultDiskSyncIntervalMs();
+    vaultDiskSyncIntervalId = setInterval(() => {
+        try {
+            if (!isUnlocked) return;
+            const vault = getVault();
+            if (!vault || vault.isLocked) return;
+            vault
+                .tickPeriodicDiskSync()
+                .then((result) => {
+                    if (result.didSync && mainWindow && !mainWindow.isDestroyed()) {
+                        try {
+                            mainWindow.webContents.send("vault:data-synced", {});
+                        } catch {}
+                    }
+                })
+                .catch(() => {});
+        } catch {}
+    }, ms);
+}
+
+function stopVaultDiskSync() {
+    if (vaultDiskSyncIntervalId) {
+        clearInterval(vaultDiskSyncIntervalId);
+        vaultDiskSyncIntervalId = null;
+    }
 }
 
 // 자동 잠금 시작
@@ -629,6 +692,7 @@ function lockVault() {
     if (!vaultManager) return;
     if (!isUnlocked) return;
 
+    stopVaultDiskSync();
     stopAutoLock();
     isUnlocked = false;
 
@@ -818,6 +882,8 @@ function setupIpcHandlers() {
 
             // 자동 잠금 시작
             startAutoLock();
+
+            startVaultDiskSync();
 
             return { success: true };
         } catch (error) {
@@ -1288,11 +1354,114 @@ function setupIpcHandlers() {
     // Vault 즉시 저장
     ipcMain.handle("vault:save", async () => {
         if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        const vault = getVault();
+        if (!vault) return { success: false, error: "No vault" };
         try {
-            await getVault().saveNow();
+            await vault.saveNow();
+            return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                ...(error.code ? { code: error.code } : {}),
+            };
+        }
+    });
+
+    // 디스크에서 금고 다시 불러오기 (로컬 미저장 편집 폐기)
+    ipcMain.handle("vault:reloadFromDisk", async () => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        if (!vaultManager) return { success: false, error: "Vault manager unavailable" };
+        try {
+            await vaultManager.reloadVaultFromDisk(vaultManager.getActiveVaultId());
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
+        }
+    });
+
+    // 외부 변경 무시하고 강제 저장 (사용자 확인 후에만 호출)
+    ipcMain.handle("vault:saveForce", async () => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        const vault = getVault();
+        if (!vault) return { success: false, error: "No vault" };
+        try {
+            await vault.saveNow({ force: true });
+            return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                ...(error.code ? { code: error.code } : {}),
+            };
+        }
+    });
+
+    // 디스크의 vault.enc가 열었을 때와 다른지(저장 없이 검사)
+    ipcMain.handle("vault:checkDiskStale", () => {
+        if (!isUnlocked) return { success: false, stale: false };
+        try {
+            const vault = getVault();
+            if (!vault || vault.isLocked) return { success: true, stale: false };
+            return { success: true, stale: vault.isDiskStale() };
+        } catch (error) {
+            return { success: false, stale: false, error: error.message };
+        }
+    });
+
+    // 로컬(메모리) vs 디스크 복호화본 구조 diff (병합 UI)
+    ipcMain.handle("vault:getVaultDiff", () => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        const vault = getVault();
+        if (!vault || vault.isLocked) return { success: false, error: "No vault" };
+        try {
+            const local = JSON.parse(JSON.stringify(vault.data));
+            const remote = vault.peekRemoteData();
+            const diff = buildVaultDiff(local, remote);
+            return { success: true, diff };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 프로젝트/시크릿/즐겨찾기 내용이 같고 암호문만 다른 경우 — UI 없이 디스크와 해시만 맞춤
+    ipcMain.handle("vault:trySilentConflictResolve", async () => {
+        if (!isUnlocked) return { success: false, didSilent: false };
+        const vault = getVault();
+        if (!vault || vault.isLocked) return { success: false, didSilent: false };
+        try {
+            const local = JSON.parse(JSON.stringify(vault.data));
+            const remote = vault.peekRemoteData();
+            if (!isSilentResolvable(local, remote)) {
+                return { success: true, didSilent: false };
+            }
+            await vault.reloadFromDisk();
+            return { success: true, didSilent: true };
+        } catch (error) {
+            return { success: false, didSilent: false, error: error.message };
+        }
+    });
+
+    // 병합 선택 적용 후 강제 저장 (conflicts: { "project::key": "local"|"remote" })
+    ipcMain.handle("vault:applyMerge", async (event, payload) => {
+        if (!isUnlocked) return { success: false, error: "Vault is locked" };
+        const vault = getVault();
+        if (!vault) return { success: false, error: "No vault" };
+        const conflicts =
+            payload && typeof payload === "object" && payload.conflicts && typeof payload.conflicts === "object" ? payload.conflicts : {};
+        try {
+            const local = JSON.parse(JSON.stringify(vault.data));
+            const remote = vault.peekRemoteData();
+            const merged = mergeVaultData(local, remote, conflicts);
+            vault.applyMergedData(merged);
+            await vault.saveNow({ force: true });
+            return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.message,
+                ...(error.code ? { code: error.code } : {}),
+            };
         }
     });
 
@@ -1753,6 +1922,11 @@ function setupIpcHandlers() {
                 startAutoLock(); // 변경된 설정으로 자동 잠금 재시작
             }
 
+            const vaultSyncIntervalChanged = mergedSettings.vaultDiskSyncIntervalSeconds !== currentSettings.vaultDiskSyncIntervalSeconds;
+            if (vaultSyncIntervalChanged && isUnlocked) {
+                startVaultDiskSync();
+            }
+
             // 화면 캡처 방지 설정 변경 처리
             const screenCaptureChanged = mergedSettings.screenCaptureProtection !== currentSettings.screenCaptureProtection;
             if (screenCaptureChanged) {
@@ -1965,6 +2139,7 @@ app.whenReady().then(async () => {
 
     createWindow();
     setupIpcHandlers();
+    attachVaultConflictNotifier();
 
     // HTTP 서버 시작
     await ensureHttpServerStarted();
