@@ -241,6 +241,7 @@
         <script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
         <script src="../modules/dropdown.js"></script>
+        <script src="../modules/list-sync.js"></script>
 
         <script>
             document.addEventListener("DOMContentLoaded", async function () {
@@ -558,32 +559,35 @@
                     return emptyState;
                 }
 
-                // 통계 카드 생성
-                function createStatCard() {
+                function getStatCardRows() {
                     if (!statistics) return null;
 
-                    const card = document.createElement("div");
-                    card.className = "project-card stat-card";
-
-                    // 만료된 것이 포함된 경우 레이블 변경
                     const expiringLabel = statistics.hasExpired
                         ? i18n.t("dashboard.statistics.expiringAndExpired")
                         : i18n.t("dashboard.statistics.expiringSecrets");
 
-                    // 만료 상태에 따른 색상 결정
                     let expiringColorClass = "";
                     if (statistics.expiringSecrets > 0) {
                         expiringColorClass = statistics.hasExpired ? " stat-error" : " stat-warning";
                     }
 
-                    const items = [
+                    return [
                         { value: statistics.totalProjects, label: i18n.t("dashboard.statistics.totalProjects"), colorClass: "" },
                         { value: statistics.totalSecrets, label: i18n.t("dashboard.statistics.totalSecrets"), colorClass: "" },
                         { value: statistics.expiringSecrets, label: expiringLabel, colorClass: expiringColorClass },
                         { value: statistics.recentAccessCount, label: i18n.t("dashboard.statistics.recentAccess"), colorClass: "" },
                     ];
+                }
 
-                    items.forEach((item) => {
+                // 통계 카드 생성
+                function createStatCard() {
+                    const rows = getStatCardRows();
+                    if (!rows) return null;
+
+                    const card = document.createElement("div");
+                    card.className = "project-card stat-card";
+
+                    rows.forEach((item) => {
                         const itemDiv = document.createElement("div");
                         itemDiv.className = "stat-item";
 
@@ -603,33 +607,119 @@
                     return card;
                 }
 
+                function updateStatCard(card) {
+                    const rows = getStatCardRows();
+                    if (!rows) return;
+                    const statItems = card.querySelectorAll(".stat-item");
+                    rows.forEach((row, i) => {
+                        const itemEl = statItems[i];
+                        if (!itemEl) return;
+                        const valueDiv = itemEl.querySelector(".stat-value");
+                        const labelDiv = itemEl.querySelector(".stat-label");
+                        if (valueDiv) {
+                            valueDiv.textContent = row.value;
+                            valueDiv.className = "stat-value" + row.colorClass;
+                        }
+                        if (labelDiv) labelDiv.textContent = row.label;
+                    });
+                }
+
+                function updateProjectCard(card, project) {
+                    const nameSpan = card.querySelector(".project-name > span:first-of-type");
+                    if (nameSpan) nameSpan.textContent = project.name;
+
+                    const isFavorite = favorites.projects.includes(project.name);
+                    const favoriteBtn = card.querySelector(".project-name .btn-icon-small");
+                    if (favoriteBtn) {
+                        favoriteBtn.textContent = isFavorite ? "★" : "☆";
+                        favoriteBtn.style.color = isFavorite ? "var(--accent)" : "var(--text-secondary)";
+                        const favoriteLabel = isFavorite ? i18n.t("project.removeFromFavorites") : i18n.t("project.addToFavorites");
+                        favoriteBtn.setAttribute("aria-label", favoriteLabel);
+                        favoriteBtn.setAttribute("title", favoriteLabel);
+                        favoriteBtn.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+                        favoriteBtn.onclick = async (e) => {
+                            e.stopPropagation();
+                            await toggleProjectFavorite(project.name);
+                        };
+                    }
+
+                    const dateDiv = card.querySelector(".project-date");
+                    if (dateDiv) {
+                        dateDiv.textContent = i18n.t("dashboard.updated", { time: formatDate(project.updatedAt) });
+                    }
+
+                    const secretCountDiv = card.querySelector(".secret-count");
+                    if (secretCountDiv) {
+                        secretCountDiv.textContent = i18n.t("dashboard.secretCount", { count: project.secretCount });
+                    }
+
+                    card.onclick = () => openProject(project.name);
+
+                    const deleteBtn = card.querySelector(".dropdown-menu .dropdown-item");
+                    if (deleteBtn) {
+                        deleteBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            deleteProject(project.name);
+                        };
+                    }
+                }
+
                 // 프로젝트 렌더링
 
                 function renderProjects() {
-                    projectsContainer.innerHTML = "";
+                    projectsContainer.querySelector(".loading")?.remove();
 
                     if (filteredProjects.length === 0) {
-                        projectsContainer.appendChild(createEmptyStateElement());
+                        const grid = projectsContainer.querySelector(".projects-grid");
+                        if (grid) grid.remove();
+                        let empty = projectsContainer.querySelector(".empty-state");
+                        if (!empty) {
+                            projectsContainer.appendChild(createEmptyStateElement());
+                        } else {
+                            const desc = empty.querySelector(".empty-state-description");
+                            if (desc) {
+                                desc.textContent =
+                                    projects.length === 0
+                                        ? i18n.t("dashboard.emptyState.descriptionEmpty")
+                                        : i18n.t("dashboard.emptyState.descriptionSearch");
+                            }
+                        }
                         return;
                     }
 
-                    const grid = document.createElement("div");
-                    grid.className = "projects-grid";
+                    const existingEmpty = projectsContainer.querySelector(".empty-state");
+                    if (existingEmpty) existingEmpty.remove();
 
-                    // 통계 카드를 먼저 추가 (프로젝트가 있을 때만)
-                    if (showStatistics && statistics && projects.length > 0) {
-                        const statCard = createStatCard();
-                        if (statCard) {
-                            grid.appendChild(statCard);
-                        }
+                    let grid = projectsContainer.querySelector(".projects-grid");
+                    if (!grid) {
+                        grid = document.createElement("div");
+                        grid.className = "projects-grid";
+                        projectsContainer.appendChild(grid);
                     }
 
-                    // 프로젝트 카드 추가
-                    filteredProjects.forEach((project) => {
-                        grid.appendChild(createProjectCard(project));
-                    });
+                    const listItems = [];
+                    if (showStatistics && statistics && projects.length > 0) {
+                        listItems.push({ kind: "stat" });
+                    }
+                    filteredProjects.forEach((p) => listItems.push({ kind: "project", project: p }));
 
-                    projectsContainer.appendChild(grid);
+                    syncListByKey(grid, listItems, {
+                        getKey: (item) => {
+                            if (item.kind === "stat") return "__stat__";
+                            return encodeURIComponent(item.project.name);
+                        },
+                        create: (item) => {
+                            if (item.kind === "stat") {
+                                const el = createStatCard();
+                                return el || document.createElement("div");
+                            }
+                            return createProjectCard(item.project);
+                        },
+                        update: (el, item) => {
+                            if (item.kind === "stat") updateStatCard(el);
+                            else updateProjectCard(el, item.project);
+                        },
+                    });
                 }
 
                 // 프로젝트 열기

@@ -290,6 +290,7 @@
         <script src="../modules/i18n-helper.js"></script>
         <script src="../modules/notification.js"></script>
         <script src="../modules/dropdown.js"></script>
+        <script src="../modules/list-sync.js"></script>
         <script>
             document.addEventListener("DOMContentLoaded", async function () {
                 // 다국어 초기화
@@ -449,14 +450,57 @@
                     return hoursUntilExpiry >= 0 && hoursUntilExpiry <= 7 * 24;
                 }
 
+                function getExpirationDisplay(expiresAt) {
+                    if (!expiresAt) return null;
+                    const expired = isExpired(expiresAt);
+                    const expiringSoon = isExpiringSoon(expiresAt);
+                    const expDate = toLocalDate(expiresAt);
+                    const formattedDate = expDate.toLocaleDateString();
+                    const now = new Date();
+                    const hoursLeft = Math.ceil((expDate - now) / (1000 * 60 * 60));
+                    const daysLeft = Math.ceil(hoursLeft / 24);
+
+                    let text = "";
+                    if (expired) {
+                        text = i18n.t("project.expiration.expiredOn", { date: formattedDate }, `Expired on ${formattedDate}`);
+                    } else if (expiringSoon) {
+                        if (daysLeft >= 3) {
+                            if (daysLeft === 1) {
+                                text = i18n.t(
+                                    "project.expiration.expiresInDays",
+                                    { count: daysLeft, date: formattedDate },
+                                    `${daysLeft} day left (${formattedDate})`,
+                                );
+                            } else {
+                                text = i18n.t(
+                                    "project.expiration.expiresInDaysPlural",
+                                    { count: daysLeft, date: formattedDate },
+                                    `${daysLeft} days left (${formattedDate})`,
+                                );
+                            }
+                        } else {
+                            text = i18n.t(
+                                "project.expiration.expiresInHours",
+                                { count: hoursLeft, date: formattedDate },
+                                `${hoursLeft} hours left (${formattedDate})`,
+                            );
+                        }
+                    } else {
+                        text = i18n.t("project.expiration.expiresOn", { date: formattedDate }, `Expires on ${formattedDate}`);
+                    }
+
+                    const expiresDivClass = "secret-expires" + (expired ? " expired" : "") + (expiringSoon && !expired ? " expiring-soon" : "");
+                    return { expired, expiringSoon, expiresDivClass, text };
+                }
+
                 function createSecretRow(key, secret) {
                     const value = secret.value;
                     const expiresAt = secret.expiresAt;
-                    const expired = isExpired(expiresAt);
-                    const expiringSoon = isExpiringSoon(expiresAt);
+                    const exp = getExpirationDisplay(expiresAt);
 
                     const item = document.createElement("div");
-                    item.className = "secret-item" + (expired ? " expired" : "") + (expiringSoon && !expired ? " expiring-soon" : "");
+                    item.className =
+                        "secret-item" + (exp && exp.expired ? " expired" : "") + (exp && exp.expiringSoon && !exp.expired ? " expiring-soon" : "");
 
                     const header = document.createElement("div");
                     header.className = "secret-header";
@@ -556,52 +600,91 @@
 
                     toggleBtn.onclick = () => toggleVisibility(valueDiv, toggleBtn);
 
-                    // 만료일 표시
-                    if (expiresAt) {
+                    if (exp) {
                         const expiresDiv = document.createElement("div");
-                        expiresDiv.className = "secret-expires" + (expired ? " expired" : "") + (expiringSoon && !expired ? " expiring-soon" : "");
-
-                        const expDate = toLocalDate(expiresAt);
-                        const formattedDate = expDate.toLocaleDateString();
-                        const now = new Date();
-                        const hoursLeft = Math.ceil((expDate - now) / (1000 * 60 * 60));
-                        const daysLeft = Math.ceil(hoursLeft / 24);
-
-                        if (expired) {
-                            expiresDiv.textContent = i18n.t("project.expiration.expiredOn", { date: formattedDate }, `Expired on ${formattedDate}`);
-                        } else if (expiringSoon) {
-                            // 3일~7일 남았을 때: 일수로 표시
-                            if (daysLeft >= 3) {
-                                if (daysLeft === 1) {
-                                    expiresDiv.textContent = i18n.t(
-                                        "project.expiration.expiresInDays",
-                                        { count: daysLeft, date: formattedDate },
-                                        `${daysLeft} day left (${formattedDate})`,
-                                    );
-                                } else {
-                                    expiresDiv.textContent = i18n.t(
-                                        "project.expiration.expiresInDaysPlural",
-                                        { count: daysLeft, date: formattedDate },
-                                        `${daysLeft} days left (${formattedDate})`,
-                                    );
-                                }
-                            }
-                            // 2일~1일 남았을 때: 시간으로 표시
-                            else {
-                                expiresDiv.textContent = i18n.t(
-                                    "project.expiration.expiresInHours",
-                                    { count: hoursLeft, date: formattedDate },
-                                    `${hoursLeft} hours left (${formattedDate})`,
-                                );
-                            }
-                        } else {
-                            expiresDiv.textContent = i18n.t("project.expiration.expiresOn", { date: formattedDate }, `Expires on ${formattedDate}`);
-                        }
-
+                        expiresDiv.className = exp.expiresDivClass;
+                        expiresDiv.textContent = exp.text;
                         item.appendChild(expiresDiv);
                     }
 
                     return item;
+                }
+
+                function updateSecretRow(item, key, secret) {
+                    const value = secret.value;
+                    const expiresAt = secret.expiresAt;
+                    const exp = getExpirationDisplay(expiresAt);
+
+                    item.className =
+                        "secret-item" + (exp && exp.expired ? " expired" : "") + (exp && exp.expiringSoon && !exp.expired ? " expiring-soon" : "");
+
+                    const keySpan = item.querySelector(".secret-key > span:first-of-type");
+                    if (keySpan) keySpan.textContent = key;
+
+                    const isFavorite = (favorites.secrets[projectName] || []).includes(key);
+                    const favoriteBtn = item.querySelector(".secret-key .btn-icon-small");
+                    if (favoriteBtn) {
+                        favoriteBtn.textContent = isFavorite ? "★" : "☆";
+                        favoriteBtn.style.color = isFavorite ? "var(--accent)" : "var(--text-secondary)";
+                        const favoriteLabel = isFavorite ? i18n.t("project.removeFromFavorites") : i18n.t("project.addToFavorites");
+                        favoriteBtn.setAttribute("aria-label", favoriteLabel);
+                        favoriteBtn.setAttribute("title", favoriteLabel);
+                        favoriteBtn.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+                        favoriteBtn.onclick = async (e) => {
+                            e.stopPropagation();
+                            await toggleSecretFavorite(key);
+                        };
+                    }
+
+                    const valueDiv = item.querySelector(".secret-value");
+                    if (valueDiv) {
+                        valueDiv.textContent = value;
+                    }
+
+                    const toggleBtn = item.querySelector(".toggle-visibility");
+                    if (toggleBtn && valueDiv) {
+                        toggleBtn.onclick = () => toggleVisibility(valueDiv, toggleBtn);
+                    }
+
+                    const editBtn = item.querySelector(".secret-header .btn-secondary");
+                    if (editBtn) {
+                        editBtn.onclick = () => editSecret(key);
+                    }
+
+                    const dropdownMenu = item.querySelector(".dropdown-menu");
+                    const dropdownBtn = item.querySelector(".dropdown .dropdown-toggle");
+                    if (dropdownBtn && dropdownMenu) {
+                        dropdownBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            dropdownManager.toggle(dropdownMenu);
+                        };
+                    }
+
+                    const dropdownItems = item.querySelectorAll(".dropdown-menu .dropdown-item");
+                    if (dropdownItems[0]) {
+                        dropdownItems[0].onclick = (e) => {
+                            e.stopPropagation();
+                            viewHistory(key);
+                        };
+                    }
+                    if (dropdownItems[1]) {
+                        dropdownItems[1].onclick = (e) => {
+                            e.stopPropagation();
+                            deleteSecret(key);
+                        };
+                    }
+
+                    let expiresEl = item.querySelector(".secret-expires");
+                    if (!exp) {
+                        if (expiresEl) expiresEl.remove();
+                    } else {
+                        if (!expiresEl) {
+                            expiresEl = document.createElement("div");
+                            item.appendChild(expiresEl);
+                        }
+                        expiresEl.className = exp.expiresDivClass;
+                        expiresEl.textContent = exp.text;
+                    }
                 }
 
                 function createEmptyStateElement() {
@@ -639,15 +722,43 @@
 
                 // 시크릿 렌더링
                 function renderSecrets() {
-                    secretsContainer.innerHTML = ""; // Clear existing content
+                    secretsContainer.querySelector(".loading")?.remove();
+
                     let secretKeys = Object.keys(filteredSecrets);
 
                     if (secretKeys.length === 0) {
-                        secretsContainer.appendChild(createEmptyStateElement());
+                        const rows = secretsContainer.querySelectorAll(".secret-item");
+                        rows.forEach((r) => r.remove());
+                        let empty = secretsContainer.querySelector(".empty-state");
+                        if (!empty) {
+                            secretsContainer.appendChild(createEmptyStateElement());
+                        } else {
+                            const description = empty.querySelector(".empty-state-description");
+                            if (description) {
+                                description.textContent =
+                                    Object.keys(secrets).length === 0
+                                        ? i18n.t("project.emptyState.descriptionEmpty")
+                                        : i18n.t("project.emptyState.descriptionSearch");
+                            }
+                            const addBtn = empty.querySelector(".btn");
+                            if (Object.keys(secrets).length === 0) {
+                                if (!addBtn) {
+                                    const b = document.createElement("button");
+                                    b.className = "btn";
+                                    b.textContent = i18n.t("project.addSecret");
+                                    b.onclick = showAddSecretModal;
+                                    empty.appendChild(b);
+                                }
+                            } else if (addBtn) {
+                                addBtn.remove();
+                            }
+                        }
                         return;
                     }
 
-                    // 즐겨찾기 항목을 위로 정렬
+                    const existingEmpty = secretsContainer.querySelector(".empty-state");
+                    if (existingEmpty) existingEmpty.remove();
+
                     const favoriteKeys = favorites.secrets[projectName] || [];
                     secretKeys.sort((a, b) => {
                         const aFav = favoriteKeys.includes(a);
@@ -657,11 +768,12 @@
                         return 0;
                     });
 
-                    const fragment = document.createDocumentFragment();
-                    secretKeys.forEach((key) => {
-                        fragment.appendChild(createSecretRow(key, filteredSecrets[key]));
+                    const rows = secretKeys.map((key) => ({ key, secret: filteredSecrets[key] }));
+                    syncListByKey(secretsContainer, rows, {
+                        getKey: (row) => encodeURIComponent(row.key),
+                        create: (row) => createSecretRow(row.key, row.secret),
+                        update: (el, row) => updateSecretRow(el, row.key, row.secret),
                     });
-                    secretsContainer.appendChild(fragment);
                 }
 
                 // 시크릿 가시성 토글
