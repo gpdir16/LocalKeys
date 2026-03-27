@@ -2123,14 +2123,19 @@ app.whenReady().then(async () => {
     nativeTheme.themeSource = "dark";
 
     // 네이티브 컨텍스트 메뉴 설정 (ESM 패키지이므로 dynamic import 사용)
-    const { default: contextMenu } = await import("electron-context-menu");
-    contextMenu({
-        showServices: process.platform === "darwin",
-        showSearchWithGoogle: true,
-        showCopyImage: true,
-        showSaveImageAs: true,
-        showInspectElement: !app.isPackaged,
-    });
+    try {
+        const { default: contextMenu } = await import("electron-context-menu");
+        contextMenu({
+            showServices: process.platform === "darwin",
+            showSearchWithGoogle: true,
+            showCopyImage: true,
+            showSaveImageAs: true,
+            showInspectElement: !app.isPackaged,
+        });
+    } catch (e) {
+        // 패키징(asar) 환경에서 electron-context-menu 의존성 ESM 해석이 깨질 수 있음 — 앱 기동은 계속함
+        console.error("electron-context-menu 로드 실패(컨텍스트 메뉴 비활성):", e);
+    }
 
     initializeApp();
 

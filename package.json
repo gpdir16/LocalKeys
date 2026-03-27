@@ -43,6 +43,11 @@
             "src/**/*",
             "cli/**/*"
         ],
+        "asarUnpack": [
+            "**/node_modules/electron-context-menu/**",
+            "**/node_modules/electron-dl/**",
+            "**/node_modules/ext-name/**"
+        ],
         "mac": {
             "category": "public.app-category.developer-tools",
             "icon": "src/assets/macicon.png",
