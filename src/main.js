@@ -1872,7 +1872,7 @@ function setupIpcHandlers() {
 
     ipcMain.handle("license:openBuyPage", () => {
         // 외부 브라우저에서 구매 페이지 열기
-        openExternalSafely("https://id.privatestater.com/buy?product=localkeys");
+        openExternalSafely("https://privatestater.com/dashboard/account/buy?product=localkeys");
 
         return { success: true };
     });

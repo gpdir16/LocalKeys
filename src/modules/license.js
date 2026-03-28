@@ -72,7 +72,7 @@ class License {
             });
 
             const options = {
-                hostname: "id.privatestater.com",
+                hostname: "privatestater.com",
                 port: 443,
                 path: "/api/id/license/checkkeypw",
                 method: "POST",

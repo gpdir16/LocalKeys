@@ -43,7 +43,7 @@ localkeys run --project=myapp -- npm start
 Depending on settings/features, the app may contact:
 
 - Update checks: `https://localkeys.privatestater.com/api/version`
-- License check/activation: `https://id.privatestater.com/api/id/license/*`
+- License check/activation: `https://privatestater.com/api/id/license/checkkeypw`
 
 You can disable automatic update checks in the settings, and license verification won't be called again after the initial setup.
 After the first setup you can block all internet connections with a firewall.

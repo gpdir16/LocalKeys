@@ -43,7 +43,7 @@ localkeys run --project=myapp -- npm start
 설정/기능에 따라 앱에서 아래 인터넷 연결이 발생할 수 있습니다.
 
 - 업데이트 체크: `https://localkeys.privatestater.com/api/version`
-- 라이선스 확인/활성화: `https://id.privatestater.com/api/id/license/*`
+- 라이선스 확인/활성화: `https://privatestater.com/api/id/license/checkkeypw`
 
 설정에서 자동 업데이트 체크를 끌 수 있으며, 초기 설정 이후에는 라이선스 검증이 다시 호출되지 않습니다.
 첫 설정을 완료한 뒤에는 방화벽으로 모든 인터넷 연결을 차단해도 됩니다.
